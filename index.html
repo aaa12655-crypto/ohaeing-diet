@@ -849,9 +849,9 @@
       <div>
         <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">글자 크기</div>
         <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px;" id="sizeSeg">
-          <button class="pill-btn" type="button" data-sz="0.86" style="padding:6px 2px; font-size:11px;">작게</button>
+          <button class="pill-btn" type="button" data-sz="0.76" style="padding:6px 2px; font-size:11px;">작게</button>
           <button class="pill-btn" type="button" data-sz="1" style="padding:6px 2px; font-size:11px;">보통</button>
-          <button class="pill-btn" type="button" data-sz="1.12" style="padding:6px 2px; font-size:11px;">크게</button>
+          <button class="pill-btn" type="button" data-sz="1.24" style="padding:6px 2px; font-size:11px;">크게</button>
         </div>
       </div>
       <div>
@@ -1096,7 +1096,7 @@ document.getElementById('themeSeg').addEventListener('click', (e) => {
 });
 
 function applyTextStyle() {
-  const sz = store.fontScale || '1';
+  let sz = store.fontScale || '1'; if (sz === '0.86') sz = '0.76'; if (sz === '1.12') sz = '1.24';
   const s = store.fontSpacing || '0.4px';
   document.documentElement.style.setProperty('--app-spacing', s);
   document.querySelectorAll('#sizeSeg button').forEach(b => {
