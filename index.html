@@ -2068,7 +2068,7 @@ function renderFriendDetailCard(name, data) {
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; background:var(--bg); margin-bottom:12px;">
         <div style="min-width:0;">
           <div style="font-size:15px; font-weight:800; color:var(--ink);">${name} · ${currentDate.slice(5).replace('-','.')}</div>
-          <div style="font-size:11px; color:var(--muted); font-weight:700; margin-top:2px;">Lv.${lv} 고앵이 | 체중 ${d.weight ? d.weight + 'kg' : '미입력'} | 물 ${(d.water || 0)*100}ml | 비타민 ${d.vit ? '✓' : '-'} · 유산균 ${d.pro ? '✓' : '-'}</div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700; margin-top:2px;">Lv.${lv} 고앵이 | 체중 ${d.weight ? d.weight + 'kg' : '미입력'} | 물 ${(d.water || 0)*100}ml | 비타민 ${d.vit ? '✓' : 'X'} · 유산균 ${d.pro ? '✓' : 'X'}</div>
         </div>
         <div style="font-size:18px; font-weight:800; color:var(--orange); flex-shrink:0;">${(eat-burn).toLocaleString()} kcal</div>
       </div>
