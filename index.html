@@ -2042,31 +2042,44 @@ function renderFriendDetailCard(name, data) {
   ['아침','점심','저녁','간식'].forEach(s => (d[s]||[]).forEach(i => eat += i.kcal));
   (d['운동']||[]).forEach(i => burn += i.kcal);
   const lv = Math.floor((data.totalLogs || 0) / 10) + 1;
-  let listHtml = '';
-  ['아침','점심','저녁','간식','운동'].forEach(s => {
-    (d[s]||[]).forEach(it => {
-      listHtml += `<div class="meal-card"><div class="meal-left"><div class="meal-tag ${s==='운동'?'green':''}">${s}</div><div class="meal-name" style="margin-left:8px;">${it.name}</div></div><div class="meal-kcal ${s==='운동'?'green':''}">${s==='운동'?'-':''}${it.kcal}<span>kcal</span></div></div>`;
-    });
+
+  const mealRows = [];
+  ['아침','점심','저녁','간식'].forEach(s => {
+    const arr = d[s] || [];
+    if (arr.length) {
+      const sum = arr.reduce((a, b) => a + b.kcal, 0);
+      const names = arr.map(i => i.name).join(', ');
+      mealRows.push(`<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 11px; border-radius:11px; background:var(--bg); border:1px solid var(--line);"><div style="font-size:12.5px; font-weight:700; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="color:var(--orange); font-weight:800; margin-right:5px;">[${s}]</span>${names}</div><div style="font-size:12.5px; font-weight:800; color:var(--orange); flex-shrink:0;">${sum.toLocaleString()}kcal</div></div>`);
+    }
   });
+
+  const exArr = d['운동'] || [];
+  let exHtml = '';
+  if (exArr.length) {
+    const exNames = exArr.map(i => i.name).join(', ');
+    exHtml = `<div style="margin-top:10px;">
+      <div style="font-size:11.5px; font-weight:800; color:var(--green); margin-bottom:6px;">운동 (-${burn.toLocaleString()} kcal)</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 11px; border-radius:11px; background:#f3faf6; border:1px solid var(--line);"><div style="font-size:12.5px; font-weight:700; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="color:var(--green); font-weight:800; margin-right:5px;">[운동]</span>${exNames}</div><div style="font-size:12.5px; font-weight:800; color:var(--green); flex-shrink:0;">-${burn.toLocaleString()}kcal</div></div>
+    </div>`;
+  }
+
   return `
     <div class="glass-card" style="margin-bottom:12px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div>
-          <div style="font-size:16px; font-weight:800;">${name}님의 ${currentDate}</div>
-          <div style="font-size:11.5px; color:var(--muted); font-weight:700;">Lv.${lv} 고앵이</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; background:var(--bg); margin-bottom:12px;">
+        <div style="min-width:0;">
+          <div style="font-size:15px; font-weight:800; color:var(--ink);">${name} · ${currentDate.slice(5).replace('-','.')}</div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700; margin-top:2px;">Lv.${lv} 고앵이 | 체중 ${d.weight ? d.weight + 'kg' : '미입력'} | 물 ${(d.water || 0)*100}ml | 비타민 ${d.vit ? '✓' : '-'} · 유산균 ${d.pro ? '✓' : '-'}</div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-size:20px; font-weight:800; color:var(--orange);">${(eat-burn).toLocaleString()} kcal</div>
-          <div style="font-size:11px; color:var(--muted);">체중 ${d.weight ? d.weight + ' kg' : '미입력'}</div>
+        <div style="font-size:18px; font-weight:800; color:var(--orange); flex-shrink:0;">${(eat-burn).toLocaleString()} kcal</div>
+      </div>
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:var(--orange); margin-bottom:6px;">식단 (+${eat.toLocaleString()} kcal)</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${mealRows.length ? mealRows.join('') : '<div style="font-size:12px; color:var(--muted); padding:8px 0;">오늘 기록된 식단이 아직 없어요</div>'}
         </div>
       </div>
-      <div style="display:flex; gap:8px; font-size:12px; font-weight:700; color:var(--ink);">
-        <span>물 ${(d.water || 0)*100}/800ml</span>
-        <span>💊 ${d.vit ? '완료' : '미완료'}</span>
-        <span>💩 ${d.pro ? '완료' : '미완료'}</span>
-      </div>
-    </div>
-    ${listHtml || '<div class="glass-card" style="text-align:center; color:var(--muted); font-size:13px;">오늘 식단이 아직 없어요</div>'}`;
+      ${exHtml}
+    </div>`;
 }
 
 async function fetchFriendData() {
