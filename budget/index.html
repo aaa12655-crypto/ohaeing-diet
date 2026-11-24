@@ -1036,7 +1036,7 @@ if (!state.cards || !state.cards.length) {
 }
 if (!state.fixedExpenses) state.fixedExpenses = [];
 if (!state.wishlist) state.wishlist = [];
-let activeCardTab = 'all';
+let activeCardTab = (state.defaultCardId && (state.cards || []).some(c => c.id === state.defaultCardId)) ? state.defaultCardId : 'all';
 let editingFixedId = null;
 let selectedFxCardId = state.cards[0].id;
 let selectedCardId = state.cards[0].id;
@@ -1087,7 +1087,7 @@ function renderFontModal() {
   const fIdx = state.fontIdx || 0;
   const tIdx = state.themeIdx || 0;
   document.getElementById('themeChips').innerHTML = THEMES.map((t, i) =>
-    `<button type="button" class="chip ${i===tIdx?'active':''}" onclick="setTheme(${i})"><span style="display:inline-block;width:10px;height:10px;background:${t.bg};border:1px solid ${t.ink};margin-right:4px;vertical-align:middle;"></span>${t.name}</button>`
+    `<button type="button" class="chip ${i===tIdx?'active':''}" onclick="setTheme(${i})"><span style="display:inline-block;width:10px;height:10px;background:${t.bg};border:1px solid ${t.ink};margin-right:4px;vertical-align:middle;"></span>${state.defaultCardId === t.id ? '★ ' : ''}${t.name}</button>`
   ).join('');
   document.getElementById('fsChips').innerHTML = FS_OPTS.map((o, i) =>
     `<button type="button" class="chip ${i===fsIdx?'active':''}" onclick="setFs(${i})">${o.label}</button>`
@@ -1357,14 +1357,33 @@ window.openCardsModal = function() {
   document.getElementById('cardsModal').classList.add('open');
 };
 function renderCardsEditList() {
-  document.getElementById('cardsEditList').innerHTML = (state.cards || []).map((c, idx) => `
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-      <input type="text" class="px-input" value="${c.name}" onchange="updateCard(${idx}, 'name', this.value)" style="flex:1;" />
-      <input type="number" inputmode="numeric" class="px-input" value="${c.goal||0}" onchange="updateCard(${idx}, 'goal', this.value)" style="width:100px;" placeholder="목표" />
+  document.getElementById('cardsEditList').innerHTML = (state.cards || []).map((c, idx) => {
+    const isDef = state.defaultCardId === c.id;
+    return `
+    <div style="display:flex;gap:5px;align-items:center;margin-bottom:6px;">
+      <button type="button" class="px-btn" onclick="toggleDefaultCard('${c.id}')" title="메인으로 고정" style="padding:6px 8px;background:${isDef ? '#FFE066' : 'var(--card-bg)'};color:${isDef ? '#111' : 'var(--muted)'};">${isDef ? '★' : '☆'}</button>
+      <input type="text" class="px-input" value="${c.name}" onchange="updateCard(${idx}, 'name', this.value)" style="flex:1;min-width:0;" />
+      <input type="number" inputmode="numeric" class="px-input" value="${c.goal||0}" onchange="updateCard(${idx}, 'goal', this.value)" style="width:92px;" placeholder="목표" />
       <button type="button" class="px-btn red" onclick="deleteCard(${idx})">삭제</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
+window.toggleDefaultCard = function(id) {
+  if (state.defaultCardId === id) {
+    state.defaultCardId = null;
+    activeCardTab = 'all';
+  } else {
+    state.defaultCardId = id;
+    const idx = (state.cards || []).findIndex(c => c.id === id);
+    if (idx > 0) {
+      const [picked] = state.cards.splice(idx, 1);
+      state.cards.unshift(picked);
+    }
+    activeCardTab = id;
+    selectedCardId = id;
+  }
+  save(); renderCardsEditList(); renderHome();
+};
 window.updateCard = function(idx, key, val) {
   if (!state.cards[idx]) return;
   state.cards[idx][key] = key === 'goal' ? Number(val || 0) : (val.trim() || state.cards[idx].name);
@@ -1373,6 +1392,7 @@ window.updateCard = function(idx, key, val) {
 window.deleteCard = function(idx) {
   if (state.cards.length <= 1) return alert('최소 1개는 남아있어야 해요!');
   const removed = state.cards.splice(idx, 1)[0];
+  if (state.defaultCardId === removed.id) state.defaultCardId = null;
   if (activeCardTab === removed.id) activeCardTab = 'all';
   if (selectedCardId === removed.id) selectedCardId = state.cards[0].id;
   save(); renderCardsEditList(); renderHome();
