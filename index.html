@@ -1998,7 +1998,7 @@ function shrinkPhotoForCloud(dataUrl) {
   });
 }
 
-async async function pushMyDayToCloud() {
+async function pushMyDayToCloud() {
   const c = getSyncCfg();
   if (!c.url || !c.room || !c.myId) return;
   const base = c.url.replace(/\/+$/, '');
