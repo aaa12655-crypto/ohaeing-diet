@@ -727,12 +727,19 @@
   <!-- CAMPAIGN: 체험단 관리 -->
   <div id="tab-camp" class="tab-pane">
     <div class="receipt">
-      <div class="rc-header" style="display:flex;justify-content:space-between;align-items:center;text-align:left;">
-        <div>
-          <div class="rc-title" style="font-size:16px;">체험단 D-DAY & 아낀 돈</div>
-          <div style="font-size:12px;color:var(--muted);">총 아낀 금액 <strong style="color:var(--green);" id="campTotalSaved">0원</strong></div>
+      <div class="rc-header" style="text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div class="month-switch" style="margin:0;">
+            <button id="campPrevMonthBtn">&lt;</button>
+            <span id="campMonthLabel">2026.11</span>
+            <button id="campNextMonthBtn">&gt;</button>
+          </div>
+          <button class="px-btn primary" id="addCampBtn">+ 체험단</button>
         </div>
-        <button class="px-btn primary" id="addCampBtn">+ 체험단</button>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <div class="rc-title" style="font-size:15px;">체험단 D-DAY & 아낀 돈</div>
+          <div style="font-size:12px;color:var(--muted);"><span id="campSavedMonthTxt">11월</span> 아낀 금액 <strong style="color:var(--green);" id="campTotalSaved">0원</strong></div>
+        </div>
       </div>
       <div id="campList"></div>
     </div>
@@ -756,8 +763,12 @@
   <div id="tab-cal" class="tab-pane">
     <div class="receipt">
       <div class="rc-header">
-        <div class="rc-title" style="font-size:16px;">월간 달력</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;">빨강: 지출 · 초록: 무지출 · 박스: 체험단 마감</div>
+        <div class="month-switch" style="justify-content:center;">
+          <button id="calPrevMonthBtn">&lt;</button>
+          <span id="calMonthLabel">2026년 11월</span>
+          <button id="calNextMonthBtn">&gt;</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">빨강: 지출 · 초록: 무지출 · 박스: 체험단 마감</div>
       </div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
@@ -1207,16 +1218,23 @@ function calcDday(dueStr) {
 }
 
 function renderCampaigns() {
-  const doneTotal = state.campaigns.filter(c => c.done).reduce((s, c) => s + Number(c.value || 0), 0);
+  const [cy, cm] = curMonth.split('-').map(Number);
+  const campMonthEl = document.getElementById('campMonthLabel');
+  if (campMonthEl) campMonthEl.textContent = `${cy}.${String(cm).padStart(2,'0')}`;
+  const campSavedTxt = document.getElementById('campSavedMonthTxt');
+  if (campSavedTxt) campSavedTxt.textContent = `${cm}월`;
+
+  const monthCamps = state.campaigns.filter(c => (c.due || '').startsWith(curMonth));
+  const doneTotal = monthCamps.filter(c => c.done).reduce((s, c) => s + Number(c.value || 0), 0);
   document.getElementById('campTotalSaved').textContent = fmt(doneTotal);
 
   const el = document.getElementById('campList');
-  if (!state.campaigns.length) {
-    el.innerHTML = '<div class="empty-box">등록된 체험단이 없어요.<br>+ 체험단 버튼으로 기한과 아낀 금액을 기록해 보세요!</div>';
+  if (!monthCamps.length) {
+    el.innerHTML = `<div class="empty-box">${cm}월에 등록된 체험단이 없어요.<br>+ 체험단 버튼으로 기한과 아낀 금액을 기록해 보세요!</div>`;
     return;
   }
 
-  const sorted = [...state.campaigns].sort((a, b) => {
+  const sorted = [...monthCamps].sort((a, b) => {
     if (!!a.done !== !!b.done) return a.done ? 1 : -1;
     return calcDday(a.due).diff - calcDday(b.due).diff;
   });
@@ -1245,6 +1263,8 @@ function renderCampaigns() {
 
 function renderCalendar() {
   const [y, m] = curMonth.split('-').map(Number);
+  const calLbl = document.getElementById('calMonthLabel');
+  if (calLbl) calLbl.textContent = `${y}년 ${m}월`;
   const firstDay = new Date(y, m - 1, 1).getDay();
   const lastDate = new Date(y, m, 0).getDate();
   const today = todayStr();
@@ -1517,18 +1537,18 @@ document.getElementById('closeFontModal').onclick = () => {
   document.getElementById('fontModal').classList.remove('open');
 };
 
-document.getElementById('prevMonthBtn').onclick = () => {
+function shiftBudgetMonth(delta) {
   const [y, m] = curMonth.split('-').map(Number);
-  const d = new Date(y, m - 2, 1);
+  const d = new Date(y, m - 1 + delta, 1);
   curMonth = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
   renderAll();
-};
-document.getElementById('nextMonthBtn').onclick = () => {
-  const [y, m] = curMonth.split('-').map(Number);
-  const d = new Date(y, m, 1);
-  curMonth = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-  renderAll();
-};
+}
+document.getElementById('prevMonthBtn').onclick = () => shiftBudgetMonth(-1);
+document.getElementById('nextMonthBtn').onclick = () => shiftBudgetMonth(1);
+document.getElementById('campPrevMonthBtn').onclick = () => shiftBudgetMonth(-1);
+document.getElementById('campNextMonthBtn').onclick = () => shiftBudgetMonth(1);
+document.getElementById('calPrevMonthBtn').onclick = () => shiftBudgetMonth(-1);
+document.getElementById('calNextMonthBtn').onclick = () => shiftBudgetMonth(1);
 
 document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
   btn.onclick = () => {
