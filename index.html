@@ -2253,7 +2253,7 @@ async function fetchFriendData() {
         const roomData = await res.json();
         if (roomData) {
           Object.keys(roomData).filter(n => n !== myName).forEach(fn => {
-            results.push({ name: fn, room: rm, data: roomData[fn]?.[currentDate] || null, comments: roomData[fn]?.comments?.[currentDate] || null });
+            results.push({ name: fn, room: rm, data: roomData[fn]?.[currentDate] || null, comments: roomData[fn]?.comments?.[currentDate] || null, myComments: roomData[myName]?.comments?.[currentDate] || null });
           });
         }
       } catch {}
@@ -2281,7 +2281,25 @@ async function fetchFriendData() {
           `</div>`
         : '';
       const cur = results[selectedFriendIdx];
-      box.innerHTML = battle + pills + renderFriendDetailCard(cur.name, cur.data, cur.comments, cur.room);
+      const myCmRaw = cur.myComments || {};
+      const myCmList = Object.entries(myCmRaw).map(([k, v]) => ({ id: k, ...v })).sort((a,b) => (a.ts||0) - (b.ts||0));
+      const myCmHtml = `
+        <div class="glass-card" style="margin-top:12px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px;">내 기록에 달린 댓글 (${myCmList.length})</div>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;">
+            ${myCmList.length ? myCmList.map(cm => `
+              <div style="background:rgba(255,255,255,0.65);border-radius:10px;padding:6px 10px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                <div><strong style="color:var(--orange);">${cm.author}</strong> ${cm.text} <span style="font-size:10px;color:var(--muted);margin-left:4px;">${cm.time||''}</span></div>
+                ${cm.author === myName ? `<button type="button" class="del-my-cm-btn" data-room="${cur.room}" data-cid="${cm.id}" style="border:none;background:none;color:var(--muted);font-size:11px;cursor:pointer;">✕</button>` : ''}
+              </div>
+            `).join('') : '<div style="font-size:12px;color:var(--muted);">아직 친구가 남긴 댓글이 없어요</div>'}
+          </div>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="friendTabMyCmInput" placeholder="답글 남기기..." style="flex:1;padding:7px 10px;border-radius:10px;border:1.5px solid var(--line);font-size:12px;font-family:inherit;background:#fff;">
+            <button type="button" id="friendTabMyCmSendBtn" style="padding:7px 12px;border-radius:10px;border:none;background:var(--orange);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">등록</button>
+          </div>
+        </div>`;
+      box.innerHTML = battle + pills + renderFriendDetailCard(cur.name, cur.data, cur.comments, cur.room) + myCmHtml;
       const fcBtn = box.querySelector('.fc-send-btn');
       const fcInput = box.querySelector('.fc-input');
       if (fcBtn && fcInput) {
@@ -2299,6 +2317,26 @@ async function fetchFriendData() {
           fetchFriendData();
         };
       });
+      box.querySelectorAll('.del-my-cm-btn').forEach(db => {
+        db.onclick = async () => {
+          await deleteDietComment(db.dataset.room, myName, db.dataset.cid);
+          fetchFriendData();
+        };
+      });
+      const mySend = document.getElementById('friendTabMyCmSendBtn');
+      const myInp = document.getElementById('friendTabMyCmInput');
+      if (mySend && myInp) {
+        const submitMyCm = async () => {
+          const txt = myInp.value.trim();
+          if (!txt) return;
+          mySend.disabled = true;
+          await postDietComment(cur.room, myName, txt);
+          myInp.value = '';
+          fetchFriendData();
+        };
+        mySend.onclick = submitMyCm;
+        myInp.onkeydown = e => { if (e.key === 'Enter') submitMyCm(); };
+      }
       box.querySelectorAll('.live-f-btn').forEach(b => b.onclick = () => { selectedFriendIdx = Number(b.dataset.i); drawLive(); });
     };
     drawLive();
