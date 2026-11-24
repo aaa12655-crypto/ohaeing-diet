@@ -1284,7 +1284,7 @@ function renderCalendar() {
         <div class="cal-day">${day}</div>
         <div>
           ${dueCamps.map(c => { const pal = ['#C84B31','#2D6A4F','#2B59C3','#8B5E34','#7D4E6D','#4A5568','#B45309','#0F766E','#4338CA','#9D174D','#3F6212','#1E40AF','#9A3412','#5B21B6','#0369A1','#6D28D9','#831843','#15803D','#713F12','#334155']; const cIdx = state.campaigns.findIndex(x => x.id === c.id); const col = pal[(cIdx >= 0 ? cIdx : 0) % pal.length]; return `<div class="cal-due" style="background:${col}" title="${c.name}">${c.name}</div>`; }).join('')}
-          ${spent > 0 ? `<div class="cal-amt">-${(spent/1000).toFixed(spent%1000?1:0)}k</div>` : (isNo ? '<div class="cal-no">무지출</div>' : '')}
+          ${spent > 0 ? `<div class="cal-amt">-${spent >= 1000 ? Number((spent/10000).toFixed(1)) + '만' : spent + '원'}</div>` : (isNo ? '<div class="cal-no">무지출</div>' : '')}
         </div>
       </div>
     `;
