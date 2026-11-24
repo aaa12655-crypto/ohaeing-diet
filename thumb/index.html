@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>오애잉 대표사진 메이커</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&display=swap" rel="stylesheet" />
+<style>
+  @font-face {
+    font-family: 'DNFBitBitv2';
+    font-style: normal;
+    font-weight: 400;
+    src: url('https://cdn.df.nexon.com/img/common/font/DNFBitBitv2.otf') format('opentype'),
+         url('https://cdn.df.nexon.com/img/common/font/DNFBitBit-Regular.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Hesom';
+    font-style: normal;
+    font-weight: 400;
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105@1.1/Hesom.woff') format('woff');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Binggrae';
+    font-style: normal;
+    font-weight: 400;
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Binggrae.woff') format('woff');
+    font-display: swap;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: #f6f6f4;
+    color: #191919;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    padding: 12px 12px 44px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .font-status {
+    font-size: 11px; color: #777; background: #eaeae6;
+    padding: 4px 8px; border-radius: 999px;
+  }
+  .font-status.ready { color: #2b6e3f; background: #e1f3e6; }
+
+  .segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+    background: #e9e9e5;
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+  .segmented button {
+    border: none; background: transparent; padding: 9px 4px; border-radius: 9px;
+    font-size: 13px; font-weight: 600; color: #666; cursor: pointer;
+  }
+  .segmented button.active {
+    background: #ffffff; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .quick-pick { display: flex; gap: 8px; margin-bottom: 8px; }
+  .btn-pick-all {
+    flex: 1; border: 1.5px dashed #bbb; background: #fff; color: #222;
+    padding: 10px 12px; border-radius: 12px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .btn-pick-all:active { background: #f0f0ec; }
+
+  .canvas-box {
+    position: relative; width: 100%; aspect-ratio: 1 / 1;
+    background: #e5e5e0; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-bottom: 6px;
+    touch-action: none;
+  }
+  canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  .hint { text-align: center; font-size: 11.5px; color: #777; margin-bottom: 10px; }
+
+  .card {
+    background: #fff; border-radius: 14px; padding: 13px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 10px;
+  }
+  .lbl-row {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+  }
+  label.lbl { font-size: 12px; font-weight: 700; color: #666; margin: 0; }
+  .mini-btn {
+    border: none; background: #f0f0ec; color: #444;
+    font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 7px; cursor: pointer;
+  }
+  .mini-btn.primary { background: #191919; color: #fff; }
+  .mini-btn.danger { background: #ffeaea; color: #b93838; }
+
+  .text-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .text-tab {
+    border: 1.5px solid #e2e2dc; background: #fafaf8; color: #555;
+    padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .text-tab.active { border-color: #191919; background: #191919; color: #fff; }
+
+  textarea {
+    width: 100%; border: 1.5px solid #e2e2dc; border-radius: 10px;
+    padding: 9px 11px; font-size: 15px; line-height: 1.4; font-family: inherit;
+    resize: none; outline: none;
+  }
+  textarea:focus { border-color: #222; }
+
+  .font-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 9px;
+  }
+  .font-btn {
+    border: 1.5px solid #e2e2dc; background: #fafaf8; padding: 10px 8px;
+    border-radius: 10px; font-size: 13px; font-weight: 600; color: #444; cursor: pointer;
+  }
+  .font-btn.active { border-color: #191919; background: #191919; color: #fff; }
+
+  .slot-bar {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .slot-pill {
+    border: 1.5px solid #e2e2dc; background: #fafaf8; color: #555;
+    padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .slot-pill.active { border-color: #191919; background: #191919; color: #fff; }
+
+  .mudo-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px;
+  }
+  .mudo-btn {
+    border: 1.5px solid #e6d78a; background: #fffbeb; color: #333;
+    border-radius: 10px; padding: 8px 4px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .mudo-btn.blue { border-color: #9dc9f0; background: #f0f7ff; color: #0b4ea2; }
+  .mudo-btn:active { transform: scale(0.97); }
+
+  .custom-bubble-row { display: flex; gap: 6px; margin-top: 8px; }
+  .custom-bubble-row input {
+    flex: 1; border: 1.5px solid #e2e2dc; border-radius: 9px;
+    padding: 8px 10px; font-size: 13px; outline: none;
+  }
+  .custom-bubble-row button {
+    border: none; border-radius: 9px; padding: 8px 10px; font-size: 12px;
+    font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .btn-y { background: #ffe46b; color: #222; }
+  .btn-b { background: #cbe5ff; color: #0b4ea2; }
+
+  .sticker-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px;
+  }
+  .sticker-btn {
+    border: 1.5px solid #ecece7; background: #fafaf8; border-radius: 10px;
+    padding: 8px 0; font-size: 20px; line-height: 1; cursor: pointer;
+  }
+  .sticker-btn:active { background: #eaeae3; transform: scale(0.95); }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
+  .slider-row span.s-lbl {
+    font-size: 12px; font-weight: 700; color: #666; width: 64px; flex-shrink: 0;
+  }
+  .slider-row input[type="range"] { flex: 1; accent-color: #191919; }
+  .slider-row span.s-val { font-size: 12px; color: #555; width: 38px; text-align: right; }
+
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-sub {
+    border: 1.5px solid #dcdcd6; background: #fff; color: #333;
+    padding: 13px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+  }
+  .btn-save {
+    flex: 1; border: none; background: #191919; color: #fff;
+    padding: 14px 16px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .btn-save:active { opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="title">📸 오애잉 대표사진 메이커</div>
+    <div id="fontStatus" class="font-status">폰트 불러오는 중...</div>
+  </div>
+
+  <div class="segmented">
+    <button id="mode4" class="active" type="button">4장 (2×2)</button>
+    <button id="mode2" type="button">2장 (위/아래)</button>
+    <button id="mode1" type="button">1장 (풀샷)</button>
+  </div>
+
+  <div class="quick-pick">
+    <button id="pickAllBtn" class="btn-pick-all" type="button">🖼️ 사진 4장 한 번에 고르기</button>
+    <button id="resetSlotBtn" class="btn-sub" type="button" style="padding:10px 12px;">사진 초기화</button>
+  </div>
+
+  <div class="canvas-box">
+    <canvas id="cv" width="1080" height="1080"></canvas>
+  </div>
+  <div class="hint">사진은 두 손가락 확대·회전 / 한 손가락 이동 · 스티커 2번 탭하면 삭제</div>
+
+  <!-- Multi-text card -->
+  <div class="card">
+    <div class="lbl-row">
+      <label class="lbl">✏️ 제목 · 글씨 (여러 개 추가 가능)</label>
+      <div style="display:flex; gap:5px;">
+        <button id="addTextBtn" class="mini-btn primary" type="button">+ 글씨 추가</button>
+        <button id="delTextBtn" class="mini-btn danger" type="button">삭제</button>
+      </div>
+    </div>
+    <div class="text-tabs" id="textTabs"></div>
+    <textarea id="titleInput" rows="2" placeholder="글씨를 입력하세요"></textarea>
+
+    <div class="font-grid" id="fontGrid">
+      <button class="font-btn active" type="button" data-font="DNFBitBitv2">비트비트체</button>
+      <button class="font-btn" type="button" data-font="Hesom">온글잎 해솜체</button>
+      <button class="font-btn" type="button" data-font="Binggrae">빙그레체</button>
+      <button class="font-btn" type="button" data-font="Gaegu">개구체</button>
+    </div>
+
+    <div class="slider-row">
+      <span class="s-lbl">글씨 크기</span>
+      <input id="sizeRange" type="range" min="40" max="135" value="76" />
+      <span id="sizeVal" class="s-val">76</span>
+    </div>
+    <div class="slider-row">
+      <span class="s-lbl">외곽선</span>
+      <input id="strokeRange" type="range" min="6" max="24" value="15" />
+      <span id="strokeVal" class="s-val">15</span>
+    </div>
+  </div>
+
+  <!-- Mudo & Stickers card -->
+  <div class="card">
+    <div class="lbl-row">
+      <label class="lbl">💬 무한도전 말풍선 &amp; 귀여운 스티커</label>
+      <button id="clearStickersBtn" class="mini-btn" type="button">스티커 비우기</button>
+    </div>
+
+    <div class="mudo-grid" id="mudoGrid">
+      <button class="mudo-btn" type="button" data-style="cloud" data-text="빤히...">☁️ 빤히...</button>
+      <button class="mudo-btn blue" type="button" data-style="speech" data-text="야무지게&#10;혼자 먹어야지~">💬 야무지게</button>
+      <button class="mudo-btn" type="button" data-style="cloud" data-text="진짜 맛도리">☁️ 진짜 맛도리</button>
+      <button class="mudo-btn blue" type="button" data-style="speech" data-text="이건 못 참지!">💬 이건 못 참지</button>
+      <button class="mudo-btn" type="button" data-style="cloud" data-text="두근두근">☁️ 두근두근</button>
+      <button class="mudo-btn blue" type="button" data-style="speech" data-text="내돈내산 찐후기">💬 내돈내산</button>
+    </div>
+
+    <div class="custom-bubble-row">
+      <input id="customBubbleInput" type="text" placeholder="원하는 말풍선 글씨 입력 (예: 꿀팁!)" maxlength="18" />
+      <button id="addCloudBtn" class="btn-y" type="button">☁️ 노랑</button>
+      <button id="addSpeechBtn" class="btn-b" type="button">💬 파랑</button>
+    </div>
+
+    <div class="sticker-grid" id="stickerGrid">
+      <button class="sticker-btn" type="button" data-emoji="✨">✨</button>
+      <button class="sticker-btn" type="button" data-emoji="🤍">🤍</button>
+      <button class="sticker-btn" type="button" data-emoji="🩷">🩷</button>
+      <button class="sticker-btn" type="button" data-emoji="🎀">🎀</button>
+      <button class="sticker-btn" type="button" data-emoji="🫧">🫧</button>
+      <button class="sticker-btn" type="button" data-emoji="🌟">🌟</button>
+      <button class="sticker-btn" type="button" data-emoji="🫶🏻">🫶🏻</button>
+      <button class="sticker-btn" type="button" data-emoji="🍓">🍓</button>
+      <button class="sticker-btn" type="button" data-emoji="💄">💄</button>
+      <button class="sticker-btn" type="button" data-emoji="🔥">🔥</button>
+    </div>
+
+    <div class="slider-row">
+      <span class="s-lbl">스티커 크기</span>
+      <input id="stickerSizeRange" type="range" min="60" max="200" value="105" />
+      <span id="stickerSizeVal" class="s-val">105</span>
+    </div>
+
+    <div class="actions">
+      <button id="centerBtn" class="btn-sub" type="button">선택 글씨 중앙</button>
+      <button id="saveBtn" class="btn-save" type="button">💾 이미지 저장 (1080×1080)</button>
+    </div>
+  </div>
+
+  <input id="multiFile" type="file" accept="image/*" multiple hidden />
+  <input id="singleFile" type="file" accept="image/*" hidden />
+</div>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const SIZE = 1080;
+
+const makeSlot = () => ({ img: null, scale: 1, rot: 0, dx: 0, dy: 0 });
+const state = {
+  mode: 4, // 4 | 2 | 1
+  slots: [makeSlot(), makeSlot(), makeSlot(), makeSlot()],
+  activeSlot: 0,
+  texts: [
+    {
+      text: '제목을 입력하세요',
+      font: 'DNFBitBitv2',
+      fontSize: 76,
+      strokeWidth: 15,
+      x: SIZE / 2,
+      y: SIZE / 2
+    }
+  ],
+  activeText: 0,
+  stickers: [],
+  stickerSize: 105
+};
+
+Promise.all([
+  document.fonts.load('400 76px "DNFBitBitv2"'),
+  document.fonts.load('400 76px "Hesom"'),
+  document.fonts.load('400 76px "Binggrae"'),
+  document.fonts.load('700 76px "Gaegu"')
+]).then(() => {
+  const st = document.getElementById('fontStatus');
+  st.textContent = '폰트 준비 완료';
+  st.classList.add('ready');
+  draw();
+}).catch(() => {
+  document.getElementById('fontStatus').textContent = '일부 폰트 대기';
+  draw();
+});
+
+function getSlotRects() {
+  if (state.mode === 1) return [{ x: 0, y: 0, w: SIZE, h: SIZE }];
+  if (state.mode === 2) {
+    const h = SIZE / 2;
+    return [{ x: 0, y: 0, w: SIZE, h }, { x: 0, y: h, w: SIZE, h }];
+  }
+  const h = SIZE / 2;
+  return [
+    { x: 0, y: 0, w: h, h },
+    { x: h, y: 0, w: h, h },
+    { x: 0, y: h, w: h, h },
+    { x: h, y: h, w: h, h }
+  ];
+}
+
+function drawSlotImage(slot, rect) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rect.x, rect.y, rect.w, rect.h);
+  ctx.clip();
+
+  if (!slot.img) {
+    ctx.fillStyle = '#dcdcd6';
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.strokeStyle = '#c8c8c0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2);
+    ctx.fillStyle = '#777';
+    ctx.font = '600 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const idx = state.slots.indexOf(slot) + 1;
+    ctx.fillText(state.mode === 1 ? '탭해서 사진 선택' : `사진 ${idx}`, rect.x + rect.w / 2, rect.y + rect.h / 2);
+    ctx.restore();
+    return;
+  }
+
+  const img = slot.img;
+  const baseScale = Math.max(rect.w / img.width, rect.h / img.height);
+  const drawW = img.width * baseScale * slot.scale;
+  const drawH = img.height * baseScale * slot.scale;
+
+  ctx.translate(rect.x + rect.w / 2 + slot.dx, rect.y + rect.h / 2 + slot.dy);
+  ctx.rotate((slot.rot * Math.PI) / 180);
+  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+  ctx.restore();
+}
+
+function getFontSpec(t) {
+  let fs = t.fontSize;
+  if (t.font === 'Hesom') fs = Math.round(t.fontSize * 1.12);
+  const weight = t.font === 'Gaegu' ? 700 : 400;
+  const lh = fs * 1.24;
+  return { fs, weight, lh, fontStr: `${weight} ${fs}px "${t.font}", "Binggrae", sans-serif` };
+}
+
+function getTextBoxMetrics(t) {
+  const lines = (t.text || '').split('\n');
+  const spec = getFontSpec(t);
+  ctx.font = spec.fontStr;
+  let maxW = 0;
+  lines.forEach(l => { maxW = Math.max(maxW, ctx.measureText(l).width); });
+  return { lines, spec, maxW: Math.max(maxW, 110), totalH: lines.length * spec.lh };
+}
+
+function drawMudoCloud(st) {
+  const scale = st.size / 105;
+  const lines = st.text.split('\n');
+  const fs = Math.round(42 * scale);
+  ctx.save();
+  ctx.font = `400 ${fs}px "Binggrae", "DNFBitBitv2", sans-serif`;
+  let maxW = 0;
+  lines.forEach(l => { maxW = Math.max(maxW, ctx.measureText(l).width); });
+  const padX = 48 * scale;
+  const padY = 26 * scale;
+  const lineH = fs * 1.24;
+  const w = Math.max(155 * scale, maxW + padX * 2);
+  const h = lines.length * lineH + padY * 2;
+  const rx = w / 2;
+  const ry = h / 2;
+
+  ctx.translate(st.x, st.y);
+  ctx.shadowColor = 'rgba(0,0,0,0.22)';
+  ctx.shadowBlur = 12 * scale;
+  ctx.shadowOffsetY = 4 * scale;
+
+  const bumps = 14;
+  ctx.beginPath();
+  for (let i = 0; i < bumps; i++) {
+    const a1 = (i / bumps) * Math.PI * 2;
+    const a2 = ((i + 1) / bumps) * Math.PI * 2;
+    const am = (a1 + a2) / 2;
+    const x1 = Math.cos(a1) * rx;
+    const y1 = Math.sin(a1) * ry;
+    const x2 = Math.cos(a2) * rx;
+    const y2 = Math.sin(a2) * ry;
+    const cx = Math.cos(am) * (rx + 18 * scale);
+    const cy = Math.sin(am) * (ry + 18 * scale);
+    if (i === 0) ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(cx, cy, x2, y2);
+  }
+  ctx.closePath();
+
+  ctx.fillStyle = '#fffef2';
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = 10 * scale;
+  ctx.strokeStyle = '#ffdf4d';
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  const startY = -((lines.length - 1) * lineH) / 2;
+  lines.forEach((l, i) => {
+    const ly = startY + i * lineH;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6 * scale;
+    ctx.strokeText(l, 0, ly);
+    ctx.fillStyle = '#222222';
+    ctx.fillText(l, 0, ly);
+  });
+  ctx.restore();
+}
+
+function drawMudoSpeech(st) {
+  const scale = st.size / 105;
+  const lines = st.text.split('\n');
+  const fs = Math.round(37 * scale);
+  ctx.save();
+  ctx.font = `400 ${fs}px "Binggrae", "DNFBitBitv2", sans-serif`;
+  let maxW = 0;
+  lines.forEach(l => { maxW = Math.max(maxW, ctx.measureText(l).width); });
+  const padX = 34 * scale;
+  const padY = 22 * scale;
+  const lineH = fs * 1.26;
+  const w = Math.max(170 * scale, maxW + padX * 2);
+  const h = lines.length * lineH + padY * 2;
+  const r = 20 * scale;
+  const tailH = 26 * scale;
+
+  ctx.translate(st.x, st.y);
+  ctx.shadowColor = 'rgba(0,0,0,0.22)';
+  ctx.shadowBlur = 12 * scale;
+  ctx.shadowOffsetY = 4 * scale;
+
+  const x = -w / 2;
+  const y = -h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(-13 * scale, y);
+  ctx.lineTo(0, y - tailH);
+  ctx.lineTo(13 * scale, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+
+  const grad = ctx.createLinearGradient(0, y, 0, y + h);
+  grad.addColorStop(0, '#eef7ff');
+  grad.addColorStop(1, '#cbe7ff');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = 8 * scale;
+  ctx.strokeStyle = '#3995e6';
+  ctx.stroke();
+
+  // Blue text + crisp white outline inside!
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.miterLimit = 2;
+  const startY = -((lines.length - 1) * lineH) / 2;
+  lines.forEach((l, i) => {
+    const ly = startY + i * lineH;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 8 * scale;
+    ctx.strokeText(l, 0, ly);
+    ctx.fillStyle = '#0b4ea2';
+    ctx.fillText(l, 0, ly);
+  });
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, SIZE, SIZE);
+  const rects = getSlotRects();
+  rects.forEach((r, i) => drawSlotImage(state.slots[i], r));
+
+  // Stickers
+  state.stickers.forEach(st => {
+    if (st.kind === 'cloud') drawMudoCloud(st);
+    else if (st.kind === 'speech') drawMudoSpeech(st);
+    else {
+      ctx.save();
+      ctx.font = `${st.size}px "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.28)';
+      ctx.shadowBlur = 10;
+      ctx.fillText(st.emoji, st.x, st.y);
+      ctx.restore();
+    }
+  });
+
+  // All text layers
+  state.texts.forEach(t => {
+    const { lines, spec } = getTextBoxMetrics(t);
+    if (!lines.some(l => l.trim().length > 0)) return;
+    ctx.save();
+    ctx.font = spec.fontStr;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+
+    const startY = t.y - ((lines.length - 1) * spec.lh) / 2;
+    lines.forEach((line, idx) => {
+      const ly = startY + idx * spec.lh;
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = t.strokeWidth;
+      ctx.strokeText(line, t.x, ly);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(line, t.x, ly);
+    });
+    ctx.restore();
+  });
+}
+
+// UI sync helpers
+function syncSlotUI() {
+  if (state.activeSlot >= state.mode) state.activeSlot = 0;
+}
+
+function syncTextUI() {
+  const tabs = document.getElementById('textTabs');
+  tabs.innerHTML = '';
+  if (state.activeText >= state.texts.length) state.activeText = state.texts.length - 1;
+  state.texts.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'text-tab' + (i === state.activeText ? ' active' : '');
+    const preview = (t.text.split('\n')[0] || '').slice(0, 7) || `글씨 ${i + 1}`;
+    btn.textContent = `${i + 1}. ${preview}`;
+    btn.onclick = () => { state.activeText = i; syncTextUI(); };
+    tabs.appendChild(btn);
+  });
+
+  const cur = state.texts[state.activeText];
+  document.getElementById('titleInput').value = cur.text;
+  document.querySelectorAll('#fontGrid .font-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.font === cur.font);
+  });
+  document.getElementById('sizeRange').value = cur.fontSize;
+  document.getElementById('sizeVal').textContent = cur.fontSize;
+  document.getElementById('strokeRange').value = cur.strokeWidth;
+  document.getElementById('strokeVal').textContent = cur.strokeWidth;
+  document.getElementById('delTextBtn').style.display = state.texts.length > 1 ? 'inline-block' : 'none';
+}
+
+// Mode switching
+const mode4Btn = document.getElementById('mode4');
+const mode2Btn = document.getElementById('mode2');
+const mode1Btn = document.getElementById('mode1');
+const pickAllBtn = document.getElementById('pickAllBtn');
+
+function setMode(m) {
+  state.mode = m;
+  mode4Btn.classList.toggle('active', m === 4);
+  mode2Btn.classList.toggle('active', m === 2);
+  mode1Btn.classList.toggle('active', m === 1);
+  if (m === 4) pickAllBtn.textContent = '🖼️ 사진 4장 한 번에 고르기';
+  else if (m === 2) pickAllBtn.textContent = '🖼️ 사진 2장 한 번에 고르기';
+  else pickAllBtn.textContent = '🖼️ 사진 1장 고르기';
+  syncSlotUI();
+  draw();
+}
+mode4Btn.addEventListener('click', () => setMode(4));
+mode2Btn.addEventListener('click', () => setMode(2));
+mode1Btn.addEventListener('click', () => setMode(1));
+
+// File loading
+function loadImageFile(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = url;
+  });
+}
+
+const multiFile = document.getElementById('multiFile');
+const singleFile = document.getElementById('singleFile');
+let uploadTargetSlot = 0;
+
+pickAllBtn.addEventListener('click', () => {
+  if (state.mode === 1) {
+    uploadTargetSlot = 0;
+    singleFile.value = '';
+    singleFile.click();
+  } else {
+    multiFile.value = '';
+    multiFile.click();
+  }
+});
+
+multiFile.addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []).slice(0, state.mode);
+  for (let i = 0; i < files.length; i++) {
+    state.slots[i] = { ...makeSlot(), img: await loadImageFile(files[i]) };
+  }
+  syncSlotUI();
+  draw();
+});
+
+singleFile.addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) {
+    state.slots[uploadTargetSlot] = { ...makeSlot(), img: await loadImageFile(file) };
+    state.activeSlot = uploadTargetSlot;
+    syncSlotUI();
+    draw();
+  }
+});
+
+document.getElementById('resetSlotBtn').addEventListener('click', () => {
+  const s = state.slots[state.activeSlot];
+  s.scale = 1; s.rot = 0; s.dx = 0; s.dy = 0;
+  draw();
+});
+
+// Multi-touch + pointer interaction on canvas
+const pointers = new Map();
+let dragTarget = null; // { type:'sticker'|'text'|'photo', index }
+let moved = false;
+let dragOffsetX = 0, dragOffsetY = 0;
+let downPt = { x: 0, y: 0 };
+let lastStickerTap = { time: 0, index: -1 };
+let pinchInit = null; // { dist, angle, scale, rot, slotIdx }
+
+function toCanvasCoords(e) {
+  const rect = cv.getBoundingClientRect();
+  return {
+    x: ((e.clientX - rect.left) / rect.width) * SIZE,
+    y: ((e.clientY - rect.top) / rect.height) * SIZE
+  };
+}
+
+function slotAtPoint(pt) {
+  const rects = getSlotRects();
+  for (let i = 0; i < rects.length; i++) {
+    const r = rects[i];
+    if (pt.x >= r.x && pt.x <= r.x + r.w && pt.y >= r.y && pt.y <= r.y + r.h) return i;
+  }
+  return 0;
+}
+
+function findHitSticker(pt) {
+  for (let i = state.stickers.length - 1; i >= 0; i--) {
+    const st = state.stickers[i];
+    const rx = st.kind === 'emoji' ? st.size * 0.65 : st.size * 1.45;
+    const ry = st.kind === 'emoji' ? st.size * 0.65 : st.size * 0.9;
+    if (Math.abs(pt.x - st.x) <= rx && Math.abs(pt.y - st.y) <= ry) return i;
+  }
+  return -1;
+}
+
+function findHitText(pt) {
+  for (let i = state.texts.length - 1; i >= 0; i--) {
+    const t = state.texts[i];
+    const { maxW, totalH } = getTextBoxMetrics(t);
+    if (Math.abs(pt.x - t.x) <= maxW / 2 + 40 && Math.abs(pt.y - t.y) <= totalH / 2 + 40) return i;
+  }
+  return -1;
+}
+
+cv.addEventListener('pointerdown', (e) => {
+  cv.setPointerCapture(e.pointerId);
+  const pt = toCanvasCoords(e);
+  pointers.set(e.pointerId, pt);
+
+  if (pointers.size === 2) {
+    const pts = Array.from(pointers.values());
+    const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    const slotIdx = slotAtPoint(mid);
+    state.activeSlot = slotIdx;
+    syncSlotUI();
+    const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+    const angle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x) * 180 / Math.PI;
+    const s = state.slots[slotIdx];
+    pinchInit = { dist, angle, scale: s.scale, rot: s.rot, slotIdx };
+    dragTarget = null;
+    moved = true;
+    return;
+  }
+
+  downPt = pt;
+  moved = false;
+  dragTarget = null;
+
+  const sIdx = findHitSticker(pt);
+  if (sIdx !== -1) {
+    dragTarget = { type: 'sticker', index: sIdx };
+    dragOffsetX = pt.x - state.stickers[sIdx].x;
+    dragOffsetY = pt.y - state.stickers[sIdx].y;
+    return;
+  }
+
+  const tIdx = findHitText(pt);
+  if (tIdx !== -1) {
+    state.activeText = tIdx;
+    syncTextUI();
+    dragTarget = { type: 'text', index: tIdx };
+    dragOffsetX = pt.x - state.texts[tIdx].x;
+    dragOffsetY = pt.y - state.texts[tIdx].y;
+    return;
+  }
+
+  const slotIdx = slotAtPoint(pt);
+  state.activeSlot = slotIdx;
+  syncSlotUI();
+  if (state.slots[slotIdx].img) {
+    dragTarget = { type: 'photo', index: slotIdx };
+    dragOffsetX = pt.x - state.slots[slotIdx].dx;
+    dragOffsetY = pt.y - state.slots[slotIdx].dy;
+  }
+});
+
+cv.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const pt = toCanvasCoords(e);
+  pointers.set(e.pointerId, pt);
+
+  if (pointers.size === 2 && pinchInit) {
+    const pts = Array.from(pointers.values());
+    const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+    const angle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x) * 180 / Math.PI;
+    const s = state.slots[pinchInit.slotIdx];
+    s.scale = Math.max(1, Math.min(3, pinchInit.scale * (dist / Math.max(10, pinchInit.dist))));
+    let dRot = angle - pinchInit.angle;
+    if (dRot > 180) dRot -= 360;
+    if (dRot < -180) dRot += 360;
+    s.rot = Math.max(-180, Math.min(180, pinchInit.rot + dRot));
+    syncSlotUI();
+    draw();
+    return;
+  }
+
+  if (!dragTarget) return;
+  if (Math.hypot(pt.x - downPt.x, pt.y - downPt.y) > 6) moved = true;
+
+  if (dragTarget.type === 'sticker') {
+    const st = state.stickers[dragTarget.index];
+    if (st) {
+      st.x = Math.max(40, Math.min(SIZE - 40, pt.x - dragOffsetX));
+      st.y = Math.max(40, Math.min(SIZE - 40, pt.y - dragOffsetY));
+    }
+  } else if (dragTarget.type === 'text') {
+    const t = state.texts[dragTarget.index];
+    if (t) {
+      t.x = Math.max(80, Math.min(SIZE - 80, pt.x - dragOffsetX));
+      t.y = Math.max(60, Math.min(SIZE - 60, pt.y - dragOffsetY));
+    }
+  } else if (dragTarget.type === 'photo') {
+    const s = state.slots[dragTarget.index];
+    s.dx = pt.x - dragOffsetX;
+    s.dy = pt.y - dragOffsetY;
+  }
+  draw();
+});
+
+cv.addEventListener('pointerup', (e) => {
+  const pt = toCanvasCoords(e);
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchInit = null;
+
+  if (!moved) {
+    if (dragTarget && dragTarget.type === 'sticker') {
+      const now = Date.now();
+      if (lastStickerTap.index === dragTarget.index && now - lastStickerTap.time < 350) {
+        state.stickers.splice(dragTarget.index, 1);
+        lastStickerTap = { time: 0, index: -1 };
+        draw();
+      } else {
+        lastStickerTap = { time: now, index: dragTarget.index };
+      }
+    } else if (!dragTarget) {
+      const slotIdx = slotAtPoint(pt);
+      if (!state.slots[slotIdx].img) {
+        uploadTargetSlot = slotIdx;
+        singleFile.value = '';
+        singleFile.click();
+      }
+    }
+  }
+  if (pointers.size === 0) dragTarget = null;
+});
+cv.addEventListener('pointercancel', (e) => {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchInit = null;
+  dragTarget = null;
+});
+
+// Text editing
+const titleInputEl = document.getElementById('titleInput');
+titleInputEl.addEventListener('focus', () => {
+  if (titleInputEl.value === '제목을 입력하세요') {
+    titleInputEl.value = '';
+    state.texts[state.activeText].text = '';
+    syncTextUI();
+    draw();
+  }
+});
+titleInputEl.addEventListener('input', (e) => {
+  state.texts[state.activeText].text = e.target.value;
+  syncTextUI();
+  draw();
+});
+document.getElementById('addTextBtn').addEventListener('click', () => {
+  state.texts.push({
+    text: '새 글씨',
+    font: state.texts[state.activeText].font,
+    fontSize: 64,
+    strokeWidth: 13,
+    x: SIZE / 2,
+    y: Math.min(SIZE - 120, state.texts[state.activeText].y + 180)
+  });
+  state.activeText = state.texts.length - 1;
+  syncTextUI();
+  draw();
+});
+document.getElementById('delTextBtn').addEventListener('click', () => {
+  if (state.texts.length <= 1) return;
+  state.texts.splice(state.activeText, 1);
+  state.activeText = Math.max(0, state.activeText - 1);
+  syncTextUI();
+  draw();
+});
+
+document.querySelectorAll('#fontGrid .font-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.texts[state.activeText].font = btn.dataset.font;
+    syncTextUI();
+    draw();
+  });
+});
+
+document.getElementById('sizeRange').addEventListener('input', (e) => {
+  state.texts[state.activeText].fontSize = Number(e.target.value);
+  document.getElementById('sizeVal').textContent = e.target.value;
+  draw();
+});
+document.getElementById('strokeRange').addEventListener('input', (e) => {
+  state.texts[state.activeText].strokeWidth = Number(e.target.value);
+  document.getElementById('strokeVal').textContent = e.target.value;
+  draw();
+});
+
+// Mudo preset bubbles
+function addMudoSticker(kind, text) {
+  const offset = (state.stickers.length % 4 - 1.5) * 60;
+  state.stickers.push({
+    kind, text,
+    x: SIZE / 2 + offset,
+    y: 220 + (state.stickers.length % 3) * 140,
+    size: state.stickerSize
+  });
+  draw();
+}
+
+document.getElementById('mudoGrid').addEventListener('click', (e) => {
+  const btn = e.target.closest('.mudo-btn');
+  if (!btn) return;
+  addMudoSticker(btn.dataset.style, btn.dataset.text);
+});
+
+const customInput = document.getElementById('customBubbleInput');
+document.getElementById('addCloudBtn').addEventListener('click', () => {
+  const val = customInput.value.trim();
+  if (!val) return;
+  addMudoSticker('cloud', val);
+  customInput.value = '';
+});
+document.getElementById('addSpeechBtn').addEventListener('click', () => {
+  const val = customInput.value.trim();
+  if (!val) return;
+  addMudoSticker('speech', val);
+  customInput.value = '';
+});
+
+// Emoji stickers
+document.getElementById('stickerGrid').addEventListener('click', (e) => {
+  const btn = e.target.closest('.sticker-btn');
+  if (!btn) return;
+  const offset = (state.stickers.length % 5 - 2) * 55;
+  state.stickers.push({
+    kind: 'emoji', emoji: btn.dataset.emoji,
+    x: SIZE / 2 + offset,
+    y: SIZE / 2 - 140 + (state.stickers.length % 3) * 45,
+    size: state.stickerSize
+  });
+  draw();
+});
+
+document.getElementById('stickerSizeRange').addEventListener('input', (e) => {
+  state.stickerSize = Number(e.target.value);
+  document.getElementById('stickerSizeVal').textContent = e.target.value;
+  if (state.stickers.length > 0) {
+    state.stickers[state.stickers.length - 1].size = state.stickerSize;
+  }
+  draw();
+});
+
+document.getElementById('clearStickersBtn').addEventListener('click', () => {
+  state.stickers = [];
+  draw();
+});
+
+document.getElementById('centerBtn').addEventListener('click', () => {
+  const t = state.texts[state.activeText];
+  t.x = SIZE / 2; t.y = SIZE / 2;
+  draw();
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  draw();
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,19).replace(/[-:T]/g, '');
+  a.download = `ohaeing-thumb-${stamp}.png`;
+  a.href = cv.toDataURL('image/png');
+  a.click();
+});
+
+syncSlotUI();
+syncTextUI();
+draw();
+</script>
+</body>
+</html>
