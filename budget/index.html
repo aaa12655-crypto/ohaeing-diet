@@ -451,14 +451,15 @@
   .cal-cell {
     border: 2px solid var(--ink);
     min-width: 0;
-    overflow: hidden;
-    min-height: 54px;
+    min-height: 58px;
+    height: auto;
     padding: 3px;
     background: var(--card-bg);
     font-size: calc(10px * var(--fs-scale));
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 2px;
   }
   .cal-cell.empty {
     border-color: transparent;
