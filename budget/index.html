@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>가계부</title>
+<style>
+  @font-face {
+    font-family: 'Binggrae';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Binggrae.woff') format('woff');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'NeoDunggeunmo';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'DNFBitBitv2';
+    src: url('https://cdn.df.nexon.com/img/common/font/DNFBitBitv2.otf') format('opentype');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'neurimboGothicRegular';
+    src: url('https://cdn.jsdelivr.net/gh/fontbee/font@main/Nyangman/neurimboGothicRegular.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'MangoByeolbyeol';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2405-3@1.1/MangoByeolbyeol.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'PyeongChangPeace';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2206-02@1.0/PyeongChangPeace-Bold.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Jalnan';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_four@1.2/JalnanOTF00.woff') format('woff');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'GmarketSans';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'SokchoBadaDotum';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SokchoBadaDotum.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Cafe24Supermagic';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/Cafe24Supermagic-Bold-v1.0.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'SEOLEIMcool';
+    src: url('https://cdn.jsdelivr.net/gh/koreafonts/fonts@ee4054052e251025fe63b73c275455b27ac75852/SEOLEIMcool/SEOLEIMcool.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'SlowSlow';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/naverfont_10@1.0/SlowSlow.woff') format('woff');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Bareun_hipi';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/naverfont_01@1.0/Bareun_hipi.woff') format('woff');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'TTHakgyoansimMulgyeolB';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_keris@1.0/TTHakgyoansimMulgyeolB.woff2') format('woff2');
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #EAE4D7;
+    --paper: #FFFDF8;
+    --ink: #1A1A1A;
+    --muted: #555555;
+    --red: #D93829;
+    --green: #1E8E4E;
+    --blue: #2457C5;
+    --amber: #D98200;
+    --line: #1A1A1A;
+    --dash: #8A8375;
+    --box-bg: #FFF9EE;
+    --saved-bg: #EEFAF2;
+    --card-bg: #FFFFFF;
+    --day-bg: #F7F3E8;
+    --nav-active: #FFE799;
+    --tag-bg: #FFF3D6;
+    --badge-fg: #FFFDF8;
+    --font-main: 'NeoDunggeunmo', 'Galmuri11', monospace, sans-serif;
+    --fs-scale: 1;
+    --ls-val: 0.3px;
+    --fw-val: 400;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-synthesis: none; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-main);
+    font-size: calc(14px * var(--fs-scale));
+    letter-spacing: var(--ls-val);
+    line-height: 1.45;
+  }
+
+  .wrap {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 12px 12px 96px;
+  }
+
+  /* Top Bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: calc(18px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    letter-spacing: -0.3px;
+  }
+  .pixel-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    color: var(--badge-fg);
+    padding: 3px 8px;
+    font-size: calc(12px * var(--fs-scale));
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--amber);
+  }
+  .top-btns { display: flex; gap: 6px; align-items: center; }
+  .px-btn {
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: calc(12px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    cursor: pointer;
+  }
+  .px-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+  .px-btn.primary {
+    background: var(--ink);
+    color: var(--badge-fg);
+  }
+  .px-btn.red {
+    background: var(--red);
+    color: #FFFFFF;
+  }
+  .px-btn.green {
+    background: var(--green);
+    color: #FFFFFF;
+  }
+
+  /* Receipt Paper */
+  .receipt {
+    position: relative;
+    background: var(--paper);
+    border-left: 2px solid var(--ink);
+    border-right: 2px solid var(--ink);
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    padding: 16px 14px;
+    margin-bottom: 14px;
+  }
+  .receipt-zig {
+    height: 10px;
+    background:
+      linear-gradient(135deg, var(--bg) 50%, transparent 50%) 0 0,
+      linear-gradient(225deg, var(--bg) 50%, transparent 50%) 0 0;
+    background-size: 14px 10px;
+    background-repeat: repeat-x;
+    margin: -16px -14px 12px;
+  }
+  .receipt-zig-bottom {
+    height: 10px;
+    background:
+      linear-gradient(315deg, var(--bg) 50%, transparent 50%) 0 0,
+      linear-gradient(45deg, var(--bg) 50%, transparent 50%) 0 0;
+    background-size: 14px 10px;
+    background-repeat: repeat-x;
+    margin: 14px -14px -16px;
+  }
+
+  .rc-header {
+    text-align: center;
+    border-bottom: 2px dashed var(--ink);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .rc-title {
+    font-size: calc(19px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    letter-spacing: 0.5px;
+  }
+  .month-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    font-size: calc(14px * var(--fs-scale));
+    font-weight: var(--fw-val);
+  }
+  .month-nav button {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    width: 26px; height: 24px;
+    font-family: inherit;
+    font-weight: var(--fw-val);
+    cursor: pointer;
+  }
+
+  /* Summary Grid */
+  .sum-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .sum-box {
+    border: 2px solid var(--ink);
+    padding: 8px 10px;
+    background: var(--box-bg);
+  }
+  .sum-box.saved {
+    background: var(--saved-bg);
+  }
+  .sum-lbl {
+    font-size: calc(11px * var(--fs-scale));
+    color: var(--muted);
+    font-weight: var(--fw-val);
+  }
+  .sum-val {
+    font-size: calc(18px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    margin-top: 2px;
+  }
+  .sum-val.red { color: var(--red); }
+  .sum-val.green { color: var(--green); }
+
+  /* Budget Bar */
+  .budget-row {
+    border: 2px solid var(--ink);
+    padding: 8px 10px;
+    background: var(--card-bg);
+    margin-bottom: 10px;
+  }
+  .budget-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: calc(12px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    margin-bottom: 5px;
+  }
+  .bar-track {
+    height: 14px;
+    border: 2px solid var(--ink);
+    background: #EFECE4;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--green);
+    transition: width .2s;
+  }
+  .bar-fill.warn { background: var(--amber); }
+  .bar-fill.over { background: var(--red); }
+
+  /* Quick Actions Row */
+  .quick-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Receipt Line Items */
+  .day-group {
+    margin-top: 12px;
+  }
+  .day-divider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 2px dashed var(--dash);
+    border-bottom: 2px dashed var(--dash);
+    padding: 4px 2px;
+    font-size: calc(12px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    background: var(--day-bg);
+  }
+  .day-total { color: var(--red); }
+  .stamp-nospend {
+    display: inline-block;
+    border: 2px solid var(--green);
+    color: var(--green);
+    background: var(--saved-bg);
+    padding: 1px 6px;
+    font-size: calc(11px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    transform: rotate(-2deg);
+  }
+  .rc-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 4px;
+    border-bottom: 1px dotted #B8B0A0;
+    cursor: pointer;
+    gap: 8px;
+  }
+  .rc-item:active { background: #F5EFE2; }
+  .rc-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .cat-tag {
+    border: 2px solid var(--ink);
+    padding: 1px 6px;
+    font-size: calc(11px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    background: var(--tag-bg);
+    white-space: nowrap;
+  }
+  .rc-memo {
+    font-size: calc(13px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rc-amt {
+    font-size: calc(14px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  /* Barcode */
+  .barcode {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 2px dashed var(--ink);
+    text-align: center;
+  }
+  .barcode-bars {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    height: 28px;
+    margin-bottom: 4px;
+  }
+  .barcode-bars span {
+    display: inline-block;
+    background: var(--ink);
+    height: 100%;
+  }
+  .barcode-txt {
+    font-size: calc(11px * var(--fs-scale));
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  /* Campaign Card */
+  .camp-card {
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    background: var(--paper);
+    padding: 11px 12px;
+    margin-bottom: 10px;
+  }
+  .camp-card.done {
+    background: #F2F7F3;
+    opacity: 0.88;
+  }
+  .camp-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .dday-badge {
+    border: 2px solid var(--ink);
+    padding: 2px 7px;
+    font-size: calc(11px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    background: #FFE2DF;
+    color: var(--red);
+    white-space: nowrap;
+  }
+  .dday-badge.safe {
+    background: #E8F1FF;
+    color: var(--blue);
+  }
+  .dday-badge.done {
+    background: #E3F6EA;
+    color: var(--green);
+  }
+  .camp-title {
+    font-size: calc(15px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    margin: 4px 0;
+  }
+  .camp-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(12px * var(--fs-scale));
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Calendar */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-top: 8px;
+  }
+  .cal-head {
+    text-align: center;
+    font-size: calc(11px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    padding: 4px 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  .cal-cell {
+    border: 2px solid var(--ink);
+    min-width: 0;
+    overflow: hidden;
+    min-height: 54px;
+    padding: 3px;
+    background: var(--card-bg);
+    font-size: calc(10px * var(--fs-scale));
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .cal-cell.empty {
+    border-color: transparent;
+    background: transparent;
+  }
+  .cal-cell.today {
+    background: #FFF6D6;
+    box-shadow: inset 0 0 0 1px var(--ink);
+  }
+  .cal-day { font-weight: var(--fw-val); font-size: calc(11px * var(--fs-scale)); }
+  .cal-amt { color: var(--red); font-weight: var(--fw-val); font-size: calc(9px * var(--fs-scale)); word-break: break-all; }
+  .cal-no { color: var(--green); font-weight: var(--fw-val); font-size: calc(9px * var(--fs-scale)); }
+  .cal-due { color: #FFF; padding: 2px 3px; font-size: calc(8.8px * var(--fs-scale)); letter-spacing: -0.3px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; margin-top: 2px; }
+
+  /* Stats */
+  .stat-row {
+    margin-bottom: 10px;
+  }
+  .stat-lbl {
+    display: flex;
+    justify-content: space-between;
+    font-size: calc(13px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    margin-bottom: 3px;
+  }
+  .stat-bar {
+    height: 14px;
+    border: 2px solid var(--ink);
+    background: #EFECE4;
+  }
+  .stat-bar > div {
+    height: 100%;
+    background: var(--ink);
+  }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 12px;
+    width: calc(100% - 24px);
+    max-width: 436px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    padding: 7px 8px;
+    z-index: 50;
+  }
+  .nav-btn {
+    border: 2px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    font-size: calc(12px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    padding: 7px 2px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .nav-btn.active {
+    border-color: var(--ink);
+    background: var(--nav-active);
+  }
+  .nav-btn.add-btn {
+    background: var(--red);
+    color: #FFFFFF;
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+    font-size: calc(18px * var(--fs-scale));
+    padding: 2px 0;
+  }
+  .nav-btn.add-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 100;
+  }
+  .modal-bg.open { display: flex; }
+  .modal-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    padding: 16px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px dashed var(--ink);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    font-size: calc(16px * var(--fs-scale));
+    font-weight: var(--fw-val);
+  }
+  .field-lbl {
+    font-size: calc(12px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    margin: 10px 0 4px;
+    display: block;
+  }
+  .px-input {
+    width: 100%;
+    border: 2px solid var(--ink);
+    background: var(--card-bg);
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: calc(14px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    color: var(--ink);
+  }
+  .chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    border: 2px solid var(--ink);
+    background: var(--card-bg);
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: calc(12px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    cursor: pointer;
+  }
+  .chip.active {
+    background: var(--ink);
+    color: #FFFFFF;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .modal-actions .px-btn { flex: 1; padding: 9px; font-size: calc(13px * var(--fs-scale)); }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .empty-box {
+    text-align: center;
+    padding: 26px 10px;
+    font-size: calc(13px * var(--fs-scale));
+    color: var(--muted);
+    border: 2px dashed var(--dash);
+    margin: 10px 0;
+  }
+
+  .card-tabs {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    scrollbar-width: none;
+  }
+  .card-tabs::-webkit-scrollbar { display: none; }
+  .ctab {
+    border: 2px solid var(--ink);
+    background: var(--card-bg);
+    padding: 4px 9px;
+    font-family: inherit;
+    font-size: calc(11px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ctab.active {
+    background: var(--ink);
+    color: var(--badge-fg);
+  }
+  .ctab.manage {
+    background: #F4EFE6;
+  }
+  .nospend-banner {
+    display: inline-block;
+    border: 2px solid var(--green);
+    color: var(--green);
+    background: var(--saved-bg);
+    padding: 2px 8px;
+    font-size: calc(11px * var(--fs-scale));
+    font-weight: var(--fw-val);
+    margin-top: 4px;
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <span class="pixel-badge">RECEIPT</span>
+      <span>가계부</span>
+    </div>
+    <div class="top-btns">
+      <button class="px-btn" id="fontBtn">Aa</button>
+      <button class="px-btn" id="budgetBtn">예산</button>
+    </div>
+  </div>
+
+  <!-- HOME: 월 전체 영수증 -->
+  <div id="tab-home" class="tab-pane active">
+    <div class="receipt">
+      <div class="receipt-zig"></div>
+      <div class="rc-header">
+        <div class="rc-title">*** RECEIPT ***</div>
+        <div class="month-nav">
+          <button id="prevMonthBtn">&lt;</button>
+          <span id="monthLabel">2026.11</span>
+          <button id="nextMonthBtn">&gt;</button>
+        </div>
+      </div>
+
+      <div class="card-tabs" id="cardTabs"></div>
+      <div class="sum-grid">
+        <div class="sum-box">
+          <div class="sum-lbl">이번 달 쓴 돈</div>
+          <div class="sum-val red" id="monthSpentVal">0원</div>
+        </div>
+        <div class="sum-box saved">
+          <div class="sum-lbl">체험단 아낀 돈</div>
+          <div class="sum-val green" id="monthSavedVal">+0원</div>
+        </div>
+      </div>
+
+      <div class="budget-row">
+        <div class="budget-top">
+          <span id="budgetRatioTxt">목표 예산 0원 중 0%</span>
+          <span id="budgetLeftTxt">남은 돈 0원</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="budgetBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="quick-row">
+        <button class="px-btn primary" id="quickSpendBtn">+ 오늘 지출 찍기</button>
+        <button class="px-btn green" id="todayNoSpendBtn">오늘 무지출 도장</button>
+      </div>
+
+      <div id="receiptList"></div>
+
+      <div class="barcode">
+        <div class="barcode-bars" id="barcodeBars"></div>
+        <div class="barcode-txt">SAVE MORE · SPEND LESS</div>
+      </div>
+      <div class="receipt-zig-bottom"></div>
+    </div>
+  </div>
+
+  <!-- CAMPAIGN: 체험단 관리 -->
+  <div id="tab-camp" class="tab-pane">
+    <div class="receipt">
+      <div class="rc-header" style="display:flex;justify-content:space-between;align-items:center;text-align:left;">
+        <div>
+          <div class="rc-title" style="font-size:16px;">체험단 D-DAY & 아낀 돈</div>
+          <div style="font-size:12px;color:var(--muted);">총 아낀 금액 <strong style="color:var(--green);" id="campTotalSaved">0원</strong></div>
+        </div>
+        <button class="px-btn primary" id="addCampBtn">+ 체험단</button>
+      </div>
+      <div id="campList"></div>
+    </div>
+  </div>
+
+  <!-- FIXED: 고정비/구독 관리 -->
+  <div id="tab-fixed" class="tab-pane">
+    <div class="receipt">
+      <div class="rc-header" style="display:flex;justify-content:space-between;align-items:center;text-align:left;">
+        <div>
+          <div class="rc-title" style="font-size:calc(16px * var(--fs-scale));">매달 고정비 · 구독</div>
+          <div style="font-size:calc(12px * var(--fs-scale));color:var(--muted);">월 총 고정비 <strong style="color:var(--red);" id="fixedTotalVal">0원</strong></div>
+        </div>
+        <button class="px-btn primary" id="addFixedBtn">+ 고정비</button>
+      </div>
+      <div id="fixedList"></div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="tab-cal" class="tab-pane">
+    <div class="receipt">
+      <div class="rc-header">
+        <div class="rc-title" style="font-size:16px;">월간 달력</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">빨강: 지출 · 초록: 무지출 · 박스: 체험단 마감</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stat" class="tab-pane">
+    <div class="receipt">
+      <div class="rc-header">
+        <div class="rc-title" style="font-size:16px;">이번 달 지출 vs 아낀 돈</div>
+      </div>
+      <div class="sum-grid" style="margin-bottom:14px;">
+        <div class="sum-box">
+          <div class="sum-lbl">총 지출</div>
+          <div class="sum-val red" id="statSpent">0원</div>
+        </div>
+        <div class="sum-box saved">
+          <div class="sum-lbl">체험단 절약</div>
+          <div class="sum-val green" id="statSaved">0원</div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight: var(--fw-val);margin-bottom:8px;border-bottom:2px dashed var(--ink);padding-bottom:4px;">분야별 지출 순위</div>
+      <div id="catStats"></div>
+
+      <div style="margin-top:18px;padding-top:12px;border-top:2px dashed var(--ink);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-size:calc(14px * var(--fs-scale));font-weight:var(--fw-val);">위시리스트 (참으면 방어!)</div>
+            <div style="font-size:calc(11px * var(--fs-scale));color:var(--muted);">참아서 아낀 돈 <strong style="color:var(--green);" id="wishSavedTotal">0원</strong></div>
+          </div>
+          <button class="px-btn primary" id="addWishBtn">+ 위시</button>
+        </div>
+        <div id="wishList"></div>
+      </div>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:2px dashed var(--ink);display:flex;gap:8px;">
+        <button class="px-btn" style="flex:1;" id="exportBtn">백업 저장</button>
+        <button class="px-btn" style="flex:1;" id="importBtn">백업 불러오기</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-btn active" data-tab="home">영수증</button>
+  <button class="nav-btn" data-tab="camp">체험단</button>
+  <button class="nav-btn" data-tab="fixed">고정비</button>
+  <button class="nav-btn" data-tab="cal">달력</button>
+  <button class="nav-btn" data-tab="stat">통계</button>
+</div>
+
+<!-- Modal: 지출 기록 -->
+<div class="modal-bg" id="spendModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span id="spendModalTitle">지출 영수증 찍기</span>
+      <div style="display:flex;gap:6px;"><button class="px-btn primary" id="saveSpendTopBtn">완료</button><button class="px-btn" id="closeSpendModal">X</button></div>
+    </div>
+    <label class="field-lbl">날짜</label>
+    <input type="date" class="px-input" id="spDate" />
+    <label class="field-lbl">지출 분야</label>
+    <div class="chip-grid" id="spCatChips"></div>
+    <label class="field-lbl">결제 수단 (카드/계좌)</label>
+    <div class="chip-grid" id="spCardChips"></div>
+    <label class="field-lbl">금액 (원)</label>
+    <input type="number" inputmode="numeric" class="px-input" id="spAmount" placeholder="예: 12000" />
+    <label class="field-lbl">내용 (선택)</label>
+    <input type="text" class="px-input" id="spMemo" placeholder="예: 아이스 아메리카노" />
+    <div class="modal-actions">
+      <button class="px-btn red" id="delSpendBtn" style="display:none;">삭제</button>
+      <button class="px-btn primary" id="saveSpendBtn">영수증에 찍기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 체험단 등록 -->
+<div class="modal-bg" id="campModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span id="campModalTitle">체험단 등록</span>
+      <div style="display:flex;gap:6px;"><button class="px-btn primary" id="saveCampTopBtn">완료</button><button class="px-btn" id="closeCampModal">X</button></div>
+    </div>
+    <label class="field-lbl">업체 / 제품명</label>
+    <input type="text" class="px-input" id="cpName" placeholder="예: 동탄 샤브샤브 2인권" />
+    <label class="field-lbl">지원 내용 (선택)</label>
+    <input type="text" class="px-input" id="cpSupport" placeholder="예: 5만원 식사권" />
+    <label class="field-lbl">아낀 금액 / 제공가 (원)</label>
+    <input type="number" inputmode="numeric" class="px-input" id="cpValue" placeholder="예: 45000" />
+    <label class="field-lbl">리뷰 마감일</label>
+    <input type="date" class="px-input" id="cpDue" />
+    <div class="modal-actions">
+      <button class="px-btn red" id="delCampBtn" style="display:none;">삭제</button>
+      <button class="px-btn primary" id="saveCampBtn">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 예산/폰트 설정 -->
+<div class="modal-bg" id="budgetModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>이번 달 목표 예산</span>
+      <div style="display:flex;gap:6px;"><button class="px-btn primary" id="saveBudgetTopBtn">완료</button><button class="px-btn" id="closeBudgetModal">X</button></div>
+    </div>
+    <label class="field-lbl">월 목표 예산 (원)</label>
+    <input type="number" inputmode="numeric" class="px-input" id="budgetInput" placeholder="예: 700000" />
+    <div class="modal-actions">
+      <button class="px-btn primary" id="saveBudgetBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 글씨체/크기/간격 설정 -->
+<div class="modal-bg" id="fontModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>글씨체 · 크기 · 간격</span>
+      <button class="px-btn" id="closeFontModal">X</button>
+    </div>
+    <label class="field-lbl">테마 색감 (모던 7종)</label>
+    <div class="chip-grid" id="themeChips"></div>
+    <label class="field-lbl">글자 크기</label>
+    <div class="chip-grid" id="fsChips"></div>
+    <label class="field-lbl">글자 간격</label>
+    <div class="chip-grid" id="lsChips"></div>
+    <label class="field-lbl">글씨체 선택 (14종)</label>
+    <div id="fontListGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:240px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Modal: 카드/계좌 관리 -->
+<div class="modal-bg" id="cardsModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>카드 · 계좌 관리</span>
+      <button class="px-btn" id="closeCardsModal">X</button>
+    </div>
+    <div id="cardsEditList"></div>
+    <div style="border-top:2px dashed var(--ink);margin-top:10px;padding-top:10px;">
+      <label class="field-lbl">새 카드/계좌 추가</label>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <input type="text" class="px-input" id="newCardName" placeholder="예: 국민카드" style="flex:1;" />
+        <input type="number" inputmode="numeric" class="px-input" id="newCardGoal" placeholder="목표(300000)" style="width:115px;" />
+      </div>
+      <button class="px-btn primary" id="addNewCardBtn" style="width:100%;">+ 추가하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 고정비 등록 -->
+<div class="modal-bg" id="fixedModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span id="fixedModalTitle">고정비 · 구독 등록</span>
+      <div style="display:flex;gap:6px;"><button class="px-btn primary" id="saveFixedTopBtn">완료</button><button class="px-btn" id="closeFixedModal">X</button></div>
+    </div>
+    <label class="field-lbl">항목명</label>
+    <input type="text" class="px-input" id="fxName" placeholder="예: 통신비, 넷플릭스, 헬스장" />
+    <label class="field-lbl">월 금액 (원)</label>
+    <input type="number" inputmode="numeric" class="px-input" id="fxAmount" placeholder="예: 55000" />
+    <label class="field-lbl">결제일 / 주기 (선택)</label>
+    <input type="text" class="px-input" id="fxDay" placeholder="예: 매월 25일" />
+    <label class="field-lbl">결제 수단</label>
+    <div class="chip-grid" id="fxCardChips"></div>
+    <div class="modal-actions">
+      <button class="px-btn red" id="delFixedBtn" style="display:none;">삭제</button>
+      <button class="px-btn primary" id="saveFixedBtn">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 위시리스트 등록 -->
+<div class="modal-bg" id="wishModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>위시리스트 추가</span>
+      <div style="display:flex;gap:6px;"><button class="px-btn primary" id="saveWishTopBtn">완료</button><button class="px-btn" id="closeWishModal">X</button></div>
+    </div>
+    <label class="field-lbl">사고 싶은 것</label>
+    <input type="text" class="px-input" id="wsName" placeholder="예: 올리브영 립밤" />
+    <label class="field-lbl">예상 가격 (원)</label>
+    <input type="number" inputmode="numeric" class="px-input" id="wsPrice" placeholder="예: 18000" />
+    <div class="modal-actions">
+      <button class="px-btn primary" id="saveWishBtn">위시에 담기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'ohaeing_receipt_budget_v1';
+const CATS = ['식비', '카페', '쇼핑', '뷰티', '교통', '운동', '생활', '기타'];
+const FONTS = [
+  { name: '네오둥근모', val: "'NeoDunggeunmo', monospace" },
+  { name: '비트비트체', val: "'DNFBitBitv2', monospace" },
+  { name: '빙그레체', val: "'Binggrae', sans-serif" },
+  { name: '느림보고딕', val: "'neurimboGothicRegular', sans-serif" },
+  { name: '망고보드 별별', val: "'MangoByeolbyeol', sans-serif" },
+  { name: '평창평화체', val: "'PyeongChangPeace', sans-serif" },
+  { name: '여기어때 잘난체', val: "'Jalnan', sans-serif" },
+  { name: '지마켓 산스', val: "'GmarketSans', sans-serif" },
+  { name: '시원한설레임', val: "'SEOLEIMcool', sans-serif" },
+  { name: '느릿느릿체', val: "'SlowSlow', sans-serif" },
+  { name: '바른히피체', val: "'Bareun_hipi', sans-serif" },
+  { name: '속초바다', val: "'SokchoBadaDotum', sans-serif" },
+  { name: '슈퍼매직', val: "'Cafe24Supermagic', sans-serif" },
+  { name: '학교안심 물결', val: "'TTHakgyoansimMulgyeolB', sans-serif" }
+];
+const THEMES = [
+  { name: '오리지널 크림', bg: '#EAE4D7', paper: '#FFFDF8', ink: '#1A1A1A', muted: '#5A564E', red: '#D93829', green: '#1E8E4E', blue: '#2457C5', box: '#FFF9EE', saved: '#EEFAF2', card: '#FFFFFF', day: '#F7F3E8', nav: '#FFE799', tag: '#FFF3D6', bfg: '#FFFDF8' },
+  { name: '스톤 그레이', bg: '#E2E4E8', paper: '#F9FAFB', ink: '#1F2937', muted: '#6B7280', red: '#DC2626', green: '#15803D', blue: '#2563EB', box: '#F3F4F6', saved: '#ECFDF5', card: '#FFFFFF', day: '#EEF0F4', nav: '#E5E7EB', tag: '#E5E7EB', bfg: '#FFFFFF' },
+  { name: '세이지 포레스트', bg: '#DCE4DE', paper: '#F7FAF8', ink: '#1B2E22', muted: '#566A5D', red: '#C84B31', green: '#2E7D32', blue: '#2D6A4F', box: '#EDF4EF', saved: '#E2F2E6', card: '#FFFFFF', day: '#E7EFE9', nav: '#CFE3D5', tag: '#DCECE0', bfg: '#F7FAF8' },
+  { name: '모카 에스프레소', bg: '#E4DBD2', paper: '#FCF8F3', ink: '#2E2219', muted: '#756456', red: '#C2412D', green: '#2F7D4E', blue: '#7C5836', box: '#F5EDE4', saved: '#EAF4EC', card: '#FFFFFF', day: '#EFE6DC', nav: '#E6D3BF', tag: '#EFE0D0', bfg: '#FCF8F3' },
+  { name: '더스티 네이비', bg: '#DCE2EC', paper: '#F8FAFD', ink: '#192538', muted: '#5B6B82', red: '#D14343', green: '#1F8A5B', blue: '#2B59C3', box: '#EEF2F8', saved: '#E6F5EE', card: '#FFFFFF', day: '#E6ECF5', nav: '#CFD9EB', tag: '#DCE4F2', bfg: '#F8FAFD' },
+  { name: '모브 로즈', bg: '#E9DFE2', paper: '#FCF8F9', ink: '#2F2026', muted: '#78626B', red: '#C93B5B', green: '#2C8558', blue: '#7D4E6D', box: '#F6ECEF', saved: '#EBF5EE', card: '#FFFFFF', day: '#F1E6E9', nav: '#EBD3DA', tag: '#F2DCE2', bfg: '#FCF8F9' },
+  { name: '미드나잇 다크', bg: '#141518', paper: '#1F2126', ink: '#F0EFEA', muted: '#A1A1AA', red: '#FF6B6B', green: '#4ADE80', blue: '#60A5FA', box: '#272A30', saved: '#1E2E26', card: '#262930', day: '#2B2E36', nav: '#3B3F4A', tag: '#323640', bfg: '#141518' }
+];
+const FS_OPTS = [
+  { label: '작게', val: 0.78 },
+  { label: '보통', val: 1 },
+  { label: '크게', val: 1.24 }
+];
+const LS_OPTS = [
+  { label: '좁게', val: '-0.2px' },
+  { label: '보통', val: '0.4px' },
+  { label: '넓게', val: '1.2px' }
+];
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {
+    budget: 700000,
+    fontIdx: 0,
+    cards: [
+      { id: 'c1', name: '카드1', goal: 300000 },
+      { id: 'c2', name: '카드2', goal: 300000 },
+      { id: 'cash', name: '계좌/현금', goal: 0 }
+    ],
+    expenses: [],
+    noSpendDays: [],
+    campaigns: []
+  };
+}
+
+let state = loadData();
+if (!state.cards || !state.cards.length) {
+  state.cards = [
+    { id: 'c1', name: '카드1', goal: 300000 },
+    { id: 'c2', name: '카드2', goal: 300000 },
+    { id: 'cash', name: '계좌/현금', goal: 0 }
+  ];
+}
+if (!state.fixedExpenses) state.fixedExpenses = [];
+if (!state.wishlist) state.wishlist = [];
+let activeCardTab = 'all';
+let editingFixedId = null;
+let selectedFxCardId = state.cards[0].id;
+let selectedCardId = state.cards[0].id;
+let curMonth = todayStr().slice(0, 7);
+let editingSpendId = null;
+let editingCampId = null;
+let selectedCat = CATS[0];
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function fmt(n) {
+  return Number(n || 0).toLocaleString('ko-KR') + '원';
+}
+
+function applyFont() {
+  const idx = state.fontIdx || 0;
+  const f = FONTS[idx] || FONTS[0];
+  const fs = FS_OPTS[state.fsIdx ?? 1] || FS_OPTS[1];
+  const ls = LS_OPTS[state.lsIdx ?? 1] || LS_OPTS[1];
+  const t = THEMES[state.themeIdx || 0] || THEMES[0];
+  const isPixel = idx <= 1;
+  const r = document.documentElement.style;
+  r.setProperty('--font-main', f.val);
+  r.setProperty('--fs-scale', fs.val);
+  r.setProperty('--ls-val', ls.val);
+  r.setProperty('--fw-val', isPixel ? '400' : '600');
+  r.setProperty('--bg', t.bg);
+  r.setProperty('--paper', t.paper);
+  r.setProperty('--ink', t.ink);
+  r.setProperty('--muted', t.muted);
+  r.setProperty('--red', t.red);
+  r.setProperty('--green', t.green);
+  r.setProperty('--blue', t.blue);
+  r.setProperty('--box-bg', t.box);
+  r.setProperty('--saved-bg', t.saved);
+  r.setProperty('--card-bg', t.card);
+  r.setProperty('--day-bg', t.day);
+  r.setProperty('--nav-active', t.nav);
+  r.setProperty('--tag-bg', t.tag);
+  r.setProperty('--badge-fg', t.bfg);
+}
+
+function renderFontModal() {
+  const fsIdx = state.fsIdx ?? 1;
+  const lsIdx = state.lsIdx ?? 1;
+  const fIdx = state.fontIdx || 0;
+  const tIdx = state.themeIdx || 0;
+  document.getElementById('themeChips').innerHTML = THEMES.map((t, i) =>
+    `<button type="button" class="chip ${i===tIdx?'active':''}" onclick="setTheme(${i})"><span style="display:inline-block;width:10px;height:10px;background:${t.bg};border:1px solid ${t.ink};margin-right:4px;vertical-align:middle;"></span>${t.name}</button>`
+  ).join('');
+  document.getElementById('fsChips').innerHTML = FS_OPTS.map((o, i) =>
+    `<button type="button" class="chip ${i===fsIdx?'active':''}" onclick="setFs(${i})">${o.label}</button>`
+  ).join('');
+  document.getElementById('lsChips').innerHTML = LS_OPTS.map((o, i) =>
+    `<button type="button" class="chip ${i===lsIdx?'active':''}" onclick="setLs(${i})">${o.label}</button>`
+  ).join('');
+  document.getElementById('fontListGrid').innerHTML = FONTS.map((f, i) =>
+    `<button type="button" class="chip ${i===fIdx?'active':''}" style="font-family:${f.val};text-align:left;" onclick="setFont(${i})">${f.name}</button>`
+  ).join('');
+}
+window.setTheme = i => { state.themeIdx = i; save(); applyFont(); renderFontModal(); };
+window.setFs = i => { state.fsIdx = i; save(); applyFont(); renderFontModal(); };
+window.setLs = i => { state.lsIdx = i; save(); applyFont(); renderFontModal(); };
+window.setFont = i => { state.fontIdx = i; save(); applyFont(); renderFontModal(); };
+
+function renderBarcode() {
+  const el = document.getElementById('barcodeBars');
+  const widths = [3,1,2,4,1,2,1,3,2,1,4,2,1,2,3,1,2,1,3,2,4,1,2,1,3,2,1,2,4,1,3,1,2];
+  el.innerHTML = widths.map(w => `<span style="width:${w}px"></span>`).join('');
+}
+
+function getMonthExpenses(ignoreCardFilter = false) {
+  return state.expenses
+    .filter(e => e.date.startsWith(curMonth) && (ignoreCardFilter || activeCardTab === 'all' || (e.cardId || 'c1') === activeCardTab))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+}
+function getCardName(cid) {
+  const c = (state.cards || []).find(x => x.id === cid);
+  return c ? c.name : '카드1';
+}
+
+function getMonthSaved() {
+  return state.campaigns
+    .filter(c => c.done && (c.due || '').startsWith(curMonth))
+    .reduce((s, c) => s + Number(c.value || 0), 0);
+}
+
+function renderCardTabs() {
+  const el = document.getElementById('cardTabs');
+  const tabs = [{ id: 'all', name: '전체' }, ...(state.cards || [])];
+  el.innerHTML = tabs.map(t =>
+    `<button type="button" class="ctab ${activeCardTab === t.id ? 'active' : ''}" onclick="setCardTab('${t.id}')">${t.name}</button>`
+  ).join('') + `<button type="button" class="ctab manage" onclick="openCardsModal()">+ 관리</button>`;
+}
+window.setCardTab = function(id) {
+  activeCardTab = id;
+  renderHome();
+};
+
+function renderHome() {
+  renderCardTabs();
+  document.getElementById('monthLabel').textContent = curMonth.replace('-', '.');
+  const exps = getMonthExpenses();
+  const totalSpent = exps.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const totalSaved = getMonthSaved();
+  const activeCard = (state.cards || []).find(c => c.id === activeCardTab);
+  const isCardGoal = activeCardTab !== 'all' && activeCard && Number(activeCard.goal) > 0;
+  const budget = isCardGoal ? Number(activeCard.goal) : Number(state.budget || 700000);
+  const pct = budget > 0 ? Math.round((totalSpent / budget) * 100) : 0;
+  const left = budget - totalSpent;
+
+  document.getElementById('monthSpentVal').textContent = fmt(totalSpent);
+  document.getElementById('monthSavedVal').textContent = '+' + fmt(totalSaved);
+  if (isCardGoal) {
+    document.getElementById('budgetRatioTxt').textContent = `${activeCard.name} 목표 ${fmt(budget)} 중 ${pct}%`;
+    document.getElementById('budgetLeftTxt').textContent = left > 0 ? `남은 금액 ${fmt(left)}` : `목표 금액 달성!`;
+  } else {
+    document.getElementById('budgetRatioTxt').textContent = `목표 ${fmt(budget)} 중 ${pct}%`;
+    document.getElementById('budgetLeftTxt').textContent = left >= 0 ? `남은 돈 ${fmt(left)}` : `${fmt(Math.abs(left))} 초과`;
+  }
+
+  const bar = document.getElementById('budgetBar');
+  bar.style.width = Math.min(100, pct) + '%';
+  bar.className = 'bar-fill' + (pct >= 100 ? ' over' : pct >= 80 ? ' warn' : '');
+
+  const today = todayStr();
+  const isTodayNo = state.noSpendDays.includes(today);
+  const noBtn = document.getElementById('todayNoSpendBtn');
+  noBtn.textContent = isTodayNo ? '오늘 무지출 취소' : '오늘 무지출 도장';
+
+  const listEl = document.getElementById('receiptList');
+  const allDates = new Set(exps.map(e => e.date));
+  state.noSpendDays.filter(d => d.startsWith(curMonth)).forEach(d => allDates.add(d));
+  const sortedDates = Array.from(allDates).sort((a, b) => b.localeCompare(a));
+
+  if (!sortedDates.length) {
+    listEl.innerHTML = '<div class="empty-box">아직 찍힌 영수증이 없어요.<br>아래 + 버튼이나 오늘 지출 찍기를 눌러보세요!</div>';
+    return;
+  }
+
+  const weekDays = ['일','월','화','수','목','금','토'];
+  listEl.innerHTML = sortedDates.map(dt => {
+    const dayExps = exps.filter(e => e.date === dt);
+    const daySum = dayExps.reduce((s, e) => s + Number(e.amount || 0), 0);
+    const dObj = new Date(dt + 'T00:00:00');
+    const wd = weekDays[dObj.getDay()];
+    const label = `${dt.slice(5).replace('-', '.')} (${wd})`;
+    const isNo = state.noSpendDays.includes(dt);
+
+    const rows = dayExps.map(e => `
+      <div class="rc-item" onclick="openEditSpend(${e.id})">
+        <div class="rc-left">
+          <span class="cat-tag">${e.cat}</span>
+          <span class="rc-memo">${activeCardTab === 'all' ? '['+getCardName(e.cardId || 'c1')+'] ' : ''}${e.memo || e.cat}</span>
+        </div>
+        <span class="rc-amt">-${Number(e.amount).toLocaleString('ko-KR')}원</span>
+      </div>
+    `).join('');
+
+    return `
+      <div class="day-group">
+        <div class="day-divider">
+          <span>${label}</span>
+          ${isNo ? '<span class="stamp-nospend">NO SPEND!</span>' : `<span class="day-total">-${fmt(daySum)}</span>`}
+        </div>
+        ${rows}
+      </div>
+    `;
+  }).join('');
+}
+
+function calcDday(dueStr) {
+  if (!dueStr) return { text: '기한없음', cls: 'safe', diff: 999 };
+  const t = new Date(todayStr() + 'T00:00:00');
+  const d = new Date(dueStr + 'T00:00:00');
+  const diff = Math.round((d - t) / 86400000);
+  if (diff < 0) return { text: `마감 D+${Math.abs(diff)}`, cls: '', diff };
+  if (diff === 0) return { text: 'D-DAY', cls: '', diff };
+  if (diff <= 3) return { text: `D-${diff}`, cls: '', diff };
+  return { text: `D-${diff}`, cls: 'safe', diff };
+}
+
+function renderCampaigns() {
+  const doneTotal = state.campaigns.filter(c => c.done).reduce((s, c) => s + Number(c.value || 0), 0);
+  document.getElementById('campTotalSaved').textContent = fmt(doneTotal);
+
+  const el = document.getElementById('campList');
+  if (!state.campaigns.length) {
+    el.innerHTML = '<div class="empty-box">등록된 체험단이 없어요.<br>+ 체험단 버튼으로 기한과 아낀 금액을 기록해 보세요!</div>';
+    return;
+  }
+
+  const sorted = [...state.campaigns].sort((a, b) => {
+    if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+    return calcDday(a.due).diff - calcDday(b.due).diff;
+  });
+
+  el.innerHTML = sorted.map(c => {
+    const dd = c.done ? { text: '완료됨', cls: 'done' } : calcDday(c.due);
+    return `
+      <div class="camp-card ${c.done ? 'done' : ''}">
+        <div class="camp-top">
+          <span class="dday-badge ${dd.cls}">${dd.text}</span>
+          <div style="display:flex;gap:6px;">
+            <button class="px-btn" onclick="openEditCamp(${c.id})">수정</button>
+            <button class="px-btn ${c.done ? '' : 'green'}" onclick="toggleCampDone(${c.id})">${c.done ? '완료취소' : '리뷰완료'}</button>
+          </div>
+        </div>
+        <div class="camp-title">${c.name}</div>
+        ${c.support ? `<div style="font-size:calc(12px * var(--fs-scale));color:var(--muted);margin-bottom:2px;">지원: ${c.support}</div>` : ''}
+        <div class="camp-meta">
+          <span>마감: ${c.due || '-'}</span>
+          <strong style="color:var(--green);">+${fmt(c.value)} 아낌</strong>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCalendar() {
+  const [y, m] = curMonth.split('-').map(Number);
+  const firstDay = new Date(y, m - 1, 1).getDay();
+  const lastDate = new Date(y, m, 0).getDate();
+  const today = todayStr();
+
+  const heads = ['일','월','화','수','목','금','토'].map(d => `<div class="cal-head">${d}</div>`).join('');
+  let cells = '';
+  for (let i = 0; i < firstDay; i++) cells += '<div class="cal-cell empty"></div>';
+
+  for (let day = 1; day <= lastDate; day++) {
+    const dt = `${curMonth}-${String(day).padStart(2,'0')}`;
+    const spent = state.expenses.filter(e => e.date === dt).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const isNo = state.noSpendDays.includes(dt);
+    const dueCamps = state.campaigns.filter(c => !c.done && c.due === dt);
+
+    cells += `
+      <div class="cal-cell ${dt === today ? 'today' : ''}">
+        <div class="cal-day">${day}</div>
+        <div>
+          ${dueCamps.map(c => { const pal = ['#C84B31','#2D6A4F','#2B59C3','#8B5E34','#7D4E6D','#4A5568','#B45309','#0F766E','#4338CA','#9D174D','#3F6212','#1E40AF','#9A3412','#5B21B6','#0369A1','#6D28D9','#831843','#15803D','#713F12','#334155']; const cIdx = state.campaigns.findIndex(x => x.id === c.id); const col = pal[(cIdx >= 0 ? cIdx : 0) % pal.length]; return `<div class="cal-due" style="background:${col}" title="${c.name}">${c.name}</div>`; }).join('')}
+          ${spent > 0 ? `<div class="cal-amt">-${(spent/1000).toFixed(spent%1000?1:0)}k</div>` : (isNo ? '<div class="cal-no">무지출</div>' : '')}
+        </div>
+      </div>
+    `;
+  }
+  document.getElementById('calGrid').innerHTML = heads + cells;
+}
+
+function renderStats() {
+  const exps = getMonthExpenses(true);
+  const spent = exps.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const saved = getMonthSaved();
+  document.getElementById('statSpent').textContent = fmt(spent);
+  document.getElementById('statSaved').textContent = '+' + fmt(saved);
+
+  const byCat = {};
+  exps.forEach(e => { byCat[e.cat] = (byCat[e.cat] || 0) + Number(e.amount || 0); });
+  const entries = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+
+  const el = document.getElementById('catStats');
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-box">이번 달 지출 내역이 아직 없어요.</div>';
+    return;
+  }
+  el.innerHTML = entries.map(([cat, amt]) => {
+    const pct = spent > 0 ? Math.round((amt / spent) * 100) : 0;
+    return `
+      <div class="stat-row">
+        <div class="stat-lbl"><span>${cat} (${pct}%)</span><span>${fmt(amt)}</span></div>
+        <div class="stat-bar"><div style="width:${pct}%"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAll() {
+  applyFont();
+  renderHome();
+  renderCampaigns();
+  renderFixed();
+  renderWishlist();
+  renderCalendar();
+  renderStats();
+}
+
+// Modals & Events
+function renderCatChips() {
+  document.getElementById('spCatChips').innerHTML = CATS.map(c =>
+    `<button type="button" class="chip ${c === selectedCat ? 'active' : ''}" onclick="pickCat('${c}')">${c}</button>`
+  ).join('');
+}
+function renderCardChips() {
+  document.getElementById('spCardChips').innerHTML = (state.cards || []).map(c =>
+    `<button type="button" class="chip ${c.id === selectedCardId ? 'active' : ''}" onclick="pickCard('${c.id}')">${c.name}</button>`
+  ).join('');
+}
+window.pickCat = function(c) {
+  selectedCat = c;
+  renderCatChips();
+};
+window.pickCard = function(id) {
+  selectedCardId = id;
+  renderCardChips();
+};
+window.openCardsModal = function() {
+  renderCardsEditList();
+  document.getElementById('cardsModal').classList.add('open');
+};
+function renderCardsEditList() {
+  document.getElementById('cardsEditList').innerHTML = (state.cards || []).map((c, idx) => `
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+      <input type="text" class="px-input" value="${c.name}" onchange="updateCard(${idx}, 'name', this.value)" style="flex:1;" />
+      <input type="number" inputmode="numeric" class="px-input" value="${c.goal||0}" onchange="updateCard(${idx}, 'goal', this.value)" style="width:100px;" placeholder="목표" />
+      <button type="button" class="px-btn red" onclick="deleteCard(${idx})">삭제</button>
+    </div>
+  `).join('');
+}
+window.updateCard = function(idx, key, val) {
+  if (!state.cards[idx]) return;
+  state.cards[idx][key] = key === 'goal' ? Number(val || 0) : (val.trim() || state.cards[idx].name);
+  save(); renderHome();
+};
+window.deleteCard = function(idx) {
+  if (state.cards.length <= 1) return alert('최소 1개는 남아있어야 해요!');
+  const removed = state.cards.splice(idx, 1)[0];
+  if (activeCardTab === removed.id) activeCardTab = 'all';
+  if (selectedCardId === removed.id) selectedCardId = state.cards[0].id;
+  save(); renderCardsEditList(); renderHome();
+};
+
+function openNewSpend() {
+  editingSpendId = null;
+  document.getElementById('spendModalTitle').textContent = '지출 영수증 찍기';
+  document.getElementById('spDate').value = todayStr();
+  document.getElementById('spAmount').value = '';
+  document.getElementById('spMemo').value = '';
+  document.getElementById('delSpendBtn').style.display = 'none';
+  selectedCat = CATS[0];
+  selectedCardId = activeCardTab !== 'all' ? activeCardTab : (state.cards[0]?.id || 'c1');
+  renderCatChips();
+  renderCardChips();
+  document.getElementById('spendModal').classList.add('open');
+}
+
+window.openEditSpend = function(id) {
+  const item = state.expenses.find(e => e.id === id);
+  if (!item) return;
+  editingSpendId = id;
+  document.getElementById('spendModalTitle').textContent = '지출 수정';
+  document.getElementById('spDate').value = item.date;
+  document.getElementById('spAmount').value = item.amount;
+  document.getElementById('spMemo').value = item.memo || '';
+  document.getElementById('delSpendBtn').style.display = 'block';
+  selectedCat = item.cat;
+  selectedCardId = item.cardId || (state.cards[0]?.id || 'c1');
+  renderCatChips();
+  renderCardChips();
+  document.getElementById('spendModal').classList.add('open');
+};
+
+function openNewCamp() {
+  editingCampId = null;
+  document.getElementById('campModalTitle').textContent = '체험단 등록';
+  document.getElementById('cpName').value = '';
+  document.getElementById('cpSupport').value = '';
+  document.getElementById('cpValue').value = '';
+  document.getElementById('cpDue').value = todayStr();
+  document.getElementById('delCampBtn').style.display = 'none';
+  document.getElementById('campModal').classList.add('open');
+}
+
+window.openEditCamp = function(id) {
+  const c = state.campaigns.find(x => x.id === id);
+  if (!c) return;
+  editingCampId = id;
+  document.getElementById('campModalTitle').textContent = '체험단 수정';
+  document.getElementById('cpName').value = c.name;
+  document.getElementById('cpSupport').value = c.support || '';
+  document.getElementById('cpValue').value = c.value;
+  document.getElementById('cpDue').value = c.due || todayStr();
+  document.getElementById('delCampBtn').style.display = 'block';
+  document.getElementById('campModal').classList.add('open');
+};
+
+window.toggleCampDone = function(id) {
+  const c = state.campaigns.find(x => x.id === id);
+  if (!c) return;
+  c.done = !c.done;
+  save();
+  renderAll();
+};
+
+document.getElementById('saveSpendBtn').onclick = () => {
+  const date = document.getElementById('spDate').value || todayStr();
+  const amount = Number(document.getElementById('spAmount').value);
+  const memo = document.getElementById('spMemo').value.trim();
+  if (!amount || amount <= 0) return alert('금액을 입력해 주세요!');
+  if (editingSpendId) {
+    const idx = state.expenses.findIndex(e => e.id === editingSpendId);
+    if (idx > -1) state.expenses[idx] = { id: editingSpendId, date, cat: selectedCat, cardId: selectedCardId, amount, memo };
+  } else {
+    state.expenses.push({ id: Date.now(), date, cat: selectedCat, cardId: selectedCardId, amount, memo });
+    state.noSpendDays = state.noSpendDays.filter(d => d !== date);
+  }
+  save();
+  document.getElementById('spendModal').classList.remove('open');
+  curMonth = date.slice(0, 7);
+  renderAll();
+};
+
+document.getElementById('delSpendBtn').onclick = () => {
+  state.expenses = state.expenses.filter(e => e.id !== editingSpendId);
+  save();
+  document.getElementById('spendModal').classList.remove('open');
+  renderAll();
+};
+
+document.getElementById('saveCampBtn').onclick = () => {
+  const name = document.getElementById('cpName').value.trim();
+  const support = document.getElementById('cpSupport').value.trim();
+  const value = Number(document.getElementById('cpValue').value || 0);
+  const due = document.getElementById('cpDue').value;
+  if (!name) return alert('업체/제품명을 입력해 주세요!');
+  if (editingCampId) {
+    const idx = state.campaigns.findIndex(c => c.id === editingCampId);
+    if (idx > -1) state.campaigns[idx] = { ...state.campaigns[idx], name, support, value, due };
+  } else {
+    state.campaigns.push({ id: Date.now(), name, support, value, due, done: false });
+  }
+  save();
+  document.getElementById('campModal').classList.remove('open');
+  renderAll();
+};
+
+document.getElementById('delCampBtn').onclick = () => {
+  state.campaigns = state.campaigns.filter(c => c.id !== editingCampId);
+  save();
+  document.getElementById('campModal').classList.remove('open');
+  renderAll();
+};
+
+document.getElementById('todayNoSpendBtn').onclick = () => {
+  const t = todayStr();
+  const todayHasSpend = state.expenses.some(e => e.date === t);
+  if (state.noSpendDays.includes(t)) {
+    state.noSpendDays = state.noSpendDays.filter(d => d !== t);
+  } else {
+    if (todayHasSpend) {
+      alert('오늘 지출 내역이 있어서 무지출 도장을 찍을 수 없어요! (지출이 0원인 날만 가능)');
+      return;
+    }
+    state.noSpendDays.push(t);
+  }
+  save();
+  renderAll();
+};
+
+document.getElementById('quickSpendBtn').onclick = openNewSpend;
+
+document.getElementById('addCampBtn').onclick = openNewCamp;
+document.getElementById('closeSpendModal').onclick = () => document.getElementById('spendModal').classList.remove('open');
+document.getElementById('closeCampModal').onclick = () => document.getElementById('campModal').classList.remove('open');
+
+document.getElementById('budgetBtn').onclick = () => {
+  document.getElementById('budgetInput').value = state.budget || 700000;
+  document.getElementById('budgetModal').classList.add('open');
+};
+document.getElementById('closeBudgetModal').onclick = () => document.getElementById('budgetModal').classList.remove('open');
+document.getElementById('closeCardsModal').onclick = () => document.getElementById('cardsModal').classList.remove('open');
+document.getElementById('addNewCardBtn').onclick = () => {
+  const name = document.getElementById('newCardName').value.trim();
+  const goal = Number(document.getElementById('newCardGoal').value || 0);
+  if (!name) return alert('카드/계좌 이름을 적어주세요!');
+  state.cards.push({ id: 'c_' + Date.now(), name, goal });
+  document.getElementById('newCardName').value = '';
+  document.getElementById('newCardGoal').value = '';
+  save(); renderCardsEditList(); renderHome();
+};
+document.getElementById('saveBudgetBtn').onclick = () => {
+  state.budget = Number(document.getElementById('budgetInput').value) || 700000;
+  save();
+  document.getElementById('budgetModal').classList.remove('open');
+  renderAll();
+};
+
+document.getElementById('fontBtn').onclick = () => {
+  renderFontModal();
+  document.getElementById('fontModal').classList.add('open');
+};
+document.getElementById('closeFontModal').onclick = () => {
+  document.getElementById('fontModal').classList.remove('open');
+};
+
+document.getElementById('prevMonthBtn').onclick = () => {
+  const [y, m] = curMonth.split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  curMonth = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  renderAll();
+};
+document.getElementById('nextMonthBtn').onclick = () => {
+  const [y, m] = curMonth.split('-').map(Number);
+  const d = new Date(y, m, 1);
+  curMonth = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  renderAll();
+};
+
+document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+  };
+});
+
+document.getElementById('exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `receipt-budget-${todayStr()}.json`;
+  a.click();
+};
+document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+document.getElementById('importFile').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      state = JSON.parse(r.result);
+      save();
+      renderAll();
+      alert('백업을 불러왔어요!');
+    } catch { alert('파일 형식이 맞지 않아요.'); }
+  };
+  r.readAsText(f);
+};
+
+
+document.getElementById('saveSpendTopBtn').onclick = () => document.getElementById('saveSpendBtn').click();
+document.getElementById('saveCampTopBtn').onclick = () => document.getElementById('saveCampBtn').click();
+document.getElementById('saveBudgetTopBtn').onclick = () => document.getElementById('saveBudgetBtn').click();
+
+function renderFixed() {
+  const activeList = (state.fixedExpenses || []).filter(f => f.active !== false);
+  const total = activeList.reduce((s, f) => s + Number(f.amount || 0), 0);
+  document.getElementById('fixedTotalVal').textContent = fmt(total);
+
+  const el = document.getElementById('fixedList');
+  if (!(state.fixedExpenses || []).length) {
+    el.innerHTML = '<div class="empty-box">등록된 고정비·구독이 없어요.<br>+ 고정비 버튼으로 매달 나가는 돈을 정리해 보세요!</div>';
+    return;
+  }
+  el.innerHTML = state.fixedExpenses.map(f => `
+    <div class="camp-card ${f.active === false ? 'done' : ''}">
+      <div class="camp-top">
+        <span class="cat-tag">${getCardName(f.cardId || 'c1')}</span>
+        <div style="display:flex;gap:6px;">
+          <button class="px-btn" onclick="openEditFixed(${f.id})">수정</button>
+          <button class="px-btn ${f.active === false ? '' : 'green'}" onclick="toggleFixedActive(${f.id})">${f.active === false ? '일시중지' : '유지중'}</button>
+        </div>
+      </div>
+      <div class="camp-title">${f.name}</div>
+      <div class="camp-meta">
+        <span>${f.day || '매월 정기결제'}</span>
+        <strong style="color:var(--red);">-${fmt(f.amount)}</strong>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFxCardChips() {
+  document.getElementById('fxCardChips').innerHTML = (state.cards || []).map(c =>
+    `<button type="button" class="chip ${c.id === selectedFxCardId ? 'active' : ''}" onclick="pickFxCard('${c.id}')">${c.name}</button>`
+  ).join('');
+}
+window.pickFxCard = id => { selectedFxCardId = id; renderFxCardChips(); };
+
+function openNewFixed() {
+  editingFixedId = null;
+  document.getElementById('fixedModalTitle').textContent = '고정비 · 구독 등록';
+  document.getElementById('fxName').value = '';
+  document.getElementById('fxAmount').value = '';
+  document.getElementById('fxDay').value = '';
+  document.getElementById('delFixedBtn').style.display = 'none';
+  selectedFxCardId = state.cards[0]?.id || 'c1';
+  renderFxCardChips();
+  document.getElementById('fixedModal').classList.add('open');
+}
+
+window.openEditFixed = function(id) {
+  const f = (state.fixedExpenses || []).find(x => x.id === id);
+  if (!f) return;
+  editingFixedId = id;
+  document.getElementById('fixedModalTitle').textContent = '고정비 수정';
+  document.getElementById('fxName').value = f.name;
+  document.getElementById('fxAmount').value = f.amount;
+  document.getElementById('fxDay').value = f.day || '';
+  document.getElementById('delFixedBtn').style.display = 'block';
+  selectedFxCardId = f.cardId || state.cards[0]?.id || 'c1';
+  renderFxCardChips();
+  document.getElementById('fixedModal').classList.add('open');
+};
+
+window.toggleFixedActive = function(id) {
+  const f = (state.fixedExpenses || []).find(x => x.id === id);
+  if (!f) return;
+  f.active = (f.active === false);
+  save(); renderAll();
+};
+
+document.getElementById('addFixedBtn').onclick = openNewFixed;
+document.getElementById('closeFixedModal').onclick = () => document.getElementById('fixedModal').classList.remove('open');
+document.getElementById('saveFixedTopBtn').onclick = () => document.getElementById('saveFixedBtn').click();
+document.getElementById('saveFixedBtn').onclick = () => {
+  const name = document.getElementById('fxName').value.trim();
+  const amount = Number(document.getElementById('fxAmount').value || 0);
+  const day = document.getElementById('fxDay').value.trim();
+  if (!name || !amount) return alert('항목명과 금액을 입력해 주세요!');
+  if (editingFixedId) {
+    const idx = state.fixedExpenses.findIndex(x => x.id === editingFixedId);
+    if (idx > -1) state.fixedExpenses[idx] = { ...state.fixedExpenses[idx], name, amount, day, cardId: selectedFxCardId };
+  } else {
+    state.fixedExpenses.push({ id: Date.now(), name, amount, day, cardId: selectedFxCardId, active: true });
+  }
+  save();
+  document.getElementById('fixedModal').classList.remove('open');
+  renderAll();
+};
+document.getElementById('delFixedBtn').onclick = () => {
+  state.fixedExpenses = state.fixedExpenses.filter(x => x.id !== editingFixedId);
+  save();
+  document.getElementById('fixedModal').classList.remove('open');
+  renderAll();
+};
+
+function renderWishlist() {
+  const list = state.wishlist || [];
+  const saved = list.filter(w => w.status === 'saved').reduce((s, w) => s + Number(w.price || 0), 0);
+  document.getElementById('wishSavedTotal').textContent = fmt(saved);
+
+  const el = document.getElementById('wishList');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-box">사고 싶은 걸 담아두고<br>참으면 방어 성공, 사면 지출로 바로 넘겨요!</div>';
+    return;
+  }
+  const sorted = [...list].sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
+  el.innerHTML = sorted.map(w => `
+    <div class="camp-card ${w.status !== 'pending' ? 'done' : ''}" style="margin-bottom:8px;">
+      <div class="camp-top">
+        <span class="cat-tag">${w.status === 'saved' ? '방어 성공!' : w.status === 'bought' ? '구매 완료' : '고민중'}</span>
+        <div style="display:flex;gap:4px;">
+          ${w.status === 'pending' ? `
+            <button class="px-btn green" onclick="markWish(${w.id}, 'saved')">참기성공</button>
+            <button class="px-btn" onclick="markWish(${w.id}, 'bought')">삼(지출)</button>
+          ` : ''}
+          <button class="px-btn red" onclick="delWish(${w.id})">삭제</button>
+        </div>
+      </div>
+      <div class="camp-title">${w.name}</div>
+      <div class="camp-meta">
+        <span>${w.status === 'saved' ? '안 사서 아낌!' : w.status === 'bought' ? '지출에 기록됨' : '살까 말까'}</span>
+        <strong style="color:${w.status==='saved'?'var(--green)':'var(--ink)'};">${fmt(w.price)}</strong>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.markWish = function(id, status) {
+  const w = (state.wishlist || []).find(x => x.id === id);
+  if (!w) return;
+  w.status = status;
+  if (status === 'bought') {
+    state.expenses.push({ id: Date.now(), date: todayStr(), cat: '쇼핑', cardId: state.cards[0]?.id || 'c1', amount: Number(w.price || 0), memo: w.name });
+  }
+  save(); renderAll();
+};
+window.delWish = function(id) {
+  state.wishlist = (state.wishlist || []).filter(x => x.id !== id);
+  save(); renderAll();
+};
+
+document.getElementById('addWishBtn').onclick = () => {
+  document.getElementById('wsName').value = '';
+  document.getElementById('wsPrice').value = '';
+  document.getElementById('wishModal').classList.add('open');
+};
+document.getElementById('closeWishModal').onclick = () => document.getElementById('wishModal').classList.remove('open');
+document.getElementById('saveWishTopBtn').onclick = () => document.getElementById('saveWishBtn').click();
+document.getElementById('saveWishBtn').onclick = () => {
+  const name = document.getElementById('wsName').value.trim();
+  const price = Number(document.getElementById('wsPrice').value || 0);
+  if (!name || !price) return alert('상품명과 가격을 입력해 주세요!');
+  state.wishlist.push({ id: Date.now(), name, price, status: 'pending' });
+  save();
+  document.getElementById('wishModal').classList.remove('open');
+  renderAll();
+};
+
+renderBarcode();
+renderAll();
+</script>
+</body>
+</html>
