@@ -639,7 +639,16 @@
         </button></div>
     </div>
     <div id="dailyList"></div>
-  </div>
+  
+    <div id="myCommentsCard" class="glass-card" style="display:none; margin-top:12px;">
+      <div style="font-size:13px; font-weight:800; color:var(--ink); margin-bottom:8px;">💬 오늘의 응원 댓글</div>
+      <div id="myCommentsList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
+      <div style="display:flex; gap:6px;">
+        <input id="myCommentInput" type="text" placeholder="답글 남기기..." style="flex:1; border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:12.5px; font-family:inherit; background:var(--bg); color:var(--ink);" />
+        <button id="myCommentSendBtn" type="button" class="pill-btn" style="background:var(--orange); color:#fff; border-color:var(--orange); padding:0 12px;">등록</button>
+      </div>
+    </div>
+</div>
 
   <!-- ALBUM PANEL -->
   <div id="panelAlbum" class="panel">
@@ -1623,6 +1632,7 @@ function renderHearts() {
 }
 
 function render() {
+  if (typeof fetchMyComments === 'function') fetchMyComments();
   renderHearts();
   renderHabits();
   const day = getDay(currentDate);
@@ -1969,6 +1979,26 @@ function loadSyncInputs() {
   document.getElementById('syncStatusBadge').style.color = c.url ? 'var(--green)' : 'var(--muted)';
 }
 
+async 
+function shrinkPhotoForCloud(dataUrl) {
+  return new Promise(resolve => {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) return resolve(null);
+    if (dataUrl.length < 18000) return resolve(dataUrl);
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 160;
+      const scale = Math.min(1, maxW / img.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', 0.55));
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
 async function pushMyDayToCloud() {
   const c = getSyncCfg();
   if (!c.url || !c.room || !c.myId) return;
@@ -1990,10 +2020,10 @@ async function pushMyDayToCloud() {
       water: day.water || 0,
       vit: !!day.vit,
       pro: !!day.pro,
-      '아침': (day['아침']||[]).map(i => ({ name: i.name, kcal: i.kcal })),
-      '점심': (day['점심']||[]).map(i => ({ name: i.name, kcal: i.kcal })),
-      '저녁': (day['저녁']||[]).map(i => ({ name: i.name, kcal: i.kcal })),
-      '간식': (day['간식']||[]).map(i => ({ name: i.name, kcal: i.kcal })),
+      '아침': await Promise.all((day['아침']||[]).map(async i => ({ name: i.name, kcal: i.kcal, photo: i.photo ? await shrinkPhotoForCloud(i.photo) : null }))),
+      '점심': await Promise.all((day['점심']||[]).map(async i => ({ name: i.name, kcal: i.kcal, photo: i.photo ? await shrinkPhotoForCloud(i.photo) : null }))),
+      '저녁': await Promise.all((day['저녁']||[]).map(async i => ({ name: i.name, kcal: i.kcal, photo: i.photo ? await shrinkPhotoForCloud(i.photo) : null }))),
+      '간식': await Promise.all((day['간식']||[]).map(async i => ({ name: i.name, kcal: i.kcal, photo: i.photo ? await shrinkPhotoForCloud(i.photo) : null }))),
       '운동': (day['운동']||[]).map(i => ({ name: i.name, kcal: i.kcal })),
     },
     updatedAt: new Date().toISOString()
@@ -2038,7 +2068,7 @@ function buildMultiBattleHtml(players) {
     </div>`;
 }
 
-function renderFriendDetailCard(name, data) {
+function renderFriendDetailCard(name, data, commentsObj, roomName) {
   if (!data || !data.day) {
     return `<div class="glass-card" style="text-align:center; color:var(--muted); font-size:13px; padding:24px;"><b>${name}</b>님의 ${currentDate} 기록이 아직 없어요</div>`;
   }
@@ -2054,7 +2084,8 @@ function renderFriendDetailCard(name, data) {
     if (arr.length) {
       const sum = arr.reduce((a, b) => a + b.kcal, 0);
       const names = arr.map(i => i.name).join(', ');
-      mealRows.push(`<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 11px; border-radius:11px; background:var(--bg); border:1px solid var(--line);"><div style="font-size:12.5px; font-weight:700; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="color:var(--orange); font-weight:800; margin-right:5px;">[${s}]</span>${names}</div><div style="font-size:12.5px; font-weight:800; color:var(--orange); flex-shrink:0;">${sum.toLocaleString()}kcal</div></div>`);
+      const thumbs = arr.filter(i => i.photo).map(i => `<img src="${i.photo}" onclick="window.openFriendPhoto && window.openFriendPhoto(this.src)" style="width:32px; height:32px; border-radius:7px; object-fit:cover; border:1px solid var(--line); flex-shrink:0; cursor:pointer;" />`).join('');
+      mealRows.push(`<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border-radius:11px; background:var(--bg); border:1px solid var(--line);"><div style="display:flex; align-items:center; gap:7px; min-width:0; flex:1;">${thumbs}<div style="font-size:12.5px; font-weight:700; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="color:var(--orange); font-weight:800; margin-right:5px;">[${s}]</span>${names}</div></div><div style="font-size:12.5px; font-weight:800; color:var(--orange); flex-shrink:0;">${sum.toLocaleString()}kcal</div></div>`);
     }
   });
 
@@ -2084,8 +2115,105 @@ function renderFriendDetailCard(name, data) {
         </div>
       </div>
       ${exHtml}
+      <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);">
+        <div style="font-size:11.5px; font-weight:800; color:var(--ink); margin-bottom:6px;">💬 응원 댓글</div>
+        <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:8px;">
+          ${(() => {
+            const list = commentsObj ? Object.entries(commentsObj).map(([k, v]) => ({ id: k, ...v })).sort((a,b) => (a.ts||0) - (b.ts||0)) : [];
+            if (!list.length) return '<div style="font-size:11.5px; color:var(--muted);">아직 댓글이 없어요. 첫 응원을 남겨보세요!</div>';
+            const myId = getSyncCfg().myId || '유빈';
+            return list.map(cm => `
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; padding:7px 9px; border-radius:10px; background:var(--bg); font-size:12px;">
+                <div><b style="color:var(--orange);">${cm.author || '친구'}</b> ${cm.text} <span style="font-size:10px; color:var(--muted); margin-left:4px;">${cm.time || ''}</span></div>
+                ${cm.author === myId ? `<button type="button" class="del-fc-btn" data-room="${roomName||''}" data-target="${name}" data-cid="${cm.id}" style="border:none; background:none; color:var(--muted); font-size:11px; cursor:pointer;">✕</button>` : ''}
+              </div>
+            `).join('');
+          })()}
+        </div>
+        <div style="display:flex; gap:6px;">
+          <input type="text" class="fc-input" placeholder="${name}에게 댓글 남기기..." style="flex:1; border:1px solid var(--line); border-radius:10px; padding:7px 10px; font-size:12px; font-family:inherit; background:var(--bg); color:var(--ink);" />
+          <button type="button" class="pill-btn fc-send-btn" data-room="${roomName||''}" data-target="${name}" style="background:var(--orange); color:#fff; border-color:var(--orange); padding:0 12px; font-size:12px;">등록</button>
+        </div>
+      </div>
     </div>`;
 }
+
+
+window.openFriendPhoto = function(src) {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = `<img src="${src}" style="max-width:100%;max-height:80vh;border-radius:14px;border:2px solid #fff;" />`;
+  ov.onclick = () => ov.remove();
+  document.body.appendChild(ov);
+};
+
+async function postDietComment(roomName, targetName, text) {
+  const c = getSyncCfg();
+  if (!c.url || !roomName || !targetName) return;
+  const base = c.url.replace(/\/+$/, '');
+  const now = new Date();
+  const hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const payload = { author: c.myId || '유빈', text, time: hhmm, ts: Date.now() };
+  await fetch(`${base}/rooms/${encodeURIComponent(roomName)}/${encodeURIComponent(targetName)}/comments/${currentDate}.json`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+async function deleteDietComment(roomName, targetName, cid) {
+  const c = getSyncCfg();
+  if (!c.url || !roomName || !targetName || !cid) return;
+  const base = c.url.replace(/\/+$/, '');
+  await fetch(`${base}/rooms/${encodeURIComponent(roomName)}/${encodeURIComponent(targetName)}/comments/${currentDate}/${encodeURIComponent(cid)}.json`, {
+    method: 'DELETE'
+  });
+}
+
+async function fetchMyComments() {
+  const card = document.getElementById('myCommentsCard');
+  const listEl = document.getElementById('myCommentsList');
+  if (!card || !listEl) return;
+  const c = getSyncCfg();
+  if (!c.url || !c.myId) { card.style.display = 'none'; return; }
+  const base = c.url.replace(/\/+$/, '');
+  const rooms = (c.room || 'ohaeing').split(',').map(s => s.trim()).filter(Boolean);
+  const firstRoom = rooms[0] || 'ohaeing';
+  card.style.display = 'block';
+  try {
+    const res = await fetch(`${base}/rooms/${encodeURIComponent(firstRoom)}/${encodeURIComponent(c.myId)}/comments/${currentDate}.json`);
+    const data = await res.json();
+    const list = data ? Object.entries(data).map(([k, v]) => ({ id: k, ...v })).sort((a,b) => (a.ts||0) - (b.ts||0)) : [];
+    if (!list.length) {
+      listEl.innerHTML = '<div style="font-size:11.5px; color:var(--muted);">오늘 달린 친구 댓글이 아직 없어요</div>';
+    } else {
+      listEl.innerHTML = list.map(cm => `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; padding:7px 9px; border-radius:10px; background:var(--bg); font-size:12px;">
+          <div><b style="color:var(--orange);">${cm.author || '친구'}</b> ${cm.text} <span style="font-size:10px; color:var(--muted); margin-left:4px;">${cm.time || ''}</span></div>
+          ${cm.author === c.myId ? `<button type="button" onclick="delMyComment('${firstRoom}','${cm.id}')" style="border:none; background:none; color:var(--muted); font-size:11px; cursor:pointer;">✕</button>` : ''}
+        </div>
+      `).join('');
+    }
+  } catch {
+    listEl.innerHTML = '';
+  }
+  const sendBtn = document.getElementById('myCommentSendBtn');
+  const inp = document.getElementById('myCommentInput');
+  if (sendBtn && inp) {
+    sendBtn.onclick = async () => {
+      const txt = inp.value.trim();
+      if (!txt) return;
+      inp.value = '';
+      await postDietComment(firstRoom, c.myId, txt);
+      fetchMyComments();
+    };
+  }
+}
+window.delMyComment = async (rm, cid) => {
+  const c = getSyncCfg();
+  await deleteDietComment(rm, c.myId, cid);
+  fetchMyComments();
+};
 
 async function fetchFriendData() {
   const box = document.getElementById('friendContent');
@@ -2134,7 +2262,7 @@ async function fetchFriendData() {
         const roomData = await res.json();
         if (roomData) {
           Object.keys(roomData).filter(n => n !== myName).forEach(fn => {
-            results.push({ name: fn, data: roomData[fn]?.[currentDate] || null });
+            results.push({ name: fn, room: rm, data: roomData[fn]?.[currentDate] || null, comments: roomData[fn]?.comments?.[currentDate] || null });
           });
         }
       } catch {}
@@ -2162,7 +2290,24 @@ async function fetchFriendData() {
           `</div>`
         : '';
       const cur = results[selectedFriendIdx];
-      box.innerHTML = battle + pills + renderFriendDetailCard(cur.name, cur.data);
+      box.innerHTML = battle + pills + renderFriendDetailCard(cur.name, cur.data, cur.comments, cur.room);
+      const fcBtn = box.querySelector('.fc-send-btn');
+      const fcInput = box.querySelector('.fc-input');
+      if (fcBtn && fcInput) {
+        fcBtn.onclick = async () => {
+          const txt = fcInput.value.trim();
+          if (!txt) return;
+          fcBtn.disabled = true;
+          await postDietComment(cur.room, cur.name, txt);
+          fetchFriendData();
+        };
+      }
+      box.querySelectorAll('.del-fc-btn').forEach(db => {
+        db.onclick = async () => {
+          await deleteDietComment(db.dataset.room, db.dataset.target, db.dataset.cid);
+          fetchFriendData();
+        };
+      });
       box.querySelectorAll('.live-f-btn').forEach(b => b.onclick = () => { selectedFriendIdx = Number(b.dataset.i); drawLive(); });
     };
     drawLive();
