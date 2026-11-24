@@ -728,17 +728,17 @@
   <!-- CAMPAIGN: 체험단 관리 -->
   <div id="tab-camp" class="tab-pane">
     <div class="receipt">
+      <div class="month-switch" style="justify-content:center; margin:0 0 10px;">
+        <button id="campPrevMonthBtn">&lt;</button>
+        <span id="campMonthLabel">2026.11</span>
+        <button id="campNextMonthBtn">&gt;</button>
+      </div>
       <div class="rc-header" style="display:flex;justify-content:space-between;align-items:center;text-align:left;">
         <div>
           <div class="rc-title" style="font-size:16px;">체험단 D-DAY & 아낀 돈</div>
           <div style="font-size:12px;color:var(--muted);"><span id="campSavedMonthTxt">11월</span> 아낀 금액 <strong style="color:var(--green);" id="campTotalSaved">0원</strong></div>
         </div>
         <button class="px-btn primary" id="addCampBtn">+ 체험단</button>
-      </div>
-      <div class="month-switch" style="justify-content:center; margin:10px 0 12px;">
-        <button id="campPrevMonthBtn">&lt;</button>
-        <span id="campMonthLabel">2026.11</span>
-        <button id="campNextMonthBtn">&gt;</button>
       </div>
       <div id="campList"></div>
     </div>
