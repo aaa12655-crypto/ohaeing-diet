@@ -1979,7 +1979,6 @@ function loadSyncInputs() {
   document.getElementById('syncStatusBadge').style.color = c.url ? 'var(--green)' : 'var(--muted)';
 }
 
-async 
 function shrinkPhotoForCloud(dataUrl) {
   return new Promise(resolve => {
     if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) return resolve(null);
@@ -1999,7 +1998,7 @@ function shrinkPhotoForCloud(dataUrl) {
   });
 }
 
-async function pushMyDayToCloud() {
+async async function pushMyDayToCloud() {
   const c = getSyncCfg();
   if (!c.url || !c.room || !c.myId) return;
   const base = c.url.replace(/\/+$/, '');
