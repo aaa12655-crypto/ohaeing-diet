@@ -462,7 +462,7 @@ html, body {
   <header class="status-bar">
     <div class="status-top">
       <div class="avatar-clean" id="avatarBox" title="단어 새싹">
-        <img src="avatar.png" alt="단어 새싹" />
+        <img src="avatar.png?v=2" alt="단어 새싹" />
       </div>
       <div class="status-info">
         <div class="lv-row">
@@ -505,16 +505,16 @@ html, body {
       </div>
 
       <div class="px-card">
-        <div class="sec-title">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <button type="button" class="px-mini-btn" id="backToBooksBtn" style="display:none;">◀ 전체 단어집</button>
-            <span id="folderSecTitle">📁 단어장</span>
+        <div class="sec-title" style="flex-wrap:wrap;gap:6px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" class="px-mini-btn" id="backToBooksBtn" style="display:none;white-space:nowrap;">◀ 전체</button>
+            <span id="folderSecTitle" style="white-space:nowrap;">📁 단어장</span>
           </div>
-          <div style="display:flex;gap:4px;">
-            <button type="button" class="px-mini-btn" id="addBookBtn">+ 큰 폴더</button>
-            <button type="button" class="px-mini-btn" id="addFolderBtn">+ Day</button>
-            <button type="button" class="px-mini-btn" id="openFolderMgrBtn">⚙️ 관리</button>
-            <button type="button" class="px-mini-btn" id="toggleEditModeBtn">✏️ 편집</button>
+          <div style="display:flex;gap:4px;flex-wrap:nowrap;">
+            <button type="button" class="px-mini-btn" id="addBookBtn" style="white-space:nowrap;">+큰폴더</button>
+            <button type="button" class="px-mini-btn" id="addFolderBtn" style="white-space:nowrap;">+Day</button>
+            <button type="button" class="px-mini-btn" id="openFolderMgrBtn" style="white-space:nowrap;">⚙️</button>
+            <button type="button" class="px-mini-btn" id="toggleEditModeBtn" style="white-space:nowrap;">✏️</button>
           </div>
         </div>
         <div id="bookListRow" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"></div>
@@ -719,7 +719,7 @@ html, body {
 <!-- 설정 & 백업 모달 -->
   <!-- 퀴즈 기록 상세 모달 -->
   <div class="modal-bg" id="quizLogModal">
-    <div class="modal-box" style="max-height:82vh;overflow-y:auto;">
+    <div class="modal-card" style="max-height:82vh;overflow-y:auto;">
       <div class="sec-title"><span id="quizLogModalTitle">📝 퀴즈 채점 결과</span><button type="button" class="px-mini-btn" onclick="document.getElementById('quizLogModal').classList.remove('open')">닫기</button></div>
       <div id="quizLogModalMeta" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
       <div id="quizLogModalBody"></div>
@@ -728,7 +728,7 @@ html, body {
 
   <!-- 출석 도장판 모달 -->
   <div class="modal-bg" id="stampModal">
-    <div class="modal-box">
+    <div class="modal-card">
       <div class="sec-title"><span>🔥 출석 도장판</span><button type="button" class="px-mini-btn" onclick="document.getElementById('stampModal').classList.remove('open')">닫기</button></div>
       <div style="font-size:12px;color:var(--muted);">시험을 완료하거나 도장을 찍으면 1일차, 2일차 도장이 쾅 찍혀요!</div>
       <div id="stampGrid" class="stamp-grid"></div>
@@ -738,29 +738,30 @@ html, body {
 
     <!-- 레벨/성장 가이드 모달 -->
   <div class="modal-bg" id="lvHelpModal">
-    <div class="modal-box">
+    <div class="modal-card">
       <div class="sec-title"><span>🌱 레벨 & 성장 도감</span><button type="button" class="px-mini-btn" onclick="document.getElementById('lvHelpModal').classList.remove('open')">닫기</button></div>
       <div id="lvHelpCurrent" style="background:#FFF8E7;border:2px solid #222;border-radius:10px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
       <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">⚡ 경험치(EXP) 얻는 법</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px;">
-        • 시험 1문제 정답: +5 EXP<br>
-        • 플래시카드 완벽 암기(⭐): +20 EXP (리스트 ⭐ +15 EXP)<br>
-        • 100 EXP × 현재 레벨이 채워지면 레벨업!
+        • 시험 1단어 정답: +1 P<br>
+        • 완벽 암기(⭐) 체크: +1 P<br>
+        • 50 P 모일 때마다 1레벨 업! (최고 Lv.99)
       </div>
-      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🏆 성장 단계 (새싹 탈출 로드맵)</div>
+      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🏆 성장 단계 (Lv.99 단어왕 로드맵)</div>
       <div style="font-size:12px;line-height:1.6;">
-        • <b>Lv.1 ~ 2</b>: 🌱 단어 새싹<br>
-        • <b>Lv.3 ~ 4</b>: 🏹 단어 헌터 (Lv.3에 새싹 탈출!)<br>
-        • <b>Lv.5 ~ 6</b>: 🛡️ 토익 기사<br>
-        • <b>Lv.7 ~ 8</b>: 📘 어휘 마스터<br>
-        • <b>Lv.9+</b>: 👑 단어왕
+        • <b>Lv.1 ~ 9</b>: 🌱 단어 새싹<br>
+        • <b>Lv.10 ~ 19</b>: 🍀 튼튼 떡잎 (Lv.10에 새싹 탈출!)<br>
+        • <b>Lv.20 ~ 44</b>: 🌷 꽃봉오리<br>
+        • <b>Lv.45 ~ 69</b>: 🌻 활짝 핀 꽃<br>
+        • <b>Lv.70 ~ 98</b>: ✨ 황금 꽃<br>
+        • <b>Lv.99</b>: 👑 단어왕
       </div>
     </div>
   </div>
 
   <!-- 폴더 관리 모달 -->
   <div class="modal-bg" id="folderMgrModal">
-    <div class="modal-box" style="max-height:82vh;overflow-y:auto;">
+    <div class="modal-card" style="max-height:82vh;overflow-y:auto;">
       <div class="sec-title"><span>⚙️ 폴더 · 단어집 관리</span><button type="button" class="px-mini-btn" onclick="document.getElementById('folderMgrModal').classList.remove('open')">닫기</button></div>
       <div style="font-size:12px;font-weight:bold;margin:6px 0 4px;">📚 큰 폴더 (단어집)</div>
       <div id="mgrBooksList"></div>
@@ -867,8 +868,8 @@ function gainExp(amt) {
   updateStreak();
   state.exp += amt;
   let leveled = false;
-  while (state.exp >= state.lv * 100) {
-    state.exp -= state.lv * 100;
+  while (state.exp >= 50 && state.lv < 99) {
+    state.exp -= 50;
     state.lv += 1;
     leveled = true;
   }
@@ -883,9 +884,13 @@ function gainExp(amt) {
 }
 
 function renderStatus() {
-  const need = state.lv * 100;
-  const titles = ['단어 새싹', '단어 헌터', '토익 기사', '어휘 마스터', '단어왕'];
-  const title = titles[Math.min(titles.length - 1, Math.floor((state.lv - 1) / 2))];
+  const need = 50;
+  let title = '단어 새싹';
+  if (state.lv >= 99) title = '단어왕';
+  else if (state.lv >= 70) title = '황금 꽃';
+  else if (state.lv >= 45) title = '활짝 핀 꽃';
+  else if (state.lv >= 20) title = '꽃봉오리';
+  else if (state.lv >= 10) title = '튼튼 떡잎';
   document.getElementById('lvTitle').textContent = `Lv.${state.lv} ${title}`;
   document.getElementById('streakBadge').textContent = `🔥 ${state.streak}일`;
   document.getElementById('expFill').style.width = `${Math.min(100, Math.round((state.exp / need) * 100))}%`;
@@ -950,8 +955,8 @@ function ensureBookState() {
 ensureBookState();
 
 document.getElementById('openLvHelpBtn').onclick = () => {
-  const need = state.lv * 100;
-  const escapeLv = state.lv < 3 ? `새싹 탈출(Lv.3)까지 ${3 - state.lv}레벨 남았어요!` : '이미 새싹 탈출 성공! 멋져요 🎉';
+  const need = 50;
+  const escapeLv = state.lv < 10 ? `새싹 탈출(Lv.10)까지 ${10 - state.lv}레벨 남았어요!` : (state.lv < 99 ? `Lv.99 단어왕까지 ${99 - state.lv}레벨 남았어요!` : '최고 등급 👑 단어왕 달성!');
   document.getElementById('lvHelpCurrent').innerHTML = `<b>현재: Lv.${state.lv}</b> (${state.exp}/${need} EXP)<br><span style="color:#E03131;">${escapeLv}</span>`;
   document.getElementById('lvHelpModal').classList.add('open');
 };
@@ -1131,7 +1136,7 @@ window.setWordStatus = function(id, st) {
   const w = state.words.find(x => x.id === id);
   if (!w) return;
   w.status = w.status === st ? 'none' : st;
-  if (w.status === 'star') gainExp(15);
+  if (w.status === 'star') gainExp(1);
   save(); renderHome(); renderStudy();
 };
 
@@ -1375,7 +1380,7 @@ document.getElementById('fcHardBtn').onclick = () => {
 };
 document.getElementById('fcMasterBtn').onclick = () => {
   const list = getStudyWords(); if (!list[fcIdx]) return;
-  list[fcIdx].status = 'star'; gainExp(20); save(); renderHome(); document.getElementById('fcNextBtn').click();
+  list[fcIdx].status = 'star'; gainExp(1); save(); renderHome(); document.getElementById('fcNextBtn').click();
 };
 
 /* Quiz Tab: Fast & Sheet Mode (No Monster Delay) */
@@ -1520,7 +1525,7 @@ function renderQuizQ() {
 function handleQuizAnswer(ok, w, userAns = '', others = []) {
   if (ok) {
     qCorrect += 1;
-    gainExp(5);
+    gainExp(1);
   } else {
     qWrongs.push({ en: w.en, ko: w.ko });
   }
@@ -1597,7 +1602,7 @@ document.getElementById('sheetSubmitBtn').onclick = () => {
     else qWrongs.push({ en: w.en, ko: w.ko });
     qDetails.push({ en: w.en, ko: w.ko, userAns: userAns || '(미입력)', ok, others });
   });
-  gainExp(qCorrect * 5);
+  gainExp(qCorrect * 1);
   finishQuiz(answered.length);
 };
 
