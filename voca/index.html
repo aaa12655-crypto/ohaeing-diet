@@ -455,6 +455,7 @@ html, body {
 }
 
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -487,8 +488,11 @@ html, body {
         <div class="sec-title" style="margin-bottom:0;">
           <span>⚡ 3초 복붙 단어 넣기</span>
           <div style="display:flex;gap:5px;">
+            <label class="px-mini-btn" style="cursor:pointer;background:#FFF3BF;">
+              📷 사진 읽기<input type="file" id="importImgOcrInput" accept="image/*" style="display:none;" />
+            </label>
             <label class="px-mini-btn" style="cursor:pointer;">
-              .txt 파일만<input type="file" id="importTxtInput" accept=".txt,.csv,text/plain" style="display:none;" />
+              .txt<input type="file" id="importTxtInput" accept=".txt,.csv,text/plain" style="display:none;" />
             </label>
             <button type="button" class="px-mini-btn on" id="togglePasteBoxBtn">접기</button>
           </div>
@@ -969,6 +973,40 @@ document.getElementById('parseAddBtn').onclick = () => {
 };
 
 document.getElementById('clearPasteBtn').onclick = () => { document.getElementById('bulkInput').value = ''; document.getElementById('bulkInput').focus(); };
+
+document.getElementById('importImgOcrInput').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const prog = document.getElementById('apiProgress');
+  if (typeof Tesseract === 'undefined') {
+    alert('사진 인식기를 불러오는 중이에요. 잠시 후 다시 눌러주세요!');
+    e.target.value = '';
+    return;
+  }
+  prog.textContent = '📷 사진에서 영어·한글 읽는 중... (첫 실행은 10~20초 걸려요)';
+  try {
+    const res = await Tesseract.recognize(file, 'eng+kor', {
+      logger: (m) => {
+        if (m.status === 'recognizing text' && typeof m.progress === 'number') {
+          prog.textContent = `📷 사진 읽는 중... ${Math.round(m.progress * 100)}%`;
+        }
+      }
+    });
+    const raw = (res && res.data && res.data.text) ? res.data.text : '';
+    const cleaned = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).join('\n');
+    if (!cleaned) {
+      prog.textContent = '😅 사진에서 글씨를 찾지 못했어요.';
+    } else {
+      const box = document.getElementById('bulkInput');
+      box.value = (box.value.trim() ? box.value.trim() + '\n' : '') + cleaned;
+      prog.textContent = '✅ 추출 완료! 위 칸에서 오타를 확인한 뒤 [+ 단어 추가하기]를 눌러주세요.';
+    }
+  } catch (err) {
+    prog.textContent = '⚠️ 사진 읽기 중 오류가 났어요.';
+  }
+  e.target.value = '';
+};
+
 document.getElementById('importTxtInput').onchange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
