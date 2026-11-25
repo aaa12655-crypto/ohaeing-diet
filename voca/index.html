@@ -246,11 +246,11 @@ html, body {
   position: absolute;
   top: 0; height: 100%;
   width: 41%;
-  border-radius: 12px;
-  border: 2px solid rgba(255,255,255,0.92);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.18), inset 0 2px 12px rgba(255,255,255,0.65), inset 0 -2px 10px rgba(0,0,0,0.08);
-  backdrop-filter: blur(6px) saturate(1.4);
-  -webkit-backdrop-filter: blur(6px) saturate(1.4);
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.78);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.16), inset 2px 2px 0 rgba(255,255,255,0.48), inset -1px -1px 0 rgba(0,0,0,0.08);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   touch-action: none;
   cursor: grab;
   z-index: 15;
@@ -274,12 +274,12 @@ html, body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.14) 24%, rgba(255,255,255,0) 42%, rgba(255,255,255,0.36) 58%, rgba(255,255,255,0) 76%, rgba(255,255,255,0.22) 100%);
+  background: linear-gradient(132deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 20%, rgba(255,255,255,0.46) 22%, rgba(255,255,255,0.06) 26%, rgba(255,255,255,0) 28%);
   pointer-events: none;
 }
-.col-cellophane.red { background: linear-gradient(135deg, rgba(255,68,78,0.68), rgba(235,38,52,0.56)); }
-.col-cellophane.green { background: linear-gradient(135deg, rgba(50,205,105,0.68), rgba(30,175,85,0.56)); }
-.col-cellophane.blue { background: linear-gradient(135deg, rgba(55,155,255,0.68), rgba(35,125,235,0.56)); }
+.col-cellophane.red { background: rgba(235, 32, 20, 0.74); }
+.col-cellophane.green { background: rgba(18, 168, 72, 0.74); }
+.col-cellophane.blue { background: rgba(24, 118, 232, 0.74); }
 
 /* Flashcard Mode */
 .flashcard {
@@ -1092,7 +1092,7 @@ function renderFolderMgrModal() {
   ensureBookState();
   document.getElementById('mgrBooksList').innerHTML = state.books.map(b => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFFDF9;">
-      <strong style="font-size:12px;">📚 ${b.name}</strong>
+      <strong style="font-size:12px;">${b.name}</strong>
       <div style="display:flex;gap:4px;">
         <button type="button" class="px-mini-btn" onclick="renameBook('${b.id}')">이름</button>
         <button type="button" class="px-mini-btn" style="color:#C92A2A;" onclick="deleteBook('${b.id}')">삭제</button>
@@ -1191,12 +1191,12 @@ function renderAllFolderRows() {
     folderRow.style.display = 'none';
     bookRow.innerHTML = state.books.map(b => {
       const cnt = state.folders.filter(f => f.bookId === b.id).length;
-      return `<button type="button" class="px-btn butter" style="padding:10px 8px;text-align:left;" onclick="enterBook('${b.id}')">📚 ${b.name}<div style="font-size:11px;color:var(--muted);margin-top:2px;">${cnt}개 Day</div></button>`;
+      return `<button type="button" class="px-btn butter" style="padding:10px 8px;text-align:left;" onclick="enterBook('${b.id}')">${b.name}<div style="font-size:11px;color:var(--muted);margin-top:2px;">${cnt}개 Day</div></button>`;
     }).join('');
   } else {
     const curB = state.books.find(b => b.id === state.curBookId) || state.books[0];
     backBtn.style.display = 'inline-block';
-    titleEl.textContent = `📚 ${curB.name}`;
+    titleEl.textContent = curB.name;
     bookRow.style.display = 'none';
     folderRow.style.display = 'flex';
     const subFolders = state.folders.filter(f => f.bookId === curB.id);
@@ -1639,7 +1639,7 @@ function renderQuizQ() {
       const box = document.getElementById('blankHintBox');
       if (g.ok) {
         box.style.color = '#2B8A3E';
-        box.innerHTML = `⭕ 정답!${g.others.length ? ` <span style="color:var(--muted);"><span style="color:var(--coral);font-weight:bold;">+ ${g.others.join(', ')}</span></span>` : ''}`;
+        box.innerHTML = `⭕ 정답!${g.others.length ? ` <span style="color:var(--muted);"><span style="color:#D92B2B;font-weight:bold;">+ ${g.others.join(', ')}</span></span>` : ''}`;
       } else {
         box.style.color = '#C92A2A';
         box.innerHTML = `❌ 오답 · 뜻: ${w.ko}`;
@@ -1884,7 +1884,7 @@ window.openQuizLogModal = (idx) => {
         <strong style="font-size:13px;">${i + 1}. ${it.en}</strong>
         <span style="font-size:13px;font-weight:bold;color:${it.ok ? '#2B8A3E' : '#C92A2A'};">${it.ok ? '⭕' : '❌'}</span>
       </div>
-      <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);"><span style="color:var(--coral);font-weight:bold;">+ ${it.others.join(', ')}</span></span>` : ''}</div>
+      <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);"><span style="color:#D92B2B;font-weight:bold;">+ ${it.others.join(', ')}</span></span>` : ''}</div>
       ${!it.ok ? `<div style="font-size:12px;color:#C92A2A;margin-top:2px;">정답: ${it.ko}</div>` : ''}
     </div>
   `).join('');
