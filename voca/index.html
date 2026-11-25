@@ -245,8 +245,8 @@ html, body {
   top: 0; height: 100%;
   width: 41%;
   border-radius: 10px;
-  border: 2px solid rgba(0,0,0,0.2);
-  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.4), 0 3px 8px rgba(0,0,0,0.12);
+  border: 2px solid #222222;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.35), 2px 2px 0 rgba(0,0,0,0.12);
   touch-action: none;
   cursor: grab;
   z-index: 15;
@@ -257,28 +257,29 @@ html, body {
 }
 .col-cellophane::before {
   content: '↔ ↕ 밀어서 확인';
-  background: rgba(255,255,255,0.94);
-  border: 1.5px solid var(--ink);
+  background: rgba(255,255,255,0.95);
+  border: 1.5px solid #222222;
   border-radius: 8px;
   padding: 2px 7px;
   font-size: 10px;
-  color: var(--ink);
+  color: #222222;
   position: relative;
   z-index: 2;
 }
 .col-cellophane::after {
   content: '';
   position: absolute;
-  top: 8px; left: -10%; right: -10%;
-  height: 1.5px;
-  background: rgba(255,255,255,0.35);
-  box-shadow: 0 9px 0 rgba(255,255,255,0.28);
-  transform: rotate(-8deg);
+  top: 32px; left: 10px;
+  width: 11px; height: 2.5px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.45);
+  box-shadow: 7px 5px 0 rgba(255,255,255,0.45);
+  transform: rotate(-45deg);
   pointer-events: none;
 }
-.col-cellophane.red { background: rgba(255, 59, 48, 0.92); }
-.col-cellophane.green { background: rgba(34, 177, 76, 0.92); }
-.col-cellophane.blue { background: rgba(0, 122, 255, 0.92); }
+.col-cellophane.red { background: rgba(255, 59, 48, 0.88); }
+.col-cellophane.green { background: rgba(34, 177, 76, 0.88); }
+.col-cellophane.blue { background: rgba(0, 122, 255, 0.88); }
 
 /* Flashcard Mode */
 .flashcard {
@@ -1349,7 +1350,7 @@ function renderStudy() {
 
     if (maskMode === 'none' || !list.length) {
       colFilm.style.display = 'none';
-      setTimeout(() => document.querySelectorAll('.study-ko').forEach(el => { el.style.color = ''; }), 0);
+      setTimeout(() => document.querySelectorAll('.study-ko').forEach(el => { el.style.opacity = ''; el.style.clipPath = ''; el.style.color = ''; }), 0);
     } else {
       colFilm.style.display = 'flex';
       colFilm.className = `col-cellophane ${maskColor}`;
@@ -1429,22 +1430,40 @@ colFilm.addEventListener('pointerup', () => {
 });
 function updateCellophaneMask() {
   if (maskMode !== 'ko' || studyView !== 'list') {
-    document.querySelectorAll('.study-ko').forEach(el => { el.style.color = ''; });
+    document.querySelectorAll('.study-ko').forEach(el => {
+      el.style.opacity = '';
+      el.style.clipPath = '';
+      el.style.color = '';
+    });
     return;
   }
   const fRect = colFilm.getBoundingClientRect();
-  const colorMap = { red: '#FF3B30', green: '#22B14C', blue: '#007AFF' };
-  const hideColor = colorMap[maskColor] || '#FF3B30';
   document.querySelectorAll('#studyListView .study-row').forEach(row => {
     const koEl = row.querySelector('.study-ko');
     if (!koEl) return;
+    koEl.style.color = '#222222';
     const kRect = koEl.getBoundingClientRect();
-    const overlapX = Math.min(fRect.right, kRect.right) - Math.max(fRect.left, kRect.left);
-    const overlapY = Math.min(fRect.bottom, kRect.bottom) - Math.max(fRect.top, kRect.top);
-    if (overlapX > kRect.width * 0.25 && overlapY > kRect.height * 0.25) {
-      koEl.style.color = hideColor;
+    const oy = Math.min(fRect.bottom, kRect.bottom) - Math.max(fRect.top, kRect.top);
+    const ox = Math.min(fRect.right, kRect.right) - Math.max(fRect.left, kRect.left);
+    if (oy <= 2 || ox <= 0) {
+      koEl.style.opacity = '1';
+      koEl.style.clipPath = 'none';
+      return;
+    }
+    if (fRect.left <= kRect.left && fRect.right >= kRect.right && oy >= kRect.height * 0.6) {
+      koEl.style.opacity = '0';
+      koEl.style.clipPath = 'none';
+    } else if (fRect.left <= kRect.left && fRect.right < kRect.right) {
+      const cutL = Math.max(0, Math.round(fRect.right - kRect.left));
+      koEl.style.opacity = '1';
+      koEl.style.clipPath = `inset(0px 0px 0px ${cutL}px)`;
+    } else if (fRect.left > kRect.left && fRect.right >= kRect.right) {
+      const cutR = Math.max(0, Math.round(kRect.right - fRect.left));
+      koEl.style.opacity = '1';
+      koEl.style.clipPath = `inset(0px ${cutR}px 0px 0px)`;
     } else {
-      koEl.style.color = '#222222';
+      koEl.style.opacity = '0';
+      koEl.style.clipPath = 'none';
     }
   });
 }
