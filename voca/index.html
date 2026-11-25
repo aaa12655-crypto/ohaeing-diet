@@ -596,10 +596,15 @@ html, body {
           <button type="button" class="px-btn dark" id="startQuizBtn" style="flex:1;">⚡ 시험 바로 시작하기</button>
           <button type="button" class="px-btn butter" id="startYesterdayWrongBtn" style="padding:8px 10px;font-size:12px;">📅 어제 오답</button>
         </div>
-      </div>
-
-      <div class="px-card" style="margin-top:10px;">
-        <div class="sec-title"><span>📋 날짜별 퀴즈 기록</span><span style="font-size:11px;color:var(--muted);">누르면 채점 확인</span></div>
+        <div style="border-top:2px dashed #E5DFCF;margin:14px 0 10px;"></div>
+        <div class="sec-title" style="margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+          <span>📋 퀴즈 기록</span>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button type="button" class="px-mini-btn" id="qLogPrevBtn">◀</button>
+            <strong id="qLogDateTxt" style="font-size:12px;">2026-11-25</strong>
+            <button type="button" class="px-mini-btn" id="qLogNextBtn">▶</button>
+          </div>
+        </div>
         <div id="quizLogList"></div>
       </div>
 
@@ -1646,6 +1651,7 @@ function finishQuiz(overrideTotal) {
   if (state.quizLogs.length > 60) state.quizLogs = state.quizLogs.slice(0, 60);
   stampToday();
   wrongViewDate = t;
+  qLogViewDate = t;
   save();
   renderStatus();
   syncFriendScore(rate, qCorrect, qWrongs.length, qWrongs);
@@ -1658,24 +1664,45 @@ function finishQuiz(overrideTotal) {
   alert(`시험 완료! ${total}개 중 ${qCorrect}개 맞음 (${rate}%)`);
 }
 
+let qLogViewDate = todayStr();
+function shiftQLogDate(delta) {
+  const d = new Date(qLogViewDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  qLogViewDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  renderQuizLogs();
+}
+function deleteQuizLog(realIdx, ev) {
+  if (ev) ev.stopPropagation();
+  state.quizLogs.splice(realIdx, 1);
+  save();
+  renderQuizLogs();
+}
 function renderQuizLogs() {
   const box = document.getElementById('quizLogList');
+  const dateEl = document.getElementById('qLogDateTxt');
+  if (dateEl) dateEl.textContent = qLogViewDate;
   if (!box) return;
-  const logs = state.quizLogs || [];
-  if (!logs.length) {
-    box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">아직 본 퀴즈 기록이 없어요!</div>';
+  const allLogs = state.quizLogs || [];
+  const filtered = allLogs.map((lg, idx) => ({ lg, idx })).filter(x => x.lg.date === qLogViewDate);
+  if (!filtered.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">이 날짜에 본 퀴즈 기록이 없어요!</div>';
     return;
   }
-  box.innerHTML = logs.map((lg, idx) => `
+  box.innerHTML = filtered.map(({ lg, idx }) => `
     <div class="quiz-log-item" onclick="openQuizLogModal(${idx})">
       <div>
-        <div style="font-size:12px;font-weight:bold;">${lg.date} ${lg.time} · ${lg.folderName}</div>
+        <div style="font-size:12px;font-weight:bold;">${lg.time} · ${lg.folderName}</div>
         <div style="font-size:11px;color:var(--muted);">총 ${lg.total}문제 중 ${lg.correct}개 정답</div>
       </div>
-      <strong style="font-size:13px;color:${lg.rate >= 80 ? '#2B8A3E' : '#E03131'};">${lg.rate}%</strong>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <strong style="font-size:13px;color:${lg.rate >= 80 ? '#2B8A3E' : '#E03131'};">${lg.rate}%</strong>
+        <button type="button" class="px-mini-btn" style="color:#C92A2A;padding:2px 6px;" onclick="deleteQuizLog(${idx}, event)">✕</button>
+      </div>
     </div>
   `).join('');
 }
+document.getElementById('qLogPrevBtn').onclick = () => shiftQLogDate(-1);
+document.getElementById('qLogNextBtn').onclick = () => shiftQLogDate(1);
 
 window.openQuizLogModal = (idx) => {
   const lg = (state.quizLogs || [])[idx];
