@@ -462,7 +462,7 @@ html, body {
   <header class="status-bar">
     <div class="status-top">
       <div class="avatar-clean" id="avatarBox" title="단어 새싹">
-        <img src="avatar.png?v=2" alt="단어 새싹" />
+        <img src="plant1.png?v=1" alt="단어 새싹" />
       </div>
       <div class="status-info">
         <div class="lv-row">
@@ -739,17 +739,18 @@ html, body {
       <div id="lvHelpCurrent" style="background:#FFF8E7;border:2px solid #222;border-radius:10px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
       <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">⚡ 경험치(EXP) 얻는 법</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px;">
-        • 시험 1단어 정답: +1 P<br>
-        • 완벽 암기(⭐) 체크: +1 P<br>
+        • 시험 1단어 정답: +1 P (완벽암기 ⭐ 제외!)<br>
         • 50 P 모일 때마다 1레벨 업! (최고 Lv.99)
       </div>
-      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🏆 성장 단계 (Lv.99 단어왕 로드맵)</div>
+      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🏆 8단계 식물 성장 도감 (Lv.99 단어왕)</div>
       <div style="font-size:12px;line-height:1.6;">
-        • <b>Lv.1 ~ 9</b>: 🌱 단어 새싹<br>
-        • <b>Lv.10 ~ 19</b>: 🍀 튼튼 떡잎 (Lv.10에 새싹 탈출!)<br>
-        • <b>Lv.20 ~ 44</b>: 🌷 꽃봉오리<br>
-        • <b>Lv.45 ~ 69</b>: 🌻 활짝 핀 꽃<br>
-        • <b>Lv.70 ~ 98</b>: ✨ 황금 꽃<br>
+        • <b>Lv.1 ~ 4</b>: 🌱 단어 새싹<br>
+        • <b>Lv.5 ~ 9</b>: ☘️ 세잎 클로버<br>
+        • <b>Lv.10 ~ 19</b>: 🍀 네잎 클로버<br>
+        • <b>Lv.20 ~ 34</b>: 🌷 분홍 봉오리<br>
+        • <b>Lv.35 ~ 54</b>: 🌸 살짝 핀 분홍꽃<br>
+        • <b>Lv.55 ~ 74</b>: 🌸 5잎 분홍꽃<br>
+        • <b>Lv.75 ~ 98</b>: ✨ 황금꽃<br>
         • <b>Lv.99</b>: 👑 단어왕
       </div>
     </div>
@@ -881,12 +882,16 @@ function gainExp(amt) {
 
 function renderStatus() {
   const need = 50;
-  let title = '단어 새싹';
-  if (state.lv >= 99) title = '단어왕';
-  else if (state.lv >= 70) title = '황금 꽃';
-  else if (state.lv >= 45) title = '활짝 핀 꽃';
-  else if (state.lv >= 20) title = '꽃봉오리';
-  else if (state.lv >= 10) title = '튼튼 떡잎';
+  let title = '단어 새싹', plantStage = 1;
+  if (state.lv >= 99) { title = '단어왕'; plantStage = 8; }
+  else if (state.lv >= 75) { title = '황금꽃'; plantStage = 7; }
+  else if (state.lv >= 55) { title = '5잎 분홍꽃'; plantStage = 6; }
+  else if (state.lv >= 35) { title = '살짝 핀 분홍꽃'; plantStage = 5; }
+  else if (state.lv >= 20) { title = '분홍 봉오리'; plantStage = 4; }
+  else if (state.lv >= 10) { title = '네잎 클로버'; plantStage = 3; }
+  else if (state.lv >= 5) { title = '세잎 클로버'; plantStage = 2; }
+  const av = document.querySelector('.avatar-clean');
+  if (av) av.src = `plant${plantStage}.png?v=1`;
   document.getElementById('lvTitle').textContent = `Lv.${state.lv} ${title}`;
   document.getElementById('streakBadge').textContent = `🔥 ${state.streak}일`;
   document.getElementById('expFill').style.width = `${Math.min(100, Math.round((state.exp / need) * 100))}%`;
@@ -1607,6 +1612,13 @@ function getDateOffset(baseStr, delta) {
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 let wrongViewDate = todayStr();
+
+function stampToday() {
+  const t = todayStr();
+  if (!Array.isArray(state.stamps)) state.stamps = [];
+  if (!state.stamps.includes(t)) state.stamps.push(t);
+  state.streak = state.stamps.length;
+}
 
 function finishQuiz(overrideTotal) {
   const total = overrideTotal || qList.length;
