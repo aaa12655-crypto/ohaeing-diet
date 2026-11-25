@@ -404,7 +404,7 @@ html, body {
         <textarea class="px-textarea" id="bulkInput" placeholder="줄바꿈 없이 한 줄로 쭉 붙여넣어도 자동 분리!
 예: abandon 버리다 crucial - 중대한 implement : 실행하다"></textarea>
         <button type="button" class="px-btn matcha" id="parseAddBtn" style="width:100%;margin-top:8px;">+ 단어 추가하기</button>
-        <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;">※ 사진·PDF는 피클 톡으로 보내주시면 정리해 드려요!</div>
+        <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;">※ 사진·PDF는 AI에게 보내서 텍스트로 추출해 붙여넣으세요!</div>
       </div>
 
       <div class="px-card">
@@ -448,7 +448,7 @@ html, body {
         </div>
         <div style="display:flex;gap:6px;align-items:center;font-size:12px;">
           <label><input type="checkbox" id="onlyHardChk" /> 헷갈림(🔥)만 보기</label>
-          <button type="button" class="px-mini-btn" id="shuffleStudyBtn" style="margin-left:auto;">순서 섞기</button>
+          <div style="margin-left:auto;display:flex;gap:4px;"><button type="button" class="px-mini-btn" id="shuffleStudyBtn">순서 섞기</button><button type="button" class="px-mini-btn" id="resetOrderBtn">원래대로</button></div>
         </div>
       </div>
 
@@ -812,7 +812,7 @@ document.getElementById('parseAddBtn').onclick = () => {
   const parsed = parseBulkLines(raw);
   if (!parsed.length) return alert('단어 뜻 형식으로 입력해 주세요! (예: abandon 버리다)');
   parsed.forEach((item, i) => {
-    state.words.unshift({ id: 'w_' + Date.now() + '_' + i, folderId: state.activeFolderId, en: item.en, ko: item.ko, status: 'none' });
+    state.words.push({ id: 'w_' + Date.now() + '_' + i, folderId: state.activeFolderId, en: item.en, ko: item.ko, status: 'none' });
   });
   document.getElementById('bulkInput').value = '';
   document.getElementById('apiProgress').textContent = `✅ ${parsed.length}개 단어 추가 완료!`;
@@ -962,6 +962,9 @@ document.getElementById('shuffleStudyBtn').onclick = () => {
     [ids[i], ids[j]] = [ids[j], ids[i]];
   }
   studyOrder = ids; fcIdx = 0; renderStudy();
+};
+document.getElementById('resetOrderBtn').onclick = () => {
+  studyOrder = []; fcIdx = 0; renderStudy();
 };
 
 document.getElementById('flashcardBox').onclick = (e) => {
