@@ -461,7 +461,7 @@ html, body {
         <div class="folder-row" id="folderRow"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);">
           <span id="folderCountTxt">총 0단어</span>
-          <button type="button" class="px-mini-btn" id="delFolderBtn" style="color:#C92A2A;">폴더 삭제</button>
+          <div style="display:flex;gap:5px;"><button type="button" class="px-mini-btn" id="clearFolderWordsBtn">비우기</button><button type="button" class="px-mini-btn" id="delFolderBtn" style="color:#C92A2A;">폴더 삭제</button></div>
         </div>
       </div>
 
@@ -802,6 +802,11 @@ document.getElementById('addFolderBtn').onclick = () => {
   save(); renderHome();
 };
 
+document.getElementById('clearFolderWordsBtn').onclick = () => {
+  if (!confirm('이 폴더 안의 단어를 모두 비울까요?')) return;
+  state.words = state.words.filter(w => w.folderId !== state.activeFolderId);
+  save(); renderHome(); renderStudy();
+};
 document.getElementById('delFolderBtn').onclick = () => {
   if (state.folders.length <= 1) return alert('최소 1개 폴더는 남아있어야 해요!');
   if (!confirm('이 폴더와 안에 있는 단어를 삭제할까요?')) return;
@@ -813,7 +818,9 @@ document.getElementById('delFolderBtn').onclick = () => {
 };
 
 function parseBulkLines(raw) {
-  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  // 줄바꿈 없이 한 줄로 쭉 이어진 경우: 한글/닫는괄호/숫자 뒤에 공백 + 새 영단어(품사약어 n./v./a./ad./adj./adv./prep./conj. 제외)가 오면 자동 줄분리
+  const normalized = raw.replace(/([가-힣)\]\d])\s+(?=(?!(?:n|v|a|ad|adj|adv|prep|conj|pron|int)\.)[A-Za-z]{2,}(?:[\s'-][A-Za-z]+)*\s+(?:[가-힣(]|(?:n|v|a|ad|adj|adv|prep|conj)\.))/g, '$1\n');
+  const lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const out = [];
   for (const line of lines) {
     let en = '', ko = '';
@@ -823,7 +830,7 @@ function parseBulkLines(raw) {
       const m = line.match(/^([A-Za-z][A-Za-z\s'-]*?)\s*[-–:]\s*(.+)$/);
       if (m) { en = m[1].trim(); ko = m[2].trim(); }
     } else {
-      const m = line.match(/^([A-Za-z][A-Za-z'-]*(?:\s+[A-Za-z'-]+)?)\s+([^A-Za-z].*)$/);
+      const m = line.match(/^([A-Za-z][A-Za-z'-]*(?:\s+[A-Za-z'-]+)?)\s+(.+)$/);
       if (m) { en = m[1].trim(); ko = m[2].trim(); }
     }
     if (en && ko) out.push({ en, ko });
