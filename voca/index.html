@@ -466,7 +466,7 @@ html, body {
       </div>
       <div class="status-info">
         <div class="lv-row">
-          <span class="lv-title" id="lvTitle">Lv.1 단어 새싹</span>
+          <span class="lv-title" id="lvTitle">Lv.1 단어 새싹</span><button type="button" class="px-mini-btn" id="openLvHelpBtn" style="padding:1px 6px;font-size:11px;border-radius:999px;">?</button>
           <span class="streak-badge" id="streakBadge">🔥 1일</span>
         </div>
         <div class="exp-wrap">
@@ -506,12 +506,18 @@ html, body {
 
       <div class="px-card">
         <div class="sec-title">
-          <span>📁 단어장</span>
-          <div style="display:flex;gap:5px;">
-            <button type="button" class="px-mini-btn" id="addFolderBtn">+ 새 폴더</button>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="px-mini-btn" id="backToBooksBtn" style="display:none;">◀ 전체 단어집</button>
+            <span id="folderSecTitle">📁 단어장</span>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button type="button" class="px-mini-btn" id="addBookBtn">+ 큰 폴더</button>
+            <button type="button" class="px-mini-btn" id="addFolderBtn">+ Day</button>
+            <button type="button" class="px-mini-btn" id="openFolderMgrBtn">⚙️ 관리</button>
             <button type="button" class="px-mini-btn" id="toggleEditModeBtn">✏️ 편집</button>
           </div>
         </div>
+        <div id="bookListRow" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"></div>
         <div class="folder-row" id="folderRow"></div>
         <div id="editFolderBtns" style="display:none;justify-content:flex-end;gap:5px;margin-bottom:8px;">
           <button type="button" class="px-mini-btn" id="clearFolderWordsBtn">전체 비우기</button>
@@ -730,6 +736,39 @@ html, body {
     </div>
   </div>
 
+    <!-- 레벨/성장 가이드 모달 -->
+  <div class="modal-bg" id="lvHelpModal">
+    <div class="modal-box">
+      <div class="sec-title"><span>🌱 레벨 & 성장 도감</span><button type="button" class="px-mini-btn" onclick="document.getElementById('lvHelpModal').classList.remove('open')">닫기</button></div>
+      <div id="lvHelpCurrent" style="background:#FFF8E7;border:2px solid #222;border-radius:10px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
+      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">⚡ 경험치(EXP) 얻는 법</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px;">
+        • 시험 1문제 정답: +5 EXP<br>
+        • 플래시카드 완벽 암기(⭐): +20 EXP (리스트 ⭐ +15 EXP)<br>
+        • 100 EXP × 현재 레벨이 채워지면 레벨업!
+      </div>
+      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🏆 성장 단계 (새싹 탈출 로드맵)</div>
+      <div style="font-size:12px;line-height:1.6;">
+        • <b>Lv.1 ~ 2</b>: 🌱 단어 새싹<br>
+        • <b>Lv.3 ~ 4</b>: 🏹 단어 헌터 (Lv.3에 새싹 탈출!)<br>
+        • <b>Lv.5 ~ 6</b>: 🛡️ 토익 기사<br>
+        • <b>Lv.7 ~ 8</b>: 📘 어휘 마스터<br>
+        • <b>Lv.9+</b>: 👑 단어왕
+      </div>
+    </div>
+  </div>
+
+  <!-- 폴더 관리 모달 -->
+  <div class="modal-bg" id="folderMgrModal">
+    <div class="modal-box" style="max-height:82vh;overflow-y:auto;">
+      <div class="sec-title"><span>⚙️ 폴더 · 단어집 관리</span><button type="button" class="px-mini-btn" onclick="document.getElementById('folderMgrModal').classList.remove('open')">닫기</button></div>
+      <div style="font-size:12px;font-weight:bold;margin:6px 0 4px;">📚 큰 폴더 (단어집)</div>
+      <div id="mgrBooksList"></div>
+      <div style="font-size:12px;font-weight:bold;margin:12px 0 4px;">📁 Day 폴더 (이름 수정 · 큰 폴더 이동 · 삭제)</div>
+      <div id="mgrFoldersList"></div>
+    </div>
+  </div>
+
   <div class="modal-bg" id="settingsModal">
   <div class="modal-card">
     <div class="modal-head">
@@ -786,7 +825,7 @@ function defaultState() {
     lv: 1, exp: 0, streak: 1, lastStudyDate: todayStr(), fsScale: 1, fontIdx: 0,
     nick: '', room: '',
     activeFolderId: 'f1',
-    folders: [{ id: 'f1', name: 'Day 1' }],
+    books: [{ id: 'b1', name: '850+ 토익 단어' }], curBookId: 'b1', folders: [{ id: 'f1', name: 'Day 1', bookId: 'b1' }],
     words: [
       { id: 'w1', folderId: 'f1', en: 'implement', ko: '시행하다, 실행에 옮기다', status: 'none' },
       { id: 'w2', folderId: 'f1', en: 'mandatory', ko: '의무적인, 필수의', status: 'hard' },
@@ -865,14 +904,165 @@ function speakWord(text) {
   window.speechSynthesis.speak(u);
 }
 
+
+function ensureBookState() {
+  if (!state.books || !state.books.length) state.books = [{ id: 'b1', name: '850+ 토익 단어' }];
+  if (state.curBookId === undefined) state.curBookId = state.books[0].id;
+  state.folders.forEach(f => { if (!f.bookId) f.bookId = state.books[0].id; });
+}
+ensureBookState();
+
+document.getElementById('openLvHelpBtn').onclick = () => {
+  const need = state.lv * 100;
+  const escapeLv = state.lv < 3 ? `새싹 탈출(Lv.3)까지 ${3 - state.lv}레벨 남았어요!` : '이미 새싹 탈출 성공! 멋져요 🎉';
+  document.getElementById('lvHelpCurrent').innerHTML = `<b>현재: Lv.${state.lv}</b> (${state.exp}/${need} EXP)<br><span style="color:#E03131;">${escapeLv}</span>`;
+  document.getElementById('lvHelpModal').classList.add('open');
+};
+
+window.enterBook = (bid) => {
+  state.curBookId = bid;
+  const sub = state.folders.filter(f => f.bookId === bid);
+  if (sub.length && !sub.some(f => f.id === state.activeFolderId)) state.activeFolderId = sub[0].id;
+  save(); renderHome(); renderStudy();
+};
+document.getElementById('backToBooksBtn').onclick = () => {
+  state.curBookId = null; save(); renderHome();
+};
+document.getElementById('addBookBtn').onclick = () => {
+  const name = prompt('새 큰 폴더(단어집) 이름 (예: 850+ 토익 단어)');
+  if (!name || !name.trim()) return;
+  const bid = 'b_' + Date.now();
+  state.books.push({ id: bid, name: name.trim() });
+  const fid = 'f_' + (Date.now() + 1);
+  state.folders.push({ id: fid, name: 'Day 1', bookId: bid });
+  state.curBookId = bid;
+  state.activeFolderId = fid;
+  save(); renderHome(); renderStudy();
+};
+
+function renderFolderMgrModal() {
+  ensureBookState();
+  document.getElementById('mgrBooksList').innerHTML = state.books.map(b => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFFDF9;">
+      <strong style="font-size:12px;">📚 ${b.name}</strong>
+      <div style="display:flex;gap:4px;">
+        <button type="button" class="px-mini-btn" onclick="renameBook('${b.id}')">이름</button>
+        <button type="button" class="px-mini-btn" style="color:#C92A2A;" onclick="deleteBook('${b.id}')">삭제</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('mgrFoldersList').innerHTML = state.folders.map(f => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFF;">
+      <div style="font-size:12px;"><b>${f.name}</b> <span style="color:var(--muted);font-size:11px;">(${(state.books.find(b=>b.id===f.bookId)||{}).name||''})</span></div>
+      <div style="display:flex;gap:4px;">
+        <button type="button" class="px-mini-btn" onclick="renameFolder('${f.id}')">이름</button>
+        <button type="button" class="px-mini-btn" onclick="moveFolderBook('${f.id}')">이동</button>
+        <button type="button" class="px-mini-btn" style="color:#C92A2A;" onclick="deleteFolderById('${f.id}')">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+document.getElementById('openFolderMgrBtn').onclick = () => {
+  renderFolderMgrModal();
+  document.getElementById('folderMgrModal').classList.add('open');
+};
+window.renameBook = (bid) => {
+  const b = state.books.find(x => x.id === bid); if (!b) return;
+  const n = prompt('새 큰 폴더 이름:', b.name); if (!n || !n.trim()) return;
+  b.name = n.trim(); save(); renderFolderMgrModal(); renderHome();
+};
+window.deleteBook = (bid) => {
+  if (state.books.length <= 1) return alert('큰 폴더는 최소 1개 필요해요!');
+  if (!confirm('이 큰 폴더와 안의 Day/단어를 삭제할까요?')) return;
+  const fids = state.folders.filter(f => f.bookId === bid).map(f => f.id);
+  state.books = state.books.filter(b => b.id !== bid);
+  state.folders = state.folders.filter(f => f.bookId !== bid);
+  state.words = state.words.filter(w => !fids.includes(w.folderId));
+  if (!state.folders.length) {
+    state.folders.push({ id: 'f_' + Date.now(), name: 'Day 1', bookId: state.books[0].id });
+  }
+  state.curBookId = state.books[0].id;
+  state.activeFolderId = state.folders[0].id;
+  save(); renderFolderMgrModal(); renderHome(); renderStudy();
+};
+window.renameFolder = (fid) => {
+  const f = state.folders.find(x => x.id === fid); if (!f) return;
+  const n = prompt('새 Day 폴더 이름:', f.name); if (!n || !n.trim()) return;
+  f.name = n.trim(); save(); renderFolderMgrModal(); renderHome();
+};
+window.moveFolderBook = (fid) => {
+  const f = state.folders.find(x => x.id === fid); if (!f) return;
+  const opts = state.books.map((b, i) => `${i + 1}. ${b.name}`).join('\n');
+  const pick = prompt(`어느 큰 폴더로 옮길까요? (번호 입력)\n${opts}`);
+  const idx = Number(pick) - 1;
+  if (!state.books[idx]) return;
+  f.bookId = state.books[idx].id;
+  save(); renderFolderMgrModal(); renderHome();
+};
+window.deleteFolderById = (fid) => {
+  if (state.folders.length <= 1) return alert('최소 1개 폴더는 남아있어야 해요!');
+  if (!confirm('이 폴더와 단어를 삭제할까요?')) return;
+  state.folders = state.folders.filter(f => f.id !== fid);
+  state.words = state.words.filter(w => w.folderId !== fid);
+  if (state.activeFolderId === fid) state.activeFolderId = state.folders[0].id;
+  save(); renderFolderMgrModal(); renderHome(); renderStudy();
+};
+
+function startVoiceInput(targetInput, btnEl) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('이 브라우저에서는 음성 입력을 지원하지 않아요! (크롬·삼성 인터넷에서 작동해요)'); return; }
+  const rec = new SR();
+  rec.lang = 'ko-KR';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  const prev = btnEl.textContent;
+  btnEl.textContent = '🔴';
+  rec.onresult = (e) => {
+    const txt = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '';
+    if (txt) {
+      targetInput.value = txt.trim();
+      targetInput.dispatchEvent(new Event('input'));
+    }
+  };
+  rec.onerror = () => { btnEl.textContent = prev; };
+  rec.onend = () => { btnEl.textContent = prev; };
+  rec.start();
+}
+
 function renderAllFolderRows() {
-  const html = state.folders.map(f =>
-    `<button type="button" class="folder-chip ${f.id === state.activeFolderId ? 'active' : ''}" onclick="selectFolder('${f.id}')">${f.name}</button>`
-  ).join('');
-  ['folderRow', 'quizFolderRow'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-  });
+  ensureBookState();
+  const bookRow = document.getElementById('bookListRow');
+  const folderRow = document.getElementById('folderRow');
+  const backBtn = document.getElementById('backToBooksBtn');
+  const titleEl = document.getElementById('folderSecTitle');
+
+  if (state.curBookId === null) {
+    backBtn.style.display = 'none';
+    titleEl.textContent = '📚 전체 단어집';
+    bookRow.style.display = 'grid';
+    folderRow.style.display = 'none';
+    bookRow.innerHTML = state.books.map(b => {
+      const cnt = state.folders.filter(f => f.bookId === b.id).length;
+      return `<button type="button" class="px-btn butter" style="padding:10px 8px;text-align:left;" onclick="enterBook('${b.id}')">📚 ${b.name}<div style="font-size:11px;color:var(--muted);margin-top:2px;">${cnt}개 Day</div></button>`;
+    }).join('');
+  } else {
+    const curB = state.books.find(b => b.id === state.curBookId) || state.books[0];
+    backBtn.style.display = 'inline-block';
+    titleEl.textContent = `📚 ${curB.name}`;
+    bookRow.style.display = 'none';
+    folderRow.style.display = 'flex';
+    const subFolders = state.folders.filter(f => f.bookId === curB.id);
+    folderRow.innerHTML = subFolders.map(f =>
+      `<button type="button" class="folder-chip ${f.id === state.activeFolderId ? 'active' : ''}" onclick="selectFolder('${f.id}')">${f.name}</button>`
+    ).join('');
+  }
+
+  const qRow = document.getElementById('quizFolderRow');
+  if (qRow) {
+    qRow.innerHTML = state.folders.map(f =>
+      `<button type="button" class="folder-chip ${f.id === state.activeFolderId ? 'active' : ''}" onclick="selectFolder('${f.id}')">${f.name}</button>`
+    ).join('');
+  }
 }
 
 function renderHome() {
@@ -915,7 +1105,7 @@ document.getElementById('addFolderBtn').onclick = () => {
   const name = prompt('새 단어장 폴더 이름 (예: Day 2)');
   if (!name || !name.trim()) return;
   const id = 'f_' + Date.now();
-  state.folders.push({ id, name: name.trim() });
+  ensureBookState(); const bid = state.curBookId || state.books[0].id; state.curBookId = bid; state.folders.push({ id, name: name.trim(), bookId: bid });
   state.activeFolderId = id;
   save(); renderHome(); renderStudy();
 };
@@ -1244,8 +1434,9 @@ function renderQuizQ() {
   if (qType === 'blank') {
     document.getElementById('qKindLabel').textContent = '영단어 보고 한글 뜻 쓰기';
     document.getElementById('qPromptText').innerHTML = `${w.en}`;
-    area.innerHTML = `<div style="display:flex;gap:6px;"><input type="text" class="px-input" id="blankAnsInput" placeholder="한글 뜻 입력 (하나만 써도 OK!)" style="flex:1;" autocomplete="off" /><button type="button" class="px-btn matcha" id="blankSubmitBtn">확인</button></div><div id="blankHintBox" style="font-size:12px;margin-top:8px;"></div>`;
+    area.innerHTML = `<div style="display:flex;gap:6px;"><input type="text" class="px-input" id="blankAnsInput" placeholder="한글 뜻 입력 또는 🎙️ 말하기" style="flex:1;" autocomplete="off" /><button type="button" class="px-btn sky" id="blankMicBtn" style="padding:7px 10px;">🎙️</button><button type="button" class="px-btn matcha" id="blankSubmitBtn">확인</button></div><div id="blankHintBox" style="font-size:12px;margin-top:8px;"></div>`;
     const inp = document.getElementById('blankAnsInput');
+    document.getElementById('blankMicBtn').onclick = (e) => startVoiceInput(inp, e.currentTarget);
     inp.focus();
     const submitFn = () => {
       const g = gradeKoreanMeaning(inp.value, w.ko);
@@ -1311,7 +1502,7 @@ function renderQuizSheet() {
           <strong>${idx + 1}. ${w.en}</strong>
           <button type="button" class="px-mini-btn" onclick="speakWord('${w.en.replace(/'/g, "\'")}')">🔊</button>
         </div>
-        <input type="text" class="px-input sheet-blank" data-idx="${idx}" placeholder="한글 뜻 입력 (하나만 써도 OK!)" autocomplete="off" />
+        <div style="display:flex;gap:6px;"><input type="text" class="px-input sheet-blank" id="sheetBlank_${idx}" data-idx="${idx}" placeholder="한글 뜻 입력 또는 🎙️ 말하기" style="flex:1;" autocomplete="off" /><button type="button" class="px-btn sky" style="padding:6px 10px;" onclick="startVoiceInput(document.getElementById('sheetBlank_${idx}'), this)">🎙️</button></div>
         <div id="sheetResult_${idx}" style="font-size:11px;margin-top:5px;"></div>
       </div>`;
     } else {
