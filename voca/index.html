@@ -1520,55 +1520,66 @@ document.getElementById('clearWrongBtn').onclick = () => {
 
 function drawSpringNoteCanvas(isWallpaper) {
   const items = getWrongItemsForDate(wrongViewDate);
+  const curFont = getComputedStyle(document.body).fontFamily || 'sans-serif';
   const W = isWallpaper ? 1080 : 900;
   const cols = 2;
   const rows = Math.max(1, Math.ceil(items.length / cols));
-  const cardH = isWallpaper ? 116 : 96;
-  const gap = isWallpaper ? 20 : 16;
-  const topOffset = isWallpaper ? 460 : 40;
-  const noteH = 150 + rows * (cardH + gap);
-  const H = isWallpaper ? Math.max(1920, topOffset + noteH + 100) : noteH + 80;
+  const cardH = isWallpaper ? 136 : 122;
+  const gap = isWallpaper ? 20 : 18;
+  const topOffset = isWallpaper ? 460 : 54;
+  const noteH = 156 + rows * (cardH + gap);
+  const H = isWallpaper ? Math.max(1920, topOffset + noteH + 100) : noteH + 96;
 
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const ctx = c.getContext('2d');
 
-  // 크림 모눈 배경
-  ctx.fillStyle = '#FAF6EE';
+  // 바깥 배경: 실제 앱 크림색
+  ctx.fillStyle = '#FBF7EE';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#EFE8DA';
-  ctx.lineWidth = 2;
-  const step = isWallpaper ? 44 : 36;
-  for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
   if (isWallpaper) {
     ctx.fillStyle = '#9C948A';
-    ctx.font = 'bold 28px sans-serif';
+    ctx.font = `bold 28px ${curFont}`;
     ctx.textAlign = 'center';
-    ctx.fillText('ONE WORD A DAY · ' + wrongViewDate, W / 2, 420);
+    ctx.fillText('ONE WORD A DAY · ' + wrongViewDate, W / 2, 418);
     ctx.textAlign = 'left';
   }
 
-  // 흰 노트 박스
+  // 스프링 노트 본체 (안쪽에 크림 모눈종이!)
   const nx = isWallpaper ? 56 : 36;
   const ny = topOffset;
   const nw = W - nx * 2;
   const nh = noteH;
-  ctx.fillStyle = '#FFFFFF';
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(nx, ny, nw, nh, 28);
+  ctx.fillStyle = '#FAF6EE';
+  ctx.fill();
+  ctx.clip();
+
+  // 노트 안쪽 모눈선
+  ctx.strokeStyle = '#EFE8DA';
+  ctx.lineWidth = 2;
+  const step = 38;
+  for (let x = nx; x < nx + nw; x += step) { ctx.beginPath(); ctx.moveTo(x, ny); ctx.lineTo(x, ny + nh); ctx.stroke(); }
+  for (let y = ny; y < ny + nh; y += step) { ctx.beginPath(); ctx.moveTo(nx, y); ctx.lineTo(nx + nw, y); ctx.stroke(); }
+  ctx.restore();
+
+  // 노트 테두리 + 그림자 느낌
   ctx.strokeStyle = '#222222';
   ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.roundRect(nx, ny, nw, nh, 28);
-  ctx.fill();
   ctx.stroke();
 
   // 코랄 스프링 링 8개
   for (let r = 0; r < 8; r++) {
-    const rx = nx + 46 + r * ((nw - 112) / 7);
+    const rx = nx + 48 + r * ((nw - 116) / 7);
     ctx.fillStyle = '#FF7B7B';
     ctx.strokeStyle = '#222222';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 4.5;
     ctx.beginPath();
     ctx.roundRect(rx, ny - 22, 22, 46, 10);
     ctx.fill();
@@ -1577,12 +1588,17 @@ function drawSpringNoteCanvas(isWallpaper) {
 
   // 제목
   ctx.fillStyle = '#222222';
-  ctx.font = `bold ${isWallpaper ? 34 : 30}px sans-serif`;
-  ctx.fillText(`📌 ${wrongViewDate} 찐 오답노트 (${items.length}개)`, nx + 34, ny + 74);
+  ctx.font = `bold ${isWallpaper ? 36 : 32}px ${curFont}`;
+  ctx.fillText(`📌 오늘 꼭 외울 찐 오답`, nx + 34, ny + 74);
+  ctx.fillStyle = '#78716C';
+  ctx.font = `bold ${isWallpaper ? 26 : 24}px ${curFont}`;
+  ctx.textAlign = 'right';
+  ctx.fillText(`${wrongViewDate} · ${items.length}개`, nx + nw - 34, ny + 74);
+  ctx.textAlign = 'left';
 
   if (!items.length) {
     ctx.fillStyle = '#78716C';
-    ctx.font = '28px sans-serif';
+    ctx.font = `28px ${curFont}`;
     ctx.fillText('틀린 단어가 없어요! 완벽해요 ⭐', nx + 34, ny + 150);
   } else {
     const cw = (nw - 68 - gap) / 2;
@@ -1590,22 +1606,28 @@ function drawSpringNoteCanvas(isWallpaper) {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const cx = nx + 34 + col * (cw + gap);
-      const cy = ny + 104 + row * (cardH + gap);
-      ctx.fillStyle = '#FFFDF9';
+      const cy = ny + 106 + row * (cardH + gap);
+      ctx.fillStyle = '#FFFFFF';
       ctx.strokeStyle = '#222222';
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.roundRect(cx, cy, cw, cardH, 16);
+      ctx.roundRect(cx, cy, cw, cardH, 18);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#222222';
-      ctx.font = `bold ${isWallpaper ? 28 : 24}px sans-serif`;
-      ctx.fillText(`${i + 1}. ${w.en}`.slice(0, 22), cx + 18, cy + (isWallpaper ? 44 : 38));
+      ctx.font = `bold ${isWallpaper ? 30 : 28}px ${curFont}`;
+      ctx.fillText(`${i + 1}. ${w.en}`.slice(0, 20), cx + 20, cy + (isWallpaper ? 48 : 44));
 
       ctx.fillStyle = '#E03131';
-      ctx.font = `${isWallpaper ? 23 : 20}px sans-serif`;
-      ctx.fillText(String(w.ko || '').slice(0, 22), cx + 18, cy + (isWallpaper ? 84 : 72));
+      ctx.font = `bold ${isWallpaper ? 24 : 22}px ${curFont}`;
+      const ko = String(w.ko || '');
+      if (ko.length > 15) {
+        ctx.fillText(ko.slice(0, 15), cx + 20, cy + (isWallpaper ? 84 : 78));
+        ctx.fillText(ko.slice(15, 30), cx + 20, cy + (isWallpaper ? 114 : 104));
+      } else {
+        ctx.fillText(ko, cx + 20, cy + (isWallpaper ? 92 : 84));
+      }
     });
   }
 
