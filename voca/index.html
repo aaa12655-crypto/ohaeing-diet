@@ -689,10 +689,14 @@ html, body {
     <section class="panel" id="panelFriend">
       <div class="px-card">
         <div class="sec-title"><span>🤝 친구와 같이 외우기</span></div>
-        <div style="display:flex;gap:6px;">
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
           <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
           <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
           <button type="button" class="px-btn matcha" id="joinRoomBtn">연결</button>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button type="button" class="px-btn butter" id="genRoomCodeBtn" style="flex:1;font-size:12px;padding:7px 8px;">🎲 방 코드 랜덤생성</button>
+          <button type="button" class="px-btn sky" id="copyInviteBtn" style="flex:1;font-size:12px;padding:7px 8px;">💌 초대장 복사</button>
         </div>
       </div>
 
@@ -1607,6 +1611,7 @@ function startQuizWithPool(pool, missionId = null) {
   if (qCnt !== 'all' && !missionId) shuffled = shuffled.slice(0, Number(qCnt));
   qList = shuffled;
   qPos = 0; qCorrect = 0; qWrongs = []; qSheetAns = {};
+  window.quizStartTime = Date.now();
   document.getElementById('quizSetupBox').style.display = 'none';
   if (qMode === 'sheet') {
     document.getElementById('quizPlayBox').style.display = 'none';
@@ -1859,7 +1864,8 @@ function finishQuiz(overrideTotal) {
   qLogViewDate = t;
   save();
   renderStatus();
-  syncFriendScore(rate, qCorrect, qWrongs.length, qWrongs);
+  const elapsedSec = window.quizStartTime ? Math.max(1, Math.round((Date.now() - window.quizStartTime) / 1000)) : 0;
+  syncFriendScore(rate, qCorrect, qWrongs.length, qWrongs, activeMissionId, total, elapsedSec);
   document.getElementById('quizPlayBox').style.display = 'none';
   document.getElementById('quizSheetBox').style.display = 'none';
   document.getElementById('quizSetupBox').style.display = 'block';
@@ -2133,9 +2139,41 @@ function drawSpringNoteCanvas(isWallpaper) {
 document.getElementById('saveReceiptImgBtn').onclick = () => drawSpringNoteCanvas(false);
 document.getElementById('saveWallpaperImgBtn').onclick = () => drawSpringNoteCanvas(true);
 
-/* Friend Sync: Missions, Scores & Wrong Words */
+/* Friend Sync: Invite Link, 1-Attempt Mission, Auto Scoreboard & Crown */
 let latestMission = null;
-async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr) {
+
+function formatElapsed(sec) {
+  if (!sec && sec !== 0) return '-';
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+}
+
+document.getElementById('genRoomCodeBtn').onclick = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('roomCodeInput').value = code;
+  state.room = code;
+  save();
+};
+
+document.getElementById('copyInviteBtn').onclick = async () => {
+  const code = document.getElementById('roomCodeInput').value.trim() || state.room;
+  if (!code) return alert('먼저 방 코드를 입력하거나 랜덤생성 해주세요!');
+  state.room = code;
+  save();
+  const base = location.origin + location.pathname;
+  const link = `${base}?room=${encodeURIComponent(code)}`;
+  const msg = `🔥 같이 영단어 외우고 퀴즈 대결할래? 링크 누르면 바로 연결돼! ${link}`;
+  try {
+    await navigator.clipboard.writeText(msg);
+    alert('초대장이 복사되었어요! 카톡에 붙여넣기 하세요');
+  } catch (e) {
+    prompt('아래 초대장을 복사해 주세요!', msg);
+  }
+};
+
+async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr, missionId, totalCnt, elapsedSec) {
   if (!state.room || !state.nick) return;
   try {
     await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/members/${encodeURIComponent(state.nick)}.json`, {
@@ -2149,6 +2187,20 @@ async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr) {
         date: todayStr(), ts: Date.now()
       })
     });
+    if (missionId && missionId !== 'yesterday' && totalCnt) {
+      await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          completed: true,
+          score: rate,
+          correct: correctCnt,
+          total: totalCnt,
+          elapsedSec: elapsedSec || 0,
+          wrongs: (wrongsArr || []).slice(0, 50),
+          ts: Date.now()
+        })
+      });
+    }
   } catch (e) {}
 }
 
@@ -2164,37 +2216,79 @@ async function loadFriendBoard() {
     const res = await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}.json`);
     const data = await res.json() || {};
     latestMission = data.mission || null;
+    const mResults = (latestMission && latestMission.results) || {};
+    const myResult = state.nick ? mResults[state.nick] : null;
+    const alreadyDone = !!(myResult && myResult.completed);
+
     if (latestMission && latestMission.words && latestMission.words.length) {
       mBox.innerHTML = `<div style="background:var(--sky-soft);border:2px solid var(--ink);border-radius:10px;padding:9px;">
         <div style="font-size:12px;font-weight:bold;">🎯 진행중 미션: ${latestMission.title}</div>
-        <div style="font-size:11px;color:var(--muted);margin:3px 0 6px;">마감: 오늘 ${latestMission.dueTime}까지 · ${latestMission.words.length}단어 (${latestMission.by})</div>
-        <button type="button" class="px-btn butter" id="takeMissionBtn" style="width:100%;padding:6px;">⚡ 이 미션 시험 바로 보기</button>
+        <div style="font-size:11px;color:var(--muted);margin:3px 0 8px;">마감: 오늘 ${latestMission.dueTime}까지 · ${latestMission.words.length}단어 (${latestMission.by})</div>
+        <button type="button" class="px-btn ${alreadyDone ? '' : 'coral'}" id="takeMissionBtn" ${alreadyDone ? 'disabled' : ''} style="width:100%;padding:7px;${alreadyDone ? 'background:#E9ECEF;color:#666;cursor:not-allowed;' : ''}">
+          ${alreadyDone ? '✅ 응시 완료 (재응시 불가)' : '🔥 미션 시험 풀기 (단 1회 기회!)'}
+        </button>
       </div>`;
-      document.getElementById('takeMissionBtn').onclick = () => {
-        
-        switchTab('Quiz');
-        startQuizWithPool(latestMission.words, latestMission.id);
-      };
+      if (!alreadyDone) {
+        document.getElementById('takeMissionBtn').onclick = async () => {
+          if (!state.nick) return alert('먼저 내 닉네임을 입력하고 연결해 주세요!');
+          if (!confirm('이 미션 시험은 딱 1번만 응시할 수 있으며, 중간에 나가거나 재응시할 수 없습니다. 시작할까요?')) return;
+          try {
+            await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ completed: true, score: 0, correct: 0, total: latestMission.words.length, elapsedSec: 0, wrongs: [], ts: Date.now() })
+            });
+          } catch (e) {}
+          switchTab('Quiz');
+          startQuizWithPool(latestMission.words, latestMission.id);
+        };
+      }
     } else {
       mBox.innerHTML = '<div style="font-size:11px;color:var(--muted);">아직 등록된 시험 미션이 없어요.</div>';
     }
 
     const members = data.members || {};
-    const entries = Object.entries(members);
-    if (!entries.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);">아직 시험 본 친구가 없어요!</div>'; return; }
-    box.innerHTML = entries.map(([name, d]) => {
-      const scoreLine = d.correct !== null && d.correct !== undefined
-        ? `${d.rate}% (맞음 ${d.correct} · 틀림 ${d.wrong})`
-        : (d.rate ?? '대기중');
-      const wrongTxt = (d.wrongs && d.wrongs.length)
-        ? `<details style="margin-top:4px;font-size:11px;color:#C92A2A;"><summary>틀린 단어 ${d.wrongs.length}개 보기</summary><div style="padding-top:4px;color:var(--ink);">${d.wrongs.map(w => `${w.en}(${w.ko})`).join(', ')}</div></details>`
-        : '';
-      return `<div style="padding:7px 0;border-bottom:1px dotted #ccc;font-size:12px;">
+    const names = Array.from(new Set([...Object.keys(members), ...Object.keys(mResults)]));
+    if (!names.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'; return; }
+
+    let winnerName = null;
+    const completedEntries = names.map(n => ({ name: n, r: mResults[n] })).filter(x => x.r && x.r.completed);
+    if (names.length >= 2 && completedEntries.length === names.length) {
+      completedEntries.sort((a, b) => (b.r.score - a.r.score) || ((a.r.elapsedSec || 999999) - (b.r.elapsedSec || 999999)));
+      winnerName = completedEntries[0].name;
+    }
+
+    box.innerHTML = names.map(name => {
+      const m = members[name] || {};
+      const r = mResults[name];
+      const crown = winnerName === name ? ' 👑' : '';
+      if (latestMission && latestMission.words && (!r || !r.completed)) {
+        return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span><strong>${name}</strong> (Lv.${m.lv || 1})</span>
+            <span style="color:var(--muted);font-size:11px;">아직 응시 전입니다 (도전 대기 중!)</span>
+          </div>
+        </div>`;
+      }
+      if (r && r.completed) {
+        const wrongList = (r.wrongs && r.wrongs.length)
+          ? `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">틀린 단어: ${r.wrongs.map(w => w.en).join(', ')}</div>`
+          : `<div style="margin-top:4px;font-size:11px;color:#2B8A3E;">틀린 단어 없음! 완벽해요 🎉</div>`;
+        return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span><strong>${name}${crown}</strong> (Lv.${m.lv || 1})</span>
+            <span><strong>${r.score}점 (${r.correct}/${r.total}개 · ${formatElapsed(r.elapsedSec)})</strong></span>
+          </div>
+          ${wrongList}
+        </div>`;
+      }
+      const scoreLine = m.correct !== null && m.correct !== undefined
+        ? `${m.rate}점 (${m.correct}/${(m.correct || 0) + (m.wrong || 0)}개)`
+        : '대기중';
+      return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;">
         <div style="display:flex;justify-content:space-between;">
-          <span><strong>${name}</strong> (Lv.${d.lv || 1})</span>
+          <span><strong>${name}</strong> (Lv.${m.lv || 1})</span>
           <span><strong>${scoreLine}</strong></span>
         </div>
-        ${wrongTxt}
       </div>`;
     }).join('');
   } catch (e) { box.innerHTML = '<div style="font-size:12px;color:#C92A2A;">불러오기 실패</div>'; }
@@ -2210,14 +2304,15 @@ document.getElementById('postMissionBtn').onclick = async () => {
   const mission = {
     id: 'm_' + Date.now(),
     title, dueTime, by: state.nick,
-    words: pool.map(w => ({ en: w.en, ko: w.ko }))
+    words: pool.map(w => ({ en: w.en, ko: w.ko })),
+    results: {}
   };
   await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission.json`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(mission)
   });
   loadFriendBoard();
-  alert('친구 방에 시험 미션을 올렸어요!');
+  alert('새 시험 미션을 올렸어요! 이전 미션 기록은 초기화되었습니다.');
 };
 
 function renderFriendTab() {
@@ -2229,12 +2324,12 @@ function renderFriendTab() {
 document.getElementById('refreshFriendBtn').onclick = () => renderFriendTab();
 async function loadFriendChats() {
   const box = document.getElementById('friendChatList');
-  if (!state.room) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">방 연결 후 한마디를 남겨보세요!</div>'; return; }
+  if (!state.room) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">방 연결 후 첫 응원 메시지를 남겨보세요!</div>'; return; }
   try {
     const res = await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/chats.json`);
     const data = await res.json() || {};
-    const arr = Object.values(data).sort((a,b) => (a.ts||0) - (b.ts||0)).slice(-20);
-    if (!arr.length) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">아직 남긴 한마디가 없어요.</div>'; return; }
+    const arr = Object.values(data).filter(c => c && typeof c === 'object' && c.nick && c.msg).sort((a,b) => (a.ts||0) - (b.ts||0)).slice(-20);
+    if (!arr.length) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">첫 응원 메시지를 남겨보세요!</div>'; return; }
     box.innerHTML = arr.map(c => `<div style="font-size:12px;padding:4px 6px;margin-bottom:4px;border-radius:8px;background:${c.nick===state.nick?'var(--butter)':'#F4EFE4'};border:1.5px solid var(--ink);"><strong>${c.nick}:</strong> ${c.msg}</div>`).join('');
     box.scrollTop = box.scrollHeight;
   } catch (e) {}
@@ -2251,12 +2346,31 @@ document.getElementById('sendFriendChatBtn').onclick = async () => {
   inp.value = '';
   loadFriendChats();
 };
-// 
+
 document.getElementById('joinRoomBtn').onclick = async () => {
   state.nick = document.getElementById('myNickInput').value.trim();
-  state.room = document.getElementById('roomCodeInput').value.trim();
-  save(); await syncFriendScore(); loadFriendBoard();
+  state.room = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if (!state.nick || !state.room) return alert('닉네임과 방 코드를 모두 입력해 주세요!');
+  save(); await syncFriendScore(); loadFriendBoard(); loadFriendChats();
 };
+
+(function checkInviteRoomParam() {
+  const rp = new URLSearchParams(location.search).get('room');
+  if (!rp) return;
+  const code = rp.trim().toUpperCase();
+  if (!code) return;
+  state.room = code;
+  save();
+  setTimeout(async () => {
+    switchTab('Friend');
+    document.getElementById('roomCodeInput').value = code;
+    if (state.nick) {
+      await syncFriendScore();
+      loadFriendBoard();
+      loadFriendChats();
+    }
+  }, 50);
+})();
 
 document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); renderVocaThemeGrid(); renderFsLsButtons(); document.getElementById('settingsModal').classList.add('open'); };
 document.getElementById('closeSettingsModal').onclick = () => document.getElementById('settingsModal').classList.remove('open');
