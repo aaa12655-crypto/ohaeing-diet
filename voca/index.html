@@ -1647,7 +1647,7 @@ function finishQuiz(overrideTotal) {
   stampToday();
   wrongViewDate = t;
   save();
-  renderHeader();
+  renderStatus();
   syncFriendScore(rate, qCorrect, qWrongs.length, qWrongs);
   document.getElementById('quizPlayBox').style.display = 'none';
   document.getElementById('quizSheetBox').style.display = 'none';
