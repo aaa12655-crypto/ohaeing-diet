@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="픽셀 영단어장" />
-<title>픽셀 영단어장</title>
+<title>영단어장</title>
 <style>
 @font-face { font-family: 'NeoDunggeunmo'; src: url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@1.530/neodgm/style.css'); font-display: swap; }
 @font-face { font-family: 'NeoDunggeunmo'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff'); font-display: swap; }
@@ -466,6 +466,11 @@ html, body {
 }
 
 </style>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="영단어장" />
 </head>
 <body>
 <div class="app-shell">
@@ -688,7 +693,7 @@ html, body {
     <!-- 4. 친구 탭 (함께 외우기 · 시험 미션 · 점수/틀린 단어 비교 · 한마디) -->
     <section class="panel" id="panelFriend">
       <div class="px-card">
-        <div class="sec-title"><span>🤝 친구와 같이 외우기</span></div>
+        <div class="sec-title"><span>🤝 친구와 같이 외우기</span><span id="roomStatusBadge" style="font-size:11px;color:var(--muted);">연결 대기중</span></div>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
           <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
           <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
@@ -825,7 +830,7 @@ html, body {
 
 <script>
 const STORAGE_KEY = 'pixel_voca_v1';
-const FB_URL = 'https://ohaeing-diet-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FB_URL = 'https://diet-9b0f5-default-rtdb.firebaseio.com';
 
 const VOCA_FONTS = [
   { name: '네오둥근모', val: "'NeoDunggeunmo', monospace" },
@@ -2316,6 +2321,7 @@ document.getElementById('postMissionBtn').onclick = async () => {
 };
 
 function renderFriendTab() {
+  updateRoomBadge();
   document.getElementById('myNickInput').value = state.nick || '';
   document.getElementById('roomCodeInput').value = state.room || '';
   loadFriendBoard();
@@ -2347,11 +2353,29 @@ document.getElementById('sendFriendChatBtn').onclick = async () => {
   loadFriendChats();
 };
 
+function updateRoomBadge() {
+  const b = document.getElementById('roomStatusBadge');
+  if (!b) return;
+  if (state.room && state.nick) {
+    b.textContent = `🟢 ${state.room} 연결됨`;
+    b.style.color = '#2B8A3E';
+    b.style.fontWeight = 'bold';
+  } else {
+    b.textContent = '연결 대기중';
+    b.style.color = 'var(--muted)';
+    b.style.fontWeight = 'normal';
+  }
+}
 document.getElementById('joinRoomBtn').onclick = async () => {
   state.nick = document.getElementById('myNickInput').value.trim();
   state.room = document.getElementById('roomCodeInput').value.trim().toUpperCase();
   if (!state.nick || !state.room) return alert('닉네임과 방 코드를 모두 입력해 주세요!');
-  save(); await syncFriendScore(); loadFriendBoard(); loadFriendChats();
+  save();
+  updateRoomBadge();
+  await syncFriendScore();
+  await loadFriendBoard();
+  await loadFriendChats();
+  alert(`방(${state.room})에 연결됐어요! 💌 초대장 복사로 친구에게 보내보세요!`);
 };
 
 (function checkInviteRoomParam() {
