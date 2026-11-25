@@ -482,7 +482,7 @@ html, body {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
           <button type="button" class="px-btn butter" id="qTypeMcq">4지선다 객관식</button>
-          <button type="button" class="px-btn" id="qTypeBlank">영단어 쓰기</button>
+          <button type="button" class="px-btn" id="qTypeBlank">한글 뜻 쓰기</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
           <button type="button" class="px-btn matcha" id="qModeFast">한 문제씩 (초고속)</button>
@@ -1072,6 +1072,26 @@ document.getElementById('sheetQuitBtn').onclick = () => {
   document.getElementById('quizSetupBox').style.display = 'block';
 };
 
+function gradeKoreanMeaning(userRaw, targetKo) {
+  const clean = (s) => s.replace(/\([^)]*\)/g, '').replace(/[\s~·.,!?;:'"\[\]]+/g, '').replace(/^(n|v|a|ad|adj|adv|prep|conj)\./g, '');
+  const u = clean(userRaw || '');
+  const parts = (targetKo || '').split(/[,;/·]+/).map(x => x.trim()).filter(Boolean);
+  if (!u || u.length < 1) return { ok: false, matched: null, others: parts };
+  let matchedIdx = -1;
+  for (let i = 0; i < parts.length; i++) {
+    const pClean = clean(parts[i]);
+    if (!pClean) continue;
+    // 정확히 같거나, 2글자 이상 핵심어가 포함되면 정답 인정
+    if (u === pClean || (u.length >= 2 && (pClean.includes(u) || u.includes(pClean)))) {
+      matchedIdx = i;
+      break;
+    }
+  }
+  const ok = matchedIdx !== -1;
+  const others = ok ? parts.filter((_, i) => i !== matchedIdx) : parts;
+  return { ok, matched: ok ? parts[matchedIdx] : null, others };
+}
+
 function getMcqOptions(w, pool) {
   const src = state.words.length >= 4 ? state.words : pool;
   const others = src.filter(x => x.en !== w.en).sort(() => Math.random() - 0.5).slice(0, 3);
@@ -1087,12 +1107,23 @@ function renderQuizQ() {
 
   const area = document.getElementById('qAnswerArea');
   if (qType === 'blank') {
-    document.getElementById('qKindLabel').textContent = '뜻 보고 영단어 쓰기';
-    document.getElementById('qPromptText').innerHTML = `${w.ko}`;
-    area.innerHTML = `<div style="display:flex;gap:6px;"><input type="text" class="px-input" id="blankAnsInput" placeholder="영단어 입력" style="flex:1;" autocomplete="off" /><button type="button" class="px-btn matcha" id="blankSubmitBtn">확인</button></div>`;
+    document.getElementById('qKindLabel').textContent = '영단어 보고 한글 뜻 쓰기';
+    document.getElementById('qPromptText').innerHTML = `${w.en}`;
+    area.innerHTML = `<div style="display:flex;gap:6px;"><input type="text" class="px-input" id="blankAnsInput" placeholder="한글 뜻 입력 (하나만 써도 OK!)" style="flex:1;" autocomplete="off" /><button type="button" class="px-btn matcha" id="blankSubmitBtn">확인</button></div><div id="blankHintBox" style="font-size:12px;margin-top:8px;"></div>`;
     const inp = document.getElementById('blankAnsInput');
     inp.focus();
-    const submitFn = () => handleQuizAnswer(inp.value.trim().toLowerCase() === w.en.toLowerCase(), w);
+    const submitFn = () => {
+      const g = gradeKoreanMeaning(inp.value, w.ko);
+      const box = document.getElementById('blankHintBox');
+      if (g.ok) {
+        box.style.color = '#2B8A3E';
+        box.innerHTML = `⭕ 정답!${g.others.length ? ` <span style="color:var(--muted);">(다른 뜻: ${g.others.join(', ')})</span>` : ''}`;
+      } else {
+        box.style.color = '#C92A2A';
+        box.innerHTML = `❌ 오답 · 뜻: ${w.ko}`;
+      }
+      setTimeout(() => handleQuizAnswer(g.ok, w), g.others.length || !g.ok ? 700 : 150);
+    };
     document.getElementById('blankSubmitBtn').onclick = submitFn;
     inp.onkeydown = (e) => { if (e.key === 'Enter') submitFn(); };
   } else {
@@ -1124,9 +1155,13 @@ function renderQuizSheet() {
   document.getElementById('sheetCountTxt').textContent = `0 / ${qList.length} 풀음`;
   box.innerHTML = qList.map((w, idx) => {
     if (qType === 'blank') {
-      return `<div class="px-card" style="padding:10px;margin-bottom:8px;">
-        <div style="font-weight:bold;margin-bottom:6px;">${idx + 1}. ${w.ko}</div>
-        <input type="text" class="px-input sheet-blank" data-idx="${idx}" placeholder="영단어 입력" autocomplete="off" />
+      return `<div class="px-card" style="padding:10px;margin-bottom:8px;" id="sheetCard_${idx}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <strong>${idx + 1}. ${w.en}</strong>
+          <button type="button" class="px-mini-btn" onclick="speakWord('${w.en.replace(/'/g, "\'")}')">🔊</button>
+        </div>
+        <input type="text" class="px-input sheet-blank" data-idx="${idx}" placeholder="한글 뜻 입력 (하나만 써도 OK!)" autocomplete="off" />
+        <div id="sheetResult_${idx}" style="font-size:11px;margin-top:5px;"></div>
       </div>`;
     } else {
       const opts = getMcqOptions(w, qList);
@@ -1162,9 +1197,24 @@ function renderQuizSheet() {
 
 document.getElementById('sheetSubmitBtn').onclick = () => {
   qCorrect = 0; qWrongs = [];
+  const feedbackLines = [];
   qList.forEach((w, idx) => {
-    const ans = (qSheetAns[idx] || '').trim().toLowerCase();
-    const ok = ans === w.en.toLowerCase();
+    let ok = false;
+    if (qType === 'blank') {
+      const g = gradeKoreanMeaning(qSheetAns[idx] || '', w.ko);
+      ok = g.ok;
+      const resEl = document.getElementById(`sheetResult_${idx}`);
+      if (resEl) {
+        resEl.style.color = ok ? '#2B8A3E' : '#C92A2A';
+        resEl.textContent = ok
+          ? `⭕ 정답!${g.others.length ? ` (다른 뜻: ${g.others.join(', ')})` : ''}`
+          : `❌ 오답 · 정답: ${w.ko}`;
+      }
+      if (ok && g.others.length) feedbackLines.push(`${w.en}: ${g.others.join(', ')}`);
+    } else {
+      const ans = (qSheetAns[idx] || '').trim().toLowerCase();
+      ok = ans === w.en.toLowerCase();
+    }
     if (ok) qCorrect += 1;
     else {
       qWrongs.push({ en: w.en, ko: w.ko });
