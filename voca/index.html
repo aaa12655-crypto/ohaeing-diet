@@ -514,15 +514,10 @@ html, body {
             <button type="button" class="px-mini-btn" id="addBookBtn" style="white-space:nowrap;">+큰폴더</button>
             <button type="button" class="px-mini-btn" id="addFolderBtn" style="white-space:nowrap;">+Day</button>
             <button type="button" class="px-mini-btn" id="openFolderMgrBtn" style="white-space:nowrap;">⚙️</button>
-            <button type="button" class="px-mini-btn" id="toggleEditModeBtn" style="white-space:nowrap;">✏️</button>
           </div>
         </div>
         <div id="bookListRow" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"></div>
         <div class="folder-row" id="folderRow"></div>
-        <div id="editFolderBtns" style="display:none;justify-content:flex-end;gap:5px;margin-bottom:8px;">
-          <button type="button" class="px-mini-btn" id="clearFolderWordsBtn">전체 비우기</button>
-          <button type="button" class="px-mini-btn" id="delFolderBtn" style="color:#C92A2A;">폴더 삭제</button>
-        </div>
 
         <div class="switch-bar">
           <button type="button" class="px-btn butter" id="modeListBtn">일직선 리스트</button>
@@ -546,6 +541,7 @@ html, body {
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
             <button type="button" class="px-mini-btn" id="shuffleStudyBtn">순서 섞기</button>
             <button type="button" class="px-mini-btn" id="resetOrderBtn">원래대로</button>
+            <button type="button" class="px-mini-btn" id="toggleEditModeBtn">✏️</button>
           </div>
         </div>
       </div>
@@ -1113,7 +1109,6 @@ function renderHome() {
   const stars = list.filter(w => w.status === 'star').length;
   const hards = list.filter(w => w.status === 'hard').length;
   document.getElementById('homeStatsTxt').textContent = `${list.length}단어 · ⭐${stars} · 🔥${hards}`;
-  document.getElementById('editFolderBtns').style.display = editMode ? 'flex' : 'none';
   document.getElementById('toggleEditModeBtn').classList.toggle('on', editMode);
   renderStudy();
 }
@@ -1151,12 +1146,12 @@ document.getElementById('addFolderBtn').onclick = () => {
   state.activeFolderId = id;
   save(); renderHome(); renderStudy();
 };
-document.getElementById('clearFolderWordsBtn').onclick = () => {
+if (document.getElementById('clearFolderWordsBtn')) document.getElementById('clearFolderWordsBtn').onclick = () => {
   if (!confirm('이 폴더 안의 단어를 모두 비울까요?')) return;
   state.words = state.words.filter(w => w.folderId !== state.activeFolderId);
   save(); renderHome(); renderStudy();
 };
-document.getElementById('delFolderBtn').onclick = () => {
+if (document.getElementById('delFolderBtn')) document.getElementById('delFolderBtn').onclick = () => {
   if (state.folders.length <= 1) return alert('최소 1개 폴더는 남아있어야 해요!');
   if (!confirm('이 폴더와 안에 있는 단어를 삭제할까요?')) return;
   const cur = state.activeFolderId;
