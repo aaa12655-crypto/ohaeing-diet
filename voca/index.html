@@ -638,26 +638,26 @@ html, body {
     <!-- 4. 오답노트 탭 -->
     <section class="panel" id="panelWrong">
       <div class="px-card">
-        <div class="sec-title">
-          <span>📒 픽셀 오답 노트</span>
-          <button type="button" class="px-mini-btn" id="clearWrongBtn">이 날 비우기</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" class="px-mini-btn" id="wrongPrevDateBtn">◀</button>
+            <strong id="receiptDateTxt" style="font-size:13px;">2026-11-25</strong>
+            <button type="button" class="px-mini-btn" id="wrongNextDateBtn">▶</button>
+            <span id="receiptRateTxt" style="font-size:11px;color:var(--muted);">0개</span>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button type="button" class="px-mini-btn" id="addWrongWordBtn">+ 추가</button>
+            <button type="button" class="px-mini-btn" id="toggleWrongEditBtn">✏️ 편집</button>
+            <button type="button" class="px-mini-btn" id="clearWrongBtn">비우기</button>
+          </div>
         </div>
-        <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin:4px 0 6px;">
-          <button type="button" class="px-mini-btn" id="wrongPrevDateBtn">◀</button>
-          <strong id="receiptDateTxt" style="font-size:14px;">2026-11-25</strong>
-          <button type="button" class="px-mini-btn" id="wrongNextDateBtn">▶</button>
-        </div>
-        <div class="spring-note-wrap">
+        <div class="spring-note-wrap" style="margin-top:14px;">
           <div class="spring-rings">
             <span class="spring-ring"></span><span class="spring-ring"></span><span class="spring-ring"></span>
             <span class="spring-ring"></span><span class="spring-ring"></span><span class="spring-ring"></span>
             <span class="spring-ring"></span><span class="spring-ring"></span>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <strong style="font-size:13px;">📌 오늘 꼭 외울 찐 오답</strong>
-            <span id="receiptRateTxt" style="font-size:11px;color:var(--muted);">0개</span>
-          </div>
-          <div id="wrongListBox" class="wrong-grid-2col"></div>
+          <div id="wrongListBox" class="wrong-grid-2col" style="margin-top:0;"></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;">
           <button type="button" class="px-btn sky" id="saveReceiptImgBtn" style="flex:1;font-size:12px;">📝 노트 이미지 저장</button>
@@ -1493,6 +1493,29 @@ function getWrongItemsForDate(dateStr) {
   return [];
 }
 
+let wrongEditMode = false;
+document.getElementById('toggleWrongEditBtn').onclick = () => {
+  wrongEditMode = !wrongEditMode;
+  document.getElementById('toggleWrongEditBtn').classList.toggle('on', wrongEditMode);
+  renderWrong();
+};
+document.getElementById('addWrongWordBtn').onclick = () => {
+  const en = prompt('오답노트에 추가할 영단어:');
+  if (!en || !en.trim()) return;
+  const ko = prompt(`'${en.trim()}'의 뜻:`);
+  if (!ko || !ko.trim()) return;
+  if (!state.wrongByDate) state.wrongByDate = {};
+  if (!state.wrongByDate[wrongViewDate]) state.wrongByDate[wrongViewDate] = [...getWrongItemsForDate(wrongViewDate)];
+  state.wrongByDate[wrongViewDate].push({ en: en.trim(), ko: ko.trim() });
+  save(); renderWrong();
+};
+window.deleteWrongWord = (idx) => {
+  if (!state.wrongByDate) state.wrongByDate = {};
+  if (!state.wrongByDate[wrongViewDate]) state.wrongByDate[wrongViewDate] = [...getWrongItemsForDate(wrongViewDate)];
+  state.wrongByDate[wrongViewDate].splice(idx, 1);
+  if (wrongViewDate === todayStr()) state.wrongLogs = [...state.wrongByDate[wrongViewDate]];
+  save(); renderWrong();
+};
 function renderWrong() {
   document.getElementById('receiptDateTxt').textContent = wrongViewDate;
   const items = getWrongItemsForDate(wrongViewDate);
@@ -1503,7 +1526,8 @@ function renderWrong() {
     return;
   }
   box.innerHTML = items.map((w, i) => `
-    <div class="wrong-grid-card">
+    <div class="wrong-grid-card" style="position:relative;">
+      ${wrongEditMode ? `<button type="button" onclick="deleteWrongWord(${i})" style="position:absolute;top:4px;right:4px;border:1.5px solid #222;background:#FFE5E5;color:#C92A2A;border-radius:6px;font-size:10px;padding:1px 5px;cursor:pointer;font-weight:bold;">✕</button>` : ''}
       <div class="wrong-grid-en">${i + 1}. ${w.en}</div>
       <div class="wrong-grid-ko">${w.ko}</div>
     </div>
@@ -1589,11 +1613,11 @@ function drawSpringNoteCanvas(isWallpaper) {
   // 제목
   ctx.fillStyle = '#222222';
   ctx.font = `bold ${isWallpaper ? 36 : 32}px ${curFont}`;
-  ctx.fillText(`📌 오늘 꼭 외울 찐 오답`, nx + 34, ny + 74);
+  ctx.fillText(`${wrongViewDate}`, nx + 34, ny + 74);
   ctx.fillStyle = '#78716C';
   ctx.font = `bold ${isWallpaper ? 26 : 24}px ${curFont}`;
   ctx.textAlign = 'right';
-  ctx.fillText(`${wrongViewDate} · ${items.length}개`, nx + nw - 34, ny + 74);
+  ctx.fillText(`${items.length}개`, nx + nw - 34, ny + 74);
   ctx.textAlign = 'left';
 
   if (!items.length) {
