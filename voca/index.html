@@ -43,7 +43,7 @@ html, body {
   margin: 0; padding: 0;
   background: #EAE3D5;
   color: var(--ink);
-  font-family: var(--app-font);
+  font-family: var(--app-font); letter-spacing: var(--app-ls, 0px);
   font-synthesis: none;
   overscroll-behavior-y: contain;
 }
@@ -779,11 +779,19 @@ html, body {
       <div style="font-size:12px;margin-bottom:5px;">서체 (14종)</div>
       <div id="vocaFontGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;"></div>
       <div style="font-size:12px;margin-bottom:5px;">글자 크기</div>
-      <div style="display:flex;gap:6px;">
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
         <button type="button" class="px-btn" onclick="setFsScale(0.85)" style="flex:1;">작게</button>
         <button type="button" class="px-btn" onclick="setFsScale(1)" style="flex:1;">보통</button>
         <button type="button" class="px-btn" onclick="setFsScale(1.18)" style="flex:1;">크게</button>
       </div>
+      <div style="font-size:12px;margin-bottom:5px;">↔️ 글씨 간격</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button type="button" class="px-btn" onclick="setLetterSp('-0.5px')" style="flex:1;">좁게</button>
+        <button type="button" class="px-btn" onclick="setLetterSp('0px')" style="flex:1;">보통</button>
+        <button type="button" class="px-btn" onclick="setLetterSp('1.2px')" style="flex:1;">넓게</button>
+      </div>
+      <div style="font-size:12px;margin-bottom:5px;">🎨 귀여운 테마 색깔 (8종)</div>
+      <div id="vocaThemeGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
     </div>
     <div style="border-top:2px dashed var(--ink);padding-top:10px;display:flex;flex-direction:column;gap:8px;">
       <button type="button" class="px-btn sky" id="exportJsonBtn">💾 JSON 백업 내보내기</button>
@@ -885,6 +893,35 @@ function renderStatus() {
   document.documentElement.style.setProperty('--fs-scale', state.fsScale || 1);
   const vf = VOCA_FONTS[state.fontIdx ?? 0] || VOCA_FONTS[0];
   document.documentElement.style.setProperty('--app-font', vf.val);
+  document.documentElement.style.setProperty('--app-ls', state.letterSp || '0px');
+  const vt = VOCA_THEMES[state.themeIdx ?? 0] || VOCA_THEMES[0];
+  document.documentElement.style.setProperty('--bg', vt.bg);
+  document.documentElement.style.setProperty('--butter', vt.butter);
+  document.documentElement.style.setProperty('--sky', vt.sky);
+  document.documentElement.style.setProperty('--matcha', vt.matcha);
+  document.documentElement.style.setProperty('--coral', vt.coral);
+}
+
+
+const VOCA_THEMES = [
+  { name: '크림 바닐라', bg: '#FBF7EE', butter: '#FFE58F', sky: '#BAE6FD', matcha: '#BBF7D0', coral: '#FECACA' },
+  { name: '딸기 밀크', bg: '#FFF0F3', butter: '#FFD6E0', sky: '#FFC2D1', matcha: '#FFE5EC', coral: '#FF8FAB' },
+  { name: '말차 라떼', bg: '#F1F8F2', butter: '#D8F3DC', sky: '#B7E4C7', matcha: '#95D5B2', coral: '#FFD6A5' },
+  { name: '소다 스카이', bg: '#EFF8FF', butter: '#DBEAFE', sky: '#BAE6FD', matcha: '#A7F3D0', coral: '#FBCFE8' },
+  { name: '버터 레몬', bg: '#FFFBEB', butter: '#FEF08A', sky: '#FDE68A', matcha: '#D9F99D', coral: '#FDBA74' },
+  { name: '라벤더 밀크', bg: '#F5F3FF', butter: '#EDE9FE', sky: '#DDD6FE', matcha: '#C7D2FE', coral: '#F5D0FE' },
+  { name: '피치 코랄', bg: '#FFF5F0', butter: '#FED7AA', sky: '#FDE68A', matcha: '#BBF7D0', coral: '#FCA5A5' },
+  { name: '모던 스톤', bg: '#F3F4F6', butter: '#E5E7EB', sky: '#CBD5E1', matcha: '#D1FAE5', coral: '#FCA5A5' }
+];
+window.setLetterSp = function(v) { state.letterSp = v; save(); renderStatus(); };
+window.setVocaTheme = function(i) { state.themeIdx = i; save(); renderStatus(); renderVocaThemeGrid(); };
+function renderVocaThemeGrid() {
+  const idx = state.themeIdx ?? 0;
+  const g = document.getElementById('vocaThemeGrid');
+  if (!g) return;
+  g.innerHTML = VOCA_THEMES.map((t, i) =>
+    `<button type="button" class="px-btn ${i===idx?'butter':''}" style="font-size:12px;padding:6px 8px;text-align:left;background:${t.bg};" onclick="setVocaTheme(${i})">🎨 ${t.name}</button>`
+  ).join('');
 }
 
 window.setFsScale = function(s) { state.fsScale = s; save(); renderStatus(); };
@@ -1962,7 +1999,7 @@ document.getElementById('joinRoomBtn').onclick = async () => {
   save(); await syncFriendScore(); loadFriendBoard();
 };
 
-document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); document.getElementById('settingsModal').classList.add('open'); };
+document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); renderVocaThemeGrid(); document.getElementById('settingsModal').classList.add('open'); };
 document.getElementById('closeSettingsModal').onclick = () => document.getElementById('settingsModal').classList.remove('open');
 document.getElementById('exportJsonBtn').onclick = () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
