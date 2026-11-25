@@ -241,34 +241,45 @@ html, body {
 .film-active-en.film-blue .study-en { color: #9ECAFF; }
 
 /* Real Translucent Draggable Cellophane Strip over the Column */
+.study-row.playing-now { background: #FFF8D6 !important; outline: 2.5px solid var(--coral); }
 .col-cellophane {
   position: absolute;
-  top: 0; bottom: 0;
+  top: 0; height: 100%;
   width: 41%;
   border-radius: 12px;
-  border: 2.5px solid rgba(255,255,255,0.85);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.16), inset 0 2px 16px rgba(255,255,255,0.45);
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
+  border: 2px solid rgba(255,255,255,0.92);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18), inset 0 2px 12px rgba(255,255,255,0.65), inset 0 -2px 10px rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px) saturate(1.4);
+  -webkit-backdrop-filter: blur(6px) saturate(1.4);
   touch-action: none;
   cursor: grab;
   z-index: 15;
   display: flex; align-items: flex-start; justify-content: flex-start;
   padding: 6px 0 0 8px;
-  transition: left .22s ease;
+  transition: left .22s ease, top .22s ease;
+  overflow: hidden;
 }
 .col-cellophane::before {
-  content: '↔ 밀어서 확인';
-  background: rgba(255,255,255,0.88);
+  content: '↔ ↕ 밀어서 확인';
+  background: rgba(255,255,255,0.92);
   border: 1.5px solid var(--ink);
   border-radius: 8px;
   padding: 2px 7px;
   font-size: 10px;
   color: var(--ink);
+  position: relative;
+  z-index: 2;
 }
-.col-cellophane.red { background: linear-gradient(135deg, rgba(255,80,80,0.62), rgba(240,55,55,0.52)); }
-.col-cellophane.green { background: linear-gradient(135deg, rgba(60,200,105,0.62), rgba(40,175,85,0.52)); }
-.col-cellophane.blue { background: linear-gradient(135deg, rgba(65,155,255,0.62), rgba(45,130,235,0.52)); }
+.col-cellophane::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.14) 24%, rgba(255,255,255,0) 42%, rgba(255,255,255,0.36) 58%, rgba(255,255,255,0) 76%, rgba(255,255,255,0.22) 100%);
+  pointer-events: none;
+}
+.col-cellophane.red { background: linear-gradient(135deg, rgba(255,68,78,0.68), rgba(235,38,52,0.56)); }
+.col-cellophane.green { background: linear-gradient(135deg, rgba(50,205,105,0.68), rgba(30,175,85,0.56)); }
+.col-cellophane.blue { background: linear-gradient(135deg, rgba(55,155,255,0.68), rgba(35,125,235,0.56)); }
 
 /* Flashcard Mode */
 .flashcard {
@@ -511,9 +522,7 @@ html, body {
             <span id="folderSecTitle" style="white-space:nowrap;">📁 단어장</span>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:nowrap;">
-            <button type="button" class="px-mini-btn" id="addBookBtn" style="white-space:nowrap;">+큰폴더</button>
-            <button type="button" class="px-mini-btn" id="addFolderBtn" style="white-space:nowrap;">+Day</button>
-            <button type="button" class="px-mini-btn" id="openFolderMgrBtn" style="white-space:nowrap;">⚙️</button>
+            <button type="button" class="px-mini-btn" id="openFolderMgrBtn" style="white-space:nowrap;">⚙️ 관리</button>
           </div>
         </div>
         <div id="bookListRow" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"></div>
@@ -539,7 +548,8 @@ html, body {
             <span id="homeStatsTxt" style="color:var(--muted);font-size:11px;white-space:nowrap;"></span>
           </div>
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
-            <button type="button" class="px-mini-btn" id="shuffleStudyBtn">순서 섞기</button>
+            <button type="button" class="px-mini-btn" id="playAllBtn">🔊 전체</button>
+            <button type="button" class="px-mini-btn" id="shuffleStudyBtn">섞기</button>
             <button type="button" class="px-mini-btn" id="resetOrderBtn">원래대로</button>
             <button type="button" class="px-mini-btn" id="toggleEditModeBtn">✏️</button>
           </div>
@@ -585,12 +595,17 @@ html, body {
           <button type="button" class="px-btn matcha" id="qModeFast">한 문제씩 (초고속)</button>
           <button type="button" class="px-btn" id="qModeSheet">시험지 (쭉 내려풀기)</button>
         </div>
-        <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px;font-size:12px;">
+        <div style="display:flex;gap:5px;align-items:center;margin-bottom:8px;font-size:12px;flex-wrap:wrap;">
           <span>문제 수:</span>
           <button type="button" class="px-mini-btn on" data-qcnt="all">전체</button>
           <button type="button" class="px-mini-btn" data-qcnt="20">20</button>
           <button type="button" class="px-mini-btn" data-qcnt="50">50</button>
           <button type="button" class="px-mini-btn" data-qcnt="100">100</button>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px;font-size:12px;">
+          <span>출제 순서:</span>
+          <button type="button" class="px-mini-btn on" id="qOrderShuffle">🔀 순서 섞기</button>
+          <button type="button" class="px-mini-btn" id="qOrderSeq">🔢 순서대로</button>
         </div>
         <div style="display:flex;gap:6px;">
           <button type="button" class="px-btn dark" id="startQuizBtn" style="flex:1;">⚡ 시험 바로 시작하기</button>
@@ -598,14 +613,17 @@ html, body {
         </div>
         <div style="border-top:2px dashed #E5DFCF;margin:14px 0 10px;"></div>
         <div class="sec-title" style="margin-bottom:6px;flex-wrap:wrap;gap:6px;">
-          <span>📋 퀴즈 기록</span>
-          <div style="display:flex;align-items:center;gap:4px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span>📋 퀴즈 기록</span>
+            <button type="button" class="px-mini-btn" id="toggleQLogBtn">펼치기 ▾</button>
+          </div>
+          <div id="qLogDateWrap" style="display:none;align-items:center;gap:4px;">
             <button type="button" class="px-mini-btn" id="qLogPrevBtn">◀</button>
             <strong id="qLogDateTxt" style="font-size:12px;">2026-11-25</strong>
             <button type="button" class="px-mini-btn" id="qLogNextBtn">▶</button>
           </div>
         </div>
-        <div id="quizLogList"></div>
+        <div id="quizLogList" style="display:none;"></div>
       </div>
 
       <!-- 단건 초고속 뷰 -->
@@ -731,33 +749,25 @@ html, body {
   <div class="modal-bg" id="stampModal">
     <div class="modal-card">
       <div class="sec-title"><span>🔥 출석 도장판</span><button type="button" class="px-mini-btn" onclick="document.getElementById('stampModal').classList.remove('open')">닫기</button></div>
-      <div style="font-size:12px;color:var(--muted);">시험을 완료하거나 도장을 찍으면 1일차, 2일차 도장이 쾅 찍혀요!</div>
+      <div style="font-size:12px;color:var(--muted);">이번 주 공부 도장을 쾅 찍어보세요! 하루라도 빠지면 연속 일수가 1일로 초기화돼요.</div>
       <div id="stampGrid" class="stamp-grid"></div>
-      <button type="button" class="px-btn coral" id="manualStampBtn" style="width:100%;margin-top:12px;">🐾 오늘 출석 도장 찍기!</button>
+      <button type="button" class="px-btn coral" id="manualStampBtn" style="width:100%;margin-top:12px;">🐾 오늘 공부했음 도장 찍기!</button>
     </div>
   </div>
 
     <!-- 레벨/성장 가이드 모달 -->
   <div class="modal-bg" id="lvHelpModal">
-    <div class="modal-card">
-      <div class="sec-title"><span>🌱 레벨 & 성장 도감</span><button type="button" class="px-mini-btn" onclick="document.getElementById('lvHelpModal').classList.remove('open')">닫기</button></div>
+    <div class="modal-card" style="max-height:84vh;overflow-y:auto;">
+      <div class="sec-title"><span>🌱 레벨 & 포인트 안내</span><button type="button" class="px-mini-btn" onclick="document.getElementById('lvHelpModal').classList.remove('open')">닫기</button></div>
       <div id="lvHelpCurrent" style="background:#FFF8E7;border:2px solid #222;border-radius:10px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
-      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">⚡ 경험치(EXP) 얻는 법</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px;">
-        • 시험 1단어 정답: +1 P (완벽암기 ⭐ 제외!)<br>
-        • 50 P 모일 때마다 1레벨 업! (최고 Lv.99)
+      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">⚡ 경험치(EXP) 규칙</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px;">
+        • 하루 출석 도장: 0 P (연속 공부 일수만 올라가요!)<br>
+        • 단어 시험 정답: +1 P (완벽암기 ⭐ 제외)<br>
+        • 하루 최대 획득: <b>25 P 제한</b> · 50 P당 1레벨 업!
       </div>
-      <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🏆 8단계 식물 성장 도감 (Lv.99 단어왕)</div>
-      <div style="font-size:12px;line-height:1.6;">
-        • <b>Lv.1 ~ 4</b>: 🌱 단어 새싹<br>
-        • <b>Lv.5 ~ 9</b>: ☘️ 세잎 클로버<br>
-        • <b>Lv.10 ~ 19</b>: 🍀 네잎 클로버<br>
-        • <b>Lv.20 ~ 34</b>: 🌷 분홍 봉오리<br>
-        • <b>Lv.35 ~ 54</b>: 🌸 살짝 핀 분홍꽃<br>
-        • <b>Lv.55 ~ 74</b>: 🌸 5잎 분홍꽃<br>
-        • <b>Lv.75 ~ 98</b>: ✨ 황금꽃<br>
-        • <b>Lv.99</b>: 👑 단어왕
-      </div>
+      <button type="button" class="px-btn butter" id="toggleGuideBookBtn" style="width:100%;font-size:12px;">🌱 8단계 성장 도감 보기 ▾</button>
+      <div id="lvGuideBookGrid" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;"></div>
     </div>
   </div>
 
@@ -765,6 +775,10 @@ html, body {
   <div class="modal-bg" id="folderMgrModal">
     <div class="modal-card" style="max-height:82vh;overflow-y:auto;">
       <div class="sec-title"><span>⚙️ 폴더 · 단어집 관리</span><button type="button" class="px-mini-btn" onclick="document.getElementById('folderMgrModal').classList.remove('open')">닫기</button></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button type="button" class="px-btn butter" id="addBookBtn" style="flex:1;padding:6px 8px;font-size:12px;">+ 큰 폴더 추가</button>
+        <button type="button" class="px-btn sky" id="addFolderBtn" style="flex:1;padding:6px 8px;font-size:12px;">+ Day 추가</button>
+      </div>
       <div style="font-size:12px;font-weight:bold;margin:6px 0 4px;">📚 큰 폴더 (단어집)</div>
       <div id="mgrBooksList"></div>
       <div style="font-size:12px;font-weight:bold;margin:12px 0 4px;">📁 Day 폴더 (이름 수정 · 큰 폴더 이동 · 삭제)</div>
@@ -783,15 +797,15 @@ html, body {
       <div id="vocaFontGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;"></div>
       <div style="font-size:12px;margin-bottom:5px;">글자 크기</div>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button type="button" class="px-btn" onclick="setFsScale(0.85)" style="flex:1;">작게</button>
-        <button type="button" class="px-btn" onclick="setFsScale(1)" style="flex:1;">보통</button>
-        <button type="button" class="px-btn" onclick="setFsScale(1.18)" style="flex:1;">크게</button>
+        <button type="button" class="px-btn" data-fs="0.85" onclick="setFsScale(0.85)" style="flex:1;">작게</button>
+        <button type="button" class="px-btn" data-fs="1" onclick="setFsScale(1)" style="flex:1;">보통</button>
+        <button type="button" class="px-btn" data-fs="1.18" onclick="setFsScale(1.18)" style="flex:1;">크게</button>
       </div>
       <div style="font-size:12px;margin-bottom:5px;">↔️ 글씨 간격</div>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button type="button" class="px-btn" onclick="setLetterSp('-0.5px')" style="flex:1;">좁게</button>
-        <button type="button" class="px-btn" onclick="setLetterSp('0px')" style="flex:1;">보통</button>
-        <button type="button" class="px-btn" onclick="setLetterSp('1.2px')" style="flex:1;">넓게</button>
+        <button type="button" class="px-btn" data-ls="-0.5px" onclick="setLetterSp('-0.5px')" style="flex:1;">좁게</button>
+        <button type="button" class="px-btn" data-ls="0px" onclick="setLetterSp('0px')" style="flex:1;">보통</button>
+        <button type="button" class="px-btn" data-ls="1.2px" onclick="setLetterSp('1.2px')" style="flex:1;">넓게</button>
       </div>
       <div style="font-size:12px;margin-bottom:5px;">🎨 귀여운 테마 색깔 (8종)</div>
       <div id="vocaThemeGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
@@ -868,6 +882,13 @@ function updateStreak() {
 
 function gainExp(amt) {
   updateStreak();
+  if (!state.dailyExp) state.dailyExp = {};
+  const t = todayStr();
+  const used = state.dailyExp[t] || 0;
+  const allow = Math.max(0, Math.min(amt, 25 - used));
+  if (allow <= 0) return;
+  state.dailyExp[t] = used + allow;
+  amt = allow;
   state.exp += amt;
   let leveled = false;
   while (state.exp >= 50 && state.lv < 99) {
@@ -875,7 +896,45 @@ function gainExp(amt) {
     state.lv += 1;
     leveled = true;
   }
-  save(); renderStatus();
+  save(); 
+function renderStampModal() {
+  const grid = document.getElementById('stampGrid');
+  if (!grid) return;
+  const set = new Set(state.stamps || []);
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun..6=Sat
+  const diffToMon = (day === 0 ? -6 : 1 - day);
+  const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
+  const names = ['월', '화', '수', '목', '금', '토', '일'];
+  const t = todayStr();
+  grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+  grid.innerHTML = names.map((nm, i) => {
+    const d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const stamped = set.has(ds);
+    const isToday = ds === t;
+    return `
+      <div style="border:2px solid ${isToday ? 'var(--coral)' : '#222'};border-radius:10px;padding:6px 2px;text-align:center;background:${stamped ? '#FFF3D1' : '#FFF'};">
+        <div style="font-size:10px;color:${isToday ? 'var(--coral)' : 'var(--muted)'};font-weight:bold;">${nm}</div>
+        <div style="font-size:10px;color:var(--muted);margin:1px 0 3px;">${d.getDate()}</div>
+        <div style="font-size:18px;line-height:1;">${stamped ? '🐾' : '▫️'}</div>
+      </div>
+    `;
+  }).join('');
+}
+document.getElementById('streakBadge').style.cursor = 'pointer';
+document.getElementById('streakBadge').onclick = () => {
+  renderStampModal();
+  document.getElementById('stampModal').classList.add('open');
+};
+document.getElementById('manualStampBtn').onclick = () => {
+  stampToday();
+  save();
+  renderStatus();
+  renderStampModal();
+};
+
+renderStatus();
   if (leveled) {
     const toast = document.getElementById('lvupToast');
     toast.textContent = `🎉 LEVEL UP! Lv.${state.lv}`;
@@ -895,10 +954,12 @@ function renderStatus() {
   else if (state.lv >= 20) { title = '분홍 봉오리'; plantStage = 4; }
   else if (state.lv >= 10) { title = '네잎 클로버'; plantStage = 3; }
   else if (state.lv >= 5) { title = '세잎 클로버'; plantStage = 2; }
-  const av = document.querySelector('.avatar-clean');
-  if (av) av.src = `plant${plantStage}.png?v=1`;
+  const avImg = document.querySelector('#avatarBox img');
+  if (avImg) avImg.src = `plant${plantStage}.png?v=1`;
   document.getElementById('lvTitle').textContent = `Lv.${state.lv} ${title}`;
-  document.getElementById('streakBadge').textContent = `🔥 ${state.streak}일`;
+  const curStreak = calcConsecutiveStreak();
+  state.streak = curStreak;
+  document.getElementById('streakBadge').textContent = `🔥 ${curStreak}일`;
   document.getElementById('expFill').style.width = `${Math.min(100, Math.round((state.exp / need) * 100))}%`;
   document.getElementById('expTxt').textContent = `${state.exp}/${need}`;
   document.documentElement.style.setProperty('--fs-scale', state.fsScale || 1);
@@ -924,18 +985,23 @@ const VOCA_THEMES = [
   { name: '피치 코랄', bg: '#FFF5F0', butter: '#FED7AA', sky: '#FDE68A', matcha: '#BBF7D0', coral: '#FCA5A5' },
   { name: '모던 스톤', bg: '#F3F4F6', butter: '#E5E7EB', sky: '#CBD5E1', matcha: '#D1FAE5', coral: '#FCA5A5' }
 ];
-window.setLetterSp = function(v) { state.letterSp = v; save(); renderStatus(); };
+window.setLetterSp = function(v) { state.letterSp = v; save(); renderStatus(); renderFsLsButtons(); };
 window.setVocaTheme = function(i) { state.themeIdx = i; save(); renderStatus(); renderVocaThemeGrid(); };
 function renderVocaThemeGrid() {
   const idx = state.themeIdx ?? 0;
   const g = document.getElementById('vocaThemeGrid');
   if (!g) return;
   g.innerHTML = VOCA_THEMES.map((t, i) =>
-    `<button type="button" class="px-btn ${i===idx?'butter':''}" style="font-size:12px;padding:6px 8px;text-align:left;background:${t.bg};" onclick="setVocaTheme(${i})">🎨 ${t.name}</button>`
+    `<button type="button" class="px-btn ${i===idx?'butter':''}" style="font-size:12px;padding:6px 8px;text-align:left;background:${i===idx?'var(--butter)':t.bg};border:2px solid ${i===idx?'#222':'#CCC'};" onclick="setVocaTheme(${i})">${i===idx?'✅ ':''}${t.name}</button>`
   ).join('');
 }
-
-window.setFsScale = function(s) { state.fsScale = s; save(); renderStatus(); };
+function renderFsLsButtons() {
+  const fs = String(state.fsScale ?? 1);
+  const ls = state.letterSp ?? '0px';
+  document.querySelectorAll('[data-fs]').forEach(b => b.classList.toggle('butter', b.dataset.fs === fs));
+  document.querySelectorAll('[data-ls]').forEach(b => b.classList.toggle('butter', b.dataset.ls === ls));
+}
+window.setFsScale = function(s) { state.fsScale = s; save(); renderStatus(); renderFsLsButtons(); };
 function renderVocaFontGrid() {
   const fIdx = state.fontIdx ?? 0;
   document.getElementById('vocaFontGrid').innerHTML = VOCA_FONTS.map((f, i) =>
@@ -960,11 +1026,45 @@ function ensureBookState() {
 }
 ensureBookState();
 
+const GUIDE_STAGES = [
+  { img: './plant1.png', lv: 'Lv.1 ~ 4', name: '단어 새싹' },
+  { img: './plant2.png', lv: 'Lv.5 ~ 9', name: '세잎 클로버' },
+  { img: './plant3.png', lv: 'Lv.10 ~ 19', name: '네잎 클로버' },
+  { img: './plant4.png', lv: 'Lv.20 ~ 34', name: '분홍 봉오리' },
+  { img: './plant5.png', lv: 'Lv.35 ~ 54', name: '살짝 핀 분홍꽃' },
+  { img: './plant6.png', lv: 'Lv.55 ~ 74', name: '5잎 분홍꽃' },
+  { img: './plant7.png', lv: 'Lv.75 ~ 98', name: '황금꽃' },
+  { img: './plant8.png', lv: 'Lv.99', name: '단어왕' }
+];
 document.getElementById('openLvHelpBtn').onclick = () => {
   const need = 50;
+  const t = todayStr();
+  const todayP = (state.dailyExp && state.dailyExp[t]) || 0;
   const escapeLv = state.lv < 10 ? `새싹 탈출(Lv.10)까지 ${10 - state.lv}레벨 남았어요!` : (state.lv < 99 ? `Lv.99 단어왕까지 ${99 - state.lv}레벨 남았어요!` : '최고 등급 👑 단어왕 달성!');
-  document.getElementById('lvHelpCurrent').innerHTML = `<b>현재: Lv.${state.lv}</b> (${state.exp}/${need} EXP)<br><span style="color:#E03131;">${escapeLv}</span>`;
+  document.getElementById('lvHelpCurrent').innerHTML = `<b>현재: Lv.${state.lv}</b> (${state.exp}/${need} EXP) · 오늘 <b>${todayP}/25 P</b><br><span style="color:#E03131;">${escapeLv}</span>`;
+  document.getElementById('lvGuideBookGrid').style.display = 'none';
+  document.getElementById('toggleGuideBookBtn').textContent = '🌱 8단계 성장 도감 보기 ▾';
   document.getElementById('lvHelpModal').classList.add('open');
+};
+document.getElementById('toggleGuideBookBtn').onclick = () => {
+  const g = document.getElementById('lvGuideBookGrid');
+  const open = g.style.display === 'grid';
+  if (open) {
+    g.style.display = 'none';
+    document.getElementById('toggleGuideBookBtn').textContent = '🌱 8단계 성장 도감 보기 ▾';
+  } else {
+    g.innerHTML = GUIDE_STAGES.map(s => `
+      <div style="border:2px solid #222;border-radius:10px;padding:8px;background:#FFFDF7;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;">
+        <div style="width:48px;height:48px;border:2px solid #222;border-radius:8px;background:#FFF;display:flex;align-items:center;justify-content:center;padding:4px;">
+          <img src="${s.img}" style="width:38px;height:38px;image-rendering:pixelated;object-fit:contain;" />
+        </div>
+        <div style="font-size:10px;color:var(--muted);">${s.lv}</div>
+        <div style="font-size:12px;font-weight:bold;">${s.name}</div>
+      </div>
+    `).join('');
+    g.style.display = 'grid';
+    document.getElementById('toggleGuideBookBtn').textContent = '🌱 8단계 성장 도감 닫기 ▴';
+  }
 };
 
 window.enterBook = (bid) => {
@@ -1299,21 +1399,29 @@ function renderStudy() {
 
 /* Draggable Column Cellophane Sheet */
 const colFilm = document.getElementById('colCellophane');
-let colDrag = false, colStartX = 0, colOrigLeft = 0;
+let colDrag = false, colStartX = 0, colStartY = 0, colOrigLeft = 0, colOrigTop = 0;
 colFilm.addEventListener('pointerdown', e => {
   colDrag = true;
   colStartX = e.clientX;
+  colStartY = e.clientY;
   colOrigLeft = colFilm.offsetLeft;
+  colOrigTop = colFilm.offsetTop;
   colFilm.style.transition = 'none';
   colFilm.setPointerCapture(e.pointerId);
 });
 colFilm.addEventListener('pointermove', e => {
   if (!colDrag) return;
-  colFilm.style.left = `${colOrigLeft + (e.clientX - colStartX)}px`;
+  const wrap = document.getElementById('studyListWrap');
+  const maxLeft = wrap.clientWidth - colFilm.offsetWidth;
+  const maxTop = Math.max(0, wrap.clientHeight - 40);
+  const dx = e.clientX - colStartX;
+  const dy = e.clientY - colStartY;
+  colFilm.style.left = `${Math.max(0, Math.min(maxLeft, colOrigLeft + dx))}px`;
+  colFilm.style.top = `${Math.max(0, Math.min(maxTop, colOrigTop + dy))}px`;
 });
 colFilm.addEventListener('pointerup', () => {
   colDrag = false;
-  colFilm.style.transition = 'left .22s ease';
+  colFilm.style.transition = 'left .22s ease, top .22s ease';
 });
 
 const fcFilm = document.getElementById('fcCellophane');
@@ -1346,6 +1454,45 @@ document.querySelectorAll('.color-dot').forEach(dot => {
   };
 });
 document.getElementById('onlyHardChk').onchange = () => { fcIdx = 0; renderStudy(); };
+let playAllTimer = null, playAllActive = false;
+function stopPlayAll() {
+  playAllActive = false;
+  if (playAllTimer) { clearTimeout(playAllTimer); playAllTimer = null; }
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  const btn = document.getElementById('playAllBtn');
+  if (btn) btn.textContent = '🔊 전체';
+  document.querySelectorAll('.study-row.playing-now').forEach(el => el.classList.remove('playing-now'));
+}
+document.getElementById('playAllBtn').onclick = () => {
+  if (playAllActive) { stopPlayAll(); return; }
+  const list = getStudyWords();
+  if (!list.length) return;
+  playAllActive = true;
+  document.getElementById('playAllBtn').textContent = '⏹️ 정지';
+  let idx = 0;
+  function step() {
+    if (!playAllActive || idx >= list.length) { stopPlayAll(); return; }
+    document.querySelectorAll('.study-row.playing-now').forEach(el => el.classList.remove('playing-now'));
+    const rows = document.querySelectorAll('#studyListView .study-row');
+    if (rows[idx]) {
+      rows[idx].classList.add('playing-now');
+      rows[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    const w = list[idx++];
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(w.en);
+      u.lang = 'en-US'; u.rate = 0.92;
+      u.onend = () => { if (playAllActive) playAllTimer = setTimeout(step, 450); };
+      u.onerror = () => { if (playAllActive) playAllTimer = setTimeout(step, 450); };
+      speechSynthesis.speak(u);
+    } else {
+      playAllTimer = setTimeout(step, 1000);
+    }
+  }
+  step();
+};
+
 document.getElementById('shuffleStudyBtn').onclick = () => {
   const ids = state.words.filter(w => w.folderId === state.activeFolderId).map(w => w.id);
   for (let i = ids.length - 1; i > 0; i--) {
@@ -1389,12 +1536,14 @@ document.getElementById('fcMasterBtn').onclick = () => {
 };
 
 /* Quiz Tab: Fast & Sheet Mode (No Monster Delay) */
-let qScope = 'all', qType = 'mcq', qMode = 'fast', qCnt = 'all';
+let qScope = 'all', qType = 'mcq', qMode = 'fast', qCnt = 'all', qOrder = 'shuffle';
 let qDetails = [], qFolderLabel = "전체";
 let qList = [], qPos = 0, qCorrect = 0, qWrongs = [], qSheetAns = {}, activeMissionId = null;
 
-document.getElementById('qScopeAll').onclick = () => { qScope = 'all'; document.getElementById('qScopeAll').classList.add('sky'); document.getElementById('qScopeHard').classList.remove('coral'); };
-document.getElementById('qScopeHard').onclick = () => { qScope = 'hard'; document.getElementById('qScopeHard').classList.add('coral'); document.getElementById('qScopeAll').classList.remove('sky'); };
+document.getElementById('qScopeAll').onclick = () => { qScope = 'all'; document.getElementById('qScopeAll').classList.add('sky'); document.getElementById('qScopeHard').classList.remove('sky'); };
+document.getElementById('qScopeHard').onclick = () => { qScope = 'hard'; document.getElementById('qScopeHard').classList.add('sky'); document.getElementById('qScopeAll').classList.remove('sky'); };
+document.getElementById('qOrderShuffle').onclick = () => { qOrder = 'shuffle'; document.getElementById('qOrderShuffle').classList.add('on'); document.getElementById('qOrderSeq').classList.remove('on'); };
+document.getElementById('qOrderSeq').onclick = () => { qOrder = 'seq'; document.getElementById('qOrderSeq').classList.add('on'); document.getElementById('qOrderShuffle').classList.remove('on'); };
 document.getElementById('qTypeMcq').onclick = () => { qType = 'mcq'; document.getElementById('qTypeMcq').classList.add('butter'); document.getElementById('qTypeBlank').classList.remove('butter'); };
 document.getElementById('qTypeBlank').onclick = () => { qType = 'blank'; document.getElementById('qTypeBlank').classList.add('butter'); document.getElementById('qTypeMcq').classList.remove('butter'); };
 document.getElementById('qModeFast').onclick = () => { qMode = 'fast'; document.getElementById('qModeFast').classList.add('matcha'); document.getElementById('qModeSheet').classList.remove('matcha'); };
@@ -1410,7 +1559,7 @@ document.querySelectorAll('[data-qcnt]').forEach(btn => {
 function startQuizWithPool(pool, missionId = null) {
   if (!pool.length) return alert('시험 볼 단어가 없어요!');
   activeMissionId = missionId;
-  let shuffled = [...pool].sort(() => Math.random() - 0.5);
+  let shuffled = (qOrder === 'seq' && !missionId) ? [...pool] : [...pool].sort(() => Math.random() - 0.5);
   if (qCnt !== 'all' && !missionId) shuffled = shuffled.slice(0, Number(qCnt));
   qList = shuffled;
   qPos = 0; qCorrect = 0; qWrongs = []; qSheetAns = {};
@@ -1490,7 +1639,7 @@ function renderQuizQ() {
       const box = document.getElementById('blankHintBox');
       if (g.ok) {
         box.style.color = '#2B8A3E';
-        box.innerHTML = `⭕ 정답!${g.others.length ? ` <span style="color:var(--muted);">(다른 뜻: ${g.others.join(', ')})</span>` : ''}`;
+        box.innerHTML = `⭕ 정답!${g.others.length ? ` <span style="color:var(--muted);"><span style="color:var(--coral);font-weight:bold;">+ ${g.others.join(', ')}</span></span>` : ''}`;
       } else {
         box.style.color = '#C92A2A';
         box.innerHTML = `❌ 오답 · 뜻: ${w.ko}`;
@@ -1618,11 +1767,23 @@ function getDateOffset(baseStr, delta) {
 }
 let wrongViewDate = todayStr();
 
+function calcConsecutiveStreak() {
+  const set = new Set(state.stamps || []);
+  const t = todayStr();
+  let cur = set.has(t) ? t : getDateOffset(t, -1);
+  if (!set.has(cur)) return 0;
+  let cnt = 0;
+  while (set.has(cur)) {
+    cnt++;
+    cur = getDateOffset(cur, -1);
+  }
+  return cnt;
+}
 function stampToday() {
   const t = todayStr();
   if (!Array.isArray(state.stamps)) state.stamps = [];
   if (!state.stamps.includes(t)) state.stamps.push(t);
-  state.streak = state.stamps.length;
+  state.streak = calcConsecutiveStreak();
 }
 
 function finishQuiz(overrideTotal) {
@@ -1701,6 +1862,14 @@ function renderQuizLogs() {
     </div>
   `).join('');
 }
+let qLogOpen = false;
+document.getElementById('toggleQLogBtn').onclick = () => {
+  qLogOpen = !qLogOpen;
+  document.getElementById('quizLogList').style.display = qLogOpen ? 'block' : 'none';
+  document.getElementById('qLogDateWrap').style.display = qLogOpen ? 'flex' : 'none';
+  document.getElementById('toggleQLogBtn').textContent = qLogOpen ? '접기 ▴' : '펼치기 ▾';
+  if (qLogOpen) renderQuizLogs();
+};
 document.getElementById('qLogPrevBtn').onclick = () => shiftQLogDate(-1);
 document.getElementById('qLogNextBtn').onclick = () => shiftQLogDate(1);
 
@@ -1715,7 +1884,7 @@ window.openQuizLogModal = (idx) => {
         <strong style="font-size:13px;">${i + 1}. ${it.en}</strong>
         <span style="font-size:13px;font-weight:bold;color:${it.ok ? '#2B8A3E' : '#C92A2A'};">${it.ok ? '⭕' : '❌'}</span>
       </div>
-      <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);">· 나머지 뜻: ${it.others.join(', ')}</span>` : ''}</div>
+      <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);"><span style="color:var(--coral);font-weight:bold;">+ ${it.others.join(', ')}</span></span>` : ''}</div>
       ${!it.ok ? `<div style="font-size:12px;color:#C92A2A;margin-top:2px;">정답: ${it.ko}</div>` : ''}
     </div>
   `).join('');
@@ -2038,7 +2207,7 @@ document.getElementById('joinRoomBtn').onclick = async () => {
   save(); await syncFriendScore(); loadFriendBoard();
 };
 
-document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); renderVocaThemeGrid(); document.getElementById('settingsModal').classList.add('open'); };
+document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); renderVocaThemeGrid(); renderFsLsButtons(); document.getElementById('settingsModal').classList.add('open'); };
 document.getElementById('closeSettingsModal').onclick = () => document.getElementById('settingsModal').classList.remove('open');
 document.getElementById('exportJsonBtn').onclick = () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
