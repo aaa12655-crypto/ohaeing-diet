@@ -364,6 +364,96 @@ html, body {
   background: var(--butter); border: 3px solid var(--ink); border-radius: 12px;
   padding: 10px 18px; font-weight: bold; z-index: 80; box-shadow: 3px 3px 0 var(--ink); display: none;
 }
+
+.toolbar-row { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+.toolbar-row::-webkit-scrollbar { display:none; }
+.toolbar-row .px-btn, .toolbar-row .px-mini-btn, .toolbar-row label { white-space:nowrap; flex-shrink:0; }
+
+/* 1번 픽셀 스프링 오답노트 */
+.spring-note-wrap {
+  position: relative;
+  background-color: #FAF6EE;
+  background-image: linear-gradient(to right, #EFE8DA 1px, transparent 1px), linear-gradient(to bottom, #EFE8DA 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 2.5px solid #222;
+  border-radius: 14px;
+  padding: 26px 12px 14px;
+  margin-top: 10px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.08);
+}
+.spring-rings {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.spring-ring {
+  width: 10px;
+  height: 22px;
+  background: #FF7B7B;
+  border: 2px solid #222;
+  border-radius: 5px;
+}
+.wrong-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.wrong-grid-card {
+  background: #FFFFFF;
+  border: 2px solid #222;
+  border-radius: 10px;
+  padding: 8px 9px;
+  min-width: 0;
+}
+.wrong-grid-en {
+  font-weight: bold;
+  font-size: calc(13px * var(--fs-scale, 1));
+  color: #222;
+  word-break: break-word;
+}
+.wrong-grid-ko {
+  font-size: calc(11px * var(--fs-scale, 1));
+  color: #E03131;
+  margin-top: 3px;
+  line-height: 1.3;
+  word-break: keep-all;
+}
+.quiz-log-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 10px;
+  background: #FFFDF9;
+  border: 2px solid #222;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-top: 10px;
+}
+.stamp-cell {
+  border: 1.5px solid #222;
+  border-radius: 8px;
+  padding: 6px 2px;
+  text-align: center;
+  font-size: 11px;
+  background: #FFFDF9;
+}
+.stamp-cell.stamped {
+  background: #FFE5E5;
+  border-color: #FF6B6B;
+  font-weight: bold;
+}
+
 </style>
 </head>
 <body>
@@ -398,7 +488,7 @@ html, body {
           <span>⚡ 3초 복붙 단어 넣기</span>
           <div style="display:flex;gap:5px;">
             <label class="px-mini-btn" style="cursor:pointer;">
-              텍스트(.txt)<input type="file" id="importTxtInput" accept=".txt,.csv" style="display:none;" />
+              .txt 파일만<input type="file" id="importTxtInput" accept=".txt,.csv,text/plain" style="display:none;" />
             </label>
             <button type="button" class="px-mini-btn on" id="togglePasteBoxBtn">접기</button>
           </div>
@@ -406,8 +496,11 @@ html, body {
         <div id="pasteBodyWrap" style="margin-top:8px;">
           <textarea class="px-textarea" id="bulkInput" placeholder="줄바꿈 없이 한 줄로 쭉 붙여넣어도 자동 분리!
 예: abandon 버리다 crucial - 중대한 implement : 실행하다"></textarea>
-          <button type="button" class="px-btn matcha" id="parseAddBtn" style="width:100%;margin-top:8px;">+ 단어 추가하기</button>
-          <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;">※ 사진·PDF는 AI에게 보내서 텍스트로 추출해 붙여넣으세요!</div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button type="button" class="px-btn matcha" id="parseAddBtn" style="flex:1;">+ 단어 추가하기</button>
+            <button type="button" class="px-btn" id="clearPasteBtn" style="padding:7px 12px;">지우기</button>
+          </div>
+          <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;">※ .txt 텍스트 파일만 열려요! (사진·PDF는 AI에게 보내 텍스트 추출 후 붙여넣기)</div>
         </div>
       </div>
 
@@ -439,10 +532,12 @@ html, body {
             <span class="color-dot" data-c="blue" style="background:#469BFF;"></span>
           </span>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;font-size:12px;">
-          <label><input type="checkbox" id="onlyHardChk" /> 헷갈림(🔥)만</label>
-          <span id="homeStatsTxt" style="color:var(--muted);font-size:11px;"></span>
-          <div style="margin-left:auto;display:flex;gap:4px;">
+        <div class="toolbar-row" style="justify-content:space-between;font-size:12px;">
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+            <label style="display:flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="onlyHardChk" /> 헷갈림만</label>
+            <span id="homeStatsTxt" style="color:var(--muted);font-size:11px;white-space:nowrap;"></span>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
             <button type="button" class="px-mini-btn" id="shuffleStudyBtn">순서 섞기</button>
             <button type="button" class="px-mini-btn" id="resetOrderBtn">원래대로</button>
           </div>
@@ -495,7 +590,15 @@ html, body {
           <button type="button" class="px-mini-btn" data-qcnt="50">50</button>
           <button type="button" class="px-mini-btn" data-qcnt="100">100</button>
         </div>
-        <button type="button" class="px-btn dark" id="startQuizBtn" style="width:100%;">⚡ 시험 바로 시작하기</button>
+        <div style="display:flex;gap:6px;">
+          <button type="button" class="px-btn dark" id="startQuizBtn" style="flex:1;">⚡ 시험 바로 시작하기</button>
+          <button type="button" class="px-btn butter" id="startYesterdayWrongBtn" style="padding:8px 10px;font-size:12px;">📅 어제 오답</button>
+        </div>
+      </div>
+
+      <div class="px-card" style="margin-top:10px;">
+        <div class="sec-title"><span>📋 날짜별 퀴즈 기록</span><span style="font-size:11px;color:var(--muted);">누르면 채점 확인</span></div>
+        <div id="quizLogList"></div>
       </div>
 
       <!-- 단건 초고속 뷰 -->
@@ -530,22 +633,32 @@ html, body {
 
     <!-- 4. 오답노트 탭 -->
     <section class="panel" id="panelWrong">
-      <div class="receipt-box">
-        <div style="text-align:center;font-weight:bold;font-size:16px;">*** 오늘의 오답 영수증 ***</div>
-        <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:2px;" id="receiptDateTxt"></div>
-        <div class="receipt-zig"></div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
-          <span>최근 시험 정답률</span>
-          <strong id="receiptRateTxt">-</strong>
+      <div class="px-card">
+        <div class="sec-title">
+          <span>📒 픽셀 오답 노트</span>
+          <button type="button" class="px-mini-btn" id="clearWrongBtn">이 날 비우기</button>
         </div>
-        <div style="border-top:2px dashed var(--ink);padding-top:8px;" id="wrongListBox"></div>
-        <div class="receipt-zig"></div>
-        <div class="barcode"></div>
-        <div style="text-align:center;font-size:11px;color:var(--muted);">KEEP GOING · ONE WORD A DAY</div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button type="button" class="px-btn sky" id="saveReceiptImgBtn" style="flex:1;">🖼️ 영수증 이미지 저장</button>
-        <button type="button" class="px-btn coral" id="clearWrongBtn">비우기</button>
+        <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin:4px 0 6px;">
+          <button type="button" class="px-mini-btn" id="wrongPrevDateBtn">◀</button>
+          <strong id="receiptDateTxt" style="font-size:14px;">2026-11-25</strong>
+          <button type="button" class="px-mini-btn" id="wrongNextDateBtn">▶</button>
+        </div>
+        <div class="spring-note-wrap">
+          <div class="spring-rings">
+            <span class="spring-ring"></span><span class="spring-ring"></span><span class="spring-ring"></span>
+            <span class="spring-ring"></span><span class="spring-ring"></span><span class="spring-ring"></span>
+            <span class="spring-ring"></span><span class="spring-ring"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong style="font-size:13px;">📌 오늘 꼭 외울 찐 오답</strong>
+            <span id="receiptRateTxt" style="font-size:11px;color:var(--muted);">0개</span>
+          </div>
+          <div id="wrongListBox" class="wrong-grid-2col"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button type="button" class="px-btn sky" id="saveReceiptImgBtn" style="flex:1;font-size:12px;">📝 노트 이미지 저장</button>
+          <button type="button" class="px-btn butter" id="saveWallpaperImgBtn" style="flex:1;font-size:12px;">📱 바탕화면(9:16) 저장</button>
+        </div>
       </div>
     </section>
     <!-- 4. 친구 탭 (함께 외우기 · 시험 미션 · 점수/틀린 단어 비교 · 한마디) -->
@@ -599,7 +712,26 @@ html, body {
 </div>
 
 <!-- 설정 & 백업 모달 -->
-<div class="modal-bg" id="settingsModal">
+  <!-- 퀴즈 기록 상세 모달 -->
+  <div class="modal-bg" id="quizLogModal">
+    <div class="modal-box" style="max-height:82vh;overflow-y:auto;">
+      <div class="sec-title"><span id="quizLogModalTitle">📝 퀴즈 채점 결과</span><button type="button" class="px-mini-btn" onclick="document.getElementById('quizLogModal').classList.remove('open')">닫기</button></div>
+      <div id="quizLogModalMeta" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
+      <div id="quizLogModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 출석 도장판 모달 -->
+  <div class="modal-bg" id="stampModal">
+    <div class="modal-box">
+      <div class="sec-title"><span>🔥 출석 도장판</span><button type="button" class="px-mini-btn" onclick="document.getElementById('stampModal').classList.remove('open')">닫기</button></div>
+      <div style="font-size:12px;color:var(--muted);">시험을 완료하거나 도장을 찍으면 1일차, 2일차 도장이 쾅 찍혀요!</div>
+      <div id="stampGrid" class="stamp-grid"></div>
+      <button type="button" class="px-btn coral" id="manualStampBtn" style="width:100%;margin-top:12px;">🐾 오늘 출석 도장 찍기!</button>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="settingsModal">
   <div class="modal-card">
     <div class="modal-head">
       <span>⚙️ 설정 및 백업</span>
@@ -661,7 +793,7 @@ function defaultState() {
       { id: 'w2', folderId: 'f1', en: 'mandatory', ko: '의무적인, 필수의', status: 'hard' },
       { id: 'w3', folderId: 'f1', en: 'revenue', ko: '수익, 세입', status: 'star' }
     ],
-    wrongLogs: [],
+    wrongLogs: [], wrongByDate: {}, quizLogs: [], stampDates: [],
     lastQuizRate: null
   };
 }
@@ -836,6 +968,7 @@ document.getElementById('parseAddBtn').onclick = () => {
   save(); renderHome(); renderStudy();
 };
 
+document.getElementById('clearPasteBtn').onclick = () => { document.getElementById('bulkInput').value = ''; document.getElementById('bulkInput').focus(); };
 document.getElementById('importTxtInput').onchange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -1122,7 +1255,7 @@ function renderQuizQ() {
         box.style.color = '#C92A2A';
         box.innerHTML = `❌ 오답 · 뜻: ${w.ko}`;
       }
-      setTimeout(() => handleQuizAnswer(g.ok, w), g.others.length || !g.ok ? 700 : 150);
+      setTimeout(() => handleQuizAnswer(g.ok, w, inp.value.trim(), g.others), g.others.length || !g.ok ? 700 : 150);
     };
     document.getElementById('blankSubmitBtn').onclick = submitFn;
     inp.onkeydown = (e) => { if (e.key === 'Enter') submitFn(); };
@@ -1132,20 +1265,19 @@ function renderQuizQ() {
     const opts = getMcqOptions(w, qList);
     area.innerHTML = opts.map(o => `<button type="button" class="px-btn quiz-opt" data-en="${o.en}">${o.ko}</button>`).join('');
     area.querySelectorAll('.quiz-opt').forEach(btn => {
-      btn.onclick = () => handleQuizAnswer(btn.dataset.en === w.en, w);
+      btn.onclick = () => handleQuizAnswer(btn.dataset.en === w.en, w, btn.textContent, []);
     });
   }
 }
 
-function handleQuizAnswer(ok, w) {
+function handleQuizAnswer(ok, w, userAns = '', others = []) {
   if (ok) {
     qCorrect += 1;
     gainExp(5);
   } else {
     qWrongs.push({ en: w.en, ko: w.ko });
-    const real = state.words.find(x => x.en === w.en);
-    if (real) real.status = 'hard';
   }
+  qDetails.push({ en: w.en, ko: w.ko, userAns: userAns || '-', ok, others: others || [] });
   qPos += 1;
   renderQuizQ(); // Zero delay! Instant next question
 }
@@ -1196,83 +1328,257 @@ function renderQuizSheet() {
 }
 
 document.getElementById('sheetSubmitBtn').onclick = () => {
-  qCorrect = 0; qWrongs = [];
-  const feedbackLines = [];
+  qCorrect = 0; qWrongs = []; qDetails = [];
   qList.forEach((w, idx) => {
-    let ok = false;
+    let ok = false, others = [], userAns = qSheetAns[idx] || '';
     if (qType === 'blank') {
-      const g = gradeKoreanMeaning(qSheetAns[idx] || '', w.ko);
+      const g = gradeKoreanMeaning(userAns, w.ko);
       ok = g.ok;
-      const resEl = document.getElementById(`sheetResult_${idx}`);
-      if (resEl) {
-        resEl.style.color = ok ? '#2B8A3E' : '#C92A2A';
-        resEl.textContent = ok
-          ? `⭕ 정답!${g.others.length ? ` (다른 뜻: ${g.others.join(', ')})` : ''}`
-          : `❌ 오답 · 정답: ${w.ko}`;
-      }
-      if (ok && g.others.length) feedbackLines.push(`${w.en}: ${g.others.join(', ')}`);
+      others = g.others || [];
     } else {
-      const ans = (qSheetAns[idx] || '').trim().toLowerCase();
+      const ans = userAns.trim().toLowerCase();
       ok = ans === w.en.toLowerCase();
+      const picked = state.words.find(x => x.en.toLowerCase() === ans);
+      if (picked) userAns = picked.ko;
     }
     if (ok) qCorrect += 1;
-    else {
-      qWrongs.push({ en: w.en, ko: w.ko });
-      const real = state.words.find(x => x.en === w.en);
-      if (real) real.status = 'hard';
-    }
+    else qWrongs.push({ en: w.en, ko: w.ko });
+    qDetails.push({ en: w.en, ko: w.ko, userAns: userAns || '(미입력)', ok, others });
   });
   gainExp(qCorrect * 5);
   finishQuiz();
 };
 
+function getDateOffset(baseStr, delta) {
+  const [y, m, d] = baseStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d + delta);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+let wrongViewDate = todayStr();
+
 function finishQuiz() {
   const total = qList.length;
   const rate = Math.round((qCorrect / total) * 100);
+  const t = todayStr();
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   state.lastQuizRate = `${rate}% (${qCorrect}/${total})`;
   state.wrongLogs = qWrongs;
+  if (!state.wrongByDate) state.wrongByDate = {};
+  const prevMap = new Map((state.wrongByDate[t] || []).map(x => [x.en, x]));
+  qWrongs.forEach(w => prevMap.set(w.en, w));
+  state.wrongByDate[t] = Array.from(prevMap.values());
+  if (!state.quizLogs) state.quizLogs = [];
+  state.quizLogs.unshift({
+    id: 'qlog_' + Date.now(),
+    date: t,
+    time: timeStr,
+    folderName: qFolderLabel || '단어장',
+    correct: qCorrect,
+    total,
+    rate,
+    items: qDetails.slice(0, 150)
+  });
+  if (state.quizLogs.length > 60) state.quizLogs = state.quizLogs.slice(0, 60);
+  stampToday();
+  wrongViewDate = t;
   save();
+  renderHeader();
   syncFriendScore(rate, qCorrect, qWrongs.length, qWrongs);
   document.getElementById('quizPlayBox').style.display = 'none';
   document.getElementById('quizSheetBox').style.display = 'none';
   document.getElementById('quizSetupBox').style.display = 'block';
-  renderWrong(); switchTab('Wrong');
+  renderQuizLogs();
+  renderQuizLogs(); renderWrong();
+  switchTab('Wrong');
   alert(`시험 완료! ${total}개 중 ${qCorrect}개 맞음 (${rate}%)`);
 }
 
-/* Wrong Receipt */
-function renderWrong() {
-  document.getElementById('receiptDateTxt').textContent = `${todayStr()} · VOCA RECEIPT`;
-  document.getElementById('receiptRateTxt').textContent = state.lastQuizRate || '아직 시험 기록 없음';
-  const box = document.getElementById('wrongListBox');
-  if (!state.wrongLogs || !state.wrongLogs.length) {
-    box.innerHTML = '<div style="text-align:center;padding:18px 0;font-size:13px;">틀린 단어가 없어요! 완벽해요 ⭐</div>';
+function renderQuizLogs() {
+  const box = document.getElementById('quizLogList');
+  if (!box) return;
+  const logs = state.quizLogs || [];
+  if (!logs.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">아직 본 퀴즈 기록이 없어요!</div>';
     return;
   }
-  box.innerHTML = state.wrongLogs.map((w, i) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dotted #ccc;font-size:13px;">
-      <span><strong>${i + 1}. ${w.en}</strong></span>
-      <span>${w.ko}</span>
+  box.innerHTML = logs.map((lg, idx) => `
+    <div class="quiz-log-item" onclick="openQuizLogModal(${idx})">
+      <div>
+        <div style="font-size:12px;font-weight:bold;">${lg.date} ${lg.time} · ${lg.folderName}</div>
+        <div style="font-size:11px;color:var(--muted);">총 ${lg.total}문제 중 ${lg.correct}개 정답</div>
+      </div>
+      <strong style="font-size:13px;color:${lg.rate >= 80 ? '#2B8A3E' : '#E03131'};">${lg.rate}%</strong>
     </div>
   `).join('');
 }
-document.getElementById('clearWrongBtn').onclick = () => { state.wrongLogs = []; save(); renderWrong(); };
-document.getElementById('saveReceiptImgBtn').onclick = () => {
-  const c = document.createElement('canvas');
-  const items = state.wrongLogs || [];
-  c.width = 540; c.height = 240 + Math.max(1, items.length) * 34;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, c.width, c.height);
-  ctx.strokeStyle = '#222'; ctx.lineWidth = 4; ctx.strokeRect(12, 12, c.width - 24, c.height - 24);
-  ctx.fillStyle = '#222'; ctx.font = 'bold 22px monospace';
-  ctx.fillText('*** TODAY WRONG RECEIPT ***', 80, 54);
-  ctx.font = '15px monospace';
-  ctx.fillText(`DATE: ${todayStr()}   SCORE: ${state.lastQuizRate || '-'}`, 40, 86);
-  let y = 130;
-  if (!items.length) ctx.fillText('NO WRONG WORDS! PERFECT!', 140, y);
-  else items.forEach((w, i) => { ctx.fillText(`${i + 1}. ${w.en}  -  ${w.ko}`, 40, y); y += 32; });
-  const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = `voca-receipt-${todayStr()}.png`; a.click();
+
+window.openQuizLogModal = (idx) => {
+  const lg = (state.quizLogs || [])[idx];
+  if (!lg) return;
+  document.getElementById('quizLogModalTitle').textContent = `📝 ${lg.folderName} (${lg.correct}/${lg.total})`;
+  document.getElementById('quizLogModalMeta').textContent = `${lg.date} ${lg.time} · 정답률 ${lg.rate}%`;
+  document.getElementById('quizLogModalBody').innerHTML = (lg.items || []).map((it, i) => `
+    <div style="padding:8px;border:1.5px solid #222;border-radius:8px;margin-bottom:6px;background:${it.ok ? '#F3FBF4' : '#FFF5F5'};">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:13px;">${i + 1}. ${it.en}</strong>
+        <span style="font-size:13px;font-weight:bold;color:${it.ok ? '#2B8A3E' : '#C92A2A'};">${it.ok ? '⭕' : '❌'}</span>
+      </div>
+      <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);">· 나머지 뜻: ${it.others.join(', ')}</span>` : ''}</div>
+      ${!it.ok ? `<div style="font-size:12px;color:#C92A2A;margin-top:2px;">정답: ${it.ko}</div>` : ''}
+    </div>
+  `).join('');
+  document.getElementById('quizLogModal').classList.add('open');
 };
+
+document.getElementById('startYesterdayWrongBtn').onclick = () => {
+  const yday = getDateOffset(todayStr(), -1);
+  let yWords = (state.wrongByDate && state.wrongByDate[yday]) || [];
+  if (!yWords.length && state.quizLogs) {
+    const map = new Map();
+    state.quizLogs.filter(l => l.date === yday).forEach(l => {
+      (l.items || []).filter(i => !i.ok).forEach(i => map.set(i.en, { en: i.en, ko: i.ko }));
+    });
+    yWords = Array.from(map.values());
+  }
+  if (!yWords.length) {
+    alert(`어제(${yday}) 틀린 단어 기록이 없어요!`);
+    return;
+  }
+  startQuizWithPool(yWords, 'yesterday');
+};
+
+/* Pixel Spring Wrong Note */
+function getWrongItemsForDate(dateStr) {
+  if (state.wrongByDate && state.wrongByDate[dateStr]) return state.wrongByDate[dateStr];
+  if (dateStr === todayStr() && state.wrongLogs && state.wrongLogs.length) return state.wrongLogs;
+  return [];
+}
+
+function renderWrong() {
+  document.getElementById('receiptDateTxt').textContent = wrongViewDate;
+  const items = getWrongItemsForDate(wrongViewDate);
+  document.getElementById('receiptRateTxt').textContent = `${items.length}개`;
+  const box = document.getElementById('wrongListBox');
+  if (!items.length) {
+    box.innerHTML = '<div style="grid-column:1 / -1;text-align:center;padding:24px 0;font-size:13px;color:var(--muted);">이 날 틀린 단어가 없어요! ⭐</div>';
+    return;
+  }
+  box.innerHTML = items.map((w, i) => `
+    <div class="wrong-grid-card">
+      <div class="wrong-grid-en">${i + 1}. ${w.en}</div>
+      <div class="wrong-grid-ko">${w.ko}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('wrongPrevDateBtn').onclick = () => { wrongViewDate = getDateOffset(wrongViewDate, -1); renderWrong(); };
+document.getElementById('wrongNextDateBtn').onclick = () => { wrongViewDate = getDateOffset(wrongViewDate, 1); renderWrong(); };
+document.getElementById('clearWrongBtn').onclick = () => {
+  if (state.wrongByDate) state.wrongByDate[wrongViewDate] = [];
+  if (wrongViewDate === todayStr()) state.wrongLogs = [];
+  save(); renderWrong();
+};
+
+function drawSpringNoteCanvas(isWallpaper) {
+  const items = getWrongItemsForDate(wrongViewDate);
+  const W = isWallpaper ? 1080 : 900;
+  const cols = 2;
+  const rows = Math.max(1, Math.ceil(items.length / cols));
+  const cardH = isWallpaper ? 116 : 96;
+  const gap = isWallpaper ? 20 : 16;
+  const topOffset = isWallpaper ? 460 : 40;
+  const noteH = 150 + rows * (cardH + gap);
+  const H = isWallpaper ? Math.max(1920, topOffset + noteH + 100) : noteH + 80;
+
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  // 크림 모눈 배경
+  ctx.fillStyle = '#FAF6EE';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#EFE8DA';
+  ctx.lineWidth = 2;
+  const step = isWallpaper ? 44 : 36;
+  for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  if (isWallpaper) {
+    ctx.fillStyle = '#9C948A';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ONE WORD A DAY · ' + wrongViewDate, W / 2, 420);
+    ctx.textAlign = 'left';
+  }
+
+  // 흰 노트 박스
+  const nx = isWallpaper ? 56 : 36;
+  const ny = topOffset;
+  const nw = W - nx * 2;
+  const nh = noteH;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#222222';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.roundRect(nx, ny, nw, nh, 28);
+  ctx.fill();
+  ctx.stroke();
+
+  // 코랄 스프링 링 8개
+  for (let r = 0; r < 8; r++) {
+    const rx = nx + 46 + r * ((nw - 112) / 7);
+    ctx.fillStyle = '#FF7B7B';
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(rx, ny - 22, 22, 46, 10);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // 제목
+  ctx.fillStyle = '#222222';
+  ctx.font = `bold ${isWallpaper ? 34 : 30}px sans-serif`;
+  ctx.fillText(`📌 ${wrongViewDate} 찐 오답노트 (${items.length}개)`, nx + 34, ny + 74);
+
+  if (!items.length) {
+    ctx.fillStyle = '#78716C';
+    ctx.font = '28px sans-serif';
+    ctx.fillText('틀린 단어가 없어요! 완벽해요 ⭐', nx + 34, ny + 150);
+  } else {
+    const cw = (nw - 68 - gap) / 2;
+    items.forEach((w, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const cx = nx + 34 + col * (cw + gap);
+      const cy = ny + 104 + row * (cardH + gap);
+      ctx.fillStyle = '#FFFDF9';
+      ctx.strokeStyle = '#222222';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.roundRect(cx, cy, cw, cardH, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#222222';
+      ctx.font = `bold ${isWallpaper ? 28 : 24}px sans-serif`;
+      ctx.fillText(`${i + 1}. ${w.en}`.slice(0, 22), cx + 18, cy + (isWallpaper ? 44 : 38));
+
+      ctx.fillStyle = '#E03131';
+      ctx.font = `${isWallpaper ? 23 : 20}px sans-serif`;
+      ctx.fillText(String(w.ko || '').slice(0, 22), cx + 18, cy + (isWallpaper ? 84 : 72));
+    });
+  }
+
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `voca-${isWallpaper ? 'wallpaper' : 'note'}-${wrongViewDate}.png`;
+  a.click();
+}
+
+document.getElementById('saveReceiptImgBtn').onclick = () => drawSpringNoteCanvas(false);
+document.getElementById('saveWallpaperImgBtn').onclick = () => drawSpringNoteCanvas(true);
 
 /* Friend Sync: Missions, Scores & Wrong Words */
 let latestMission = null;
