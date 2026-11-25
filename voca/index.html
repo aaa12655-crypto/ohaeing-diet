@@ -385,52 +385,46 @@ html, body {
         </div>
       </div>
       <div class="top-btns">
-        <button type="button" class="px-mini-btn" id="openFriendBtn">친구</button>
         <button type="button" class="px-mini-btn" id="openSettingsBtn">설정</button>
       </div>
     </div>
   </header>
 
   <main class="main-area">
-    <!-- 1. 단어장(홈) 탭: 3초 복붙 위 -> 폴더+단어 목록 합침 -->
+    <!-- 1. 단어장(메인: 복붙 + 폴더 + 일직선 셀로판지 / 플래시카드 통합) -->
     <section class="panel active" id="panelHome">
-      <div class="px-card">
-        <div class="sec-title">
+      <div class="px-card" style="padding:10px 12px;">
+        <div class="sec-title" style="margin-bottom:0;">
           <span>⚡ 3초 복붙 단어 넣기</span>
-          <label class="px-mini-btn" style="cursor:pointer;">
-            텍스트(.txt)<input type="file" id="importTxtInput" accept=".txt,.csv" style="display:none;" />
-          </label>
+          <div style="display:flex;gap:5px;">
+            <label class="px-mini-btn" style="cursor:pointer;">
+              텍스트(.txt)<input type="file" id="importTxtInput" accept=".txt,.csv" style="display:none;" />
+            </label>
+            <button type="button" class="px-mini-btn on" id="togglePasteBoxBtn">접기</button>
+          </div>
         </div>
-        <textarea class="px-textarea" id="bulkInput" placeholder="줄바꿈 없이 한 줄로 쭉 붙여넣어도 자동 분리!
+        <div id="pasteBodyWrap" style="margin-top:8px;">
+          <textarea class="px-textarea" id="bulkInput" placeholder="줄바꿈 없이 한 줄로 쭉 붙여넣어도 자동 분리!
 예: abandon 버리다 crucial - 중대한 implement : 실행하다"></textarea>
-        <button type="button" class="px-btn matcha" id="parseAddBtn" style="width:100%;margin-top:8px;">+ 단어 추가하기</button>
-        <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;">※ 사진·PDF는 AI에게 보내서 텍스트로 추출해 붙여넣으세요!</div>
+          <button type="button" class="px-btn matcha" id="parseAddBtn" style="width:100%;margin-top:8px;">+ 단어 추가하기</button>
+          <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;">※ 사진·PDF는 AI에게 보내서 텍스트로 추출해 붙여넣으세요!</div>
+        </div>
       </div>
 
       <div class="px-card">
         <div class="sec-title">
-          <span>📁 단어장 폴더</span>
+          <span>📁 단어장</span>
           <div style="display:flex;gap:5px;">
             <button type="button" class="px-mini-btn" id="addFolderBtn">+ 새 폴더</button>
             <button type="button" class="px-mini-btn" id="toggleEditModeBtn">✏️ 편집</button>
           </div>
         </div>
         <div class="folder-row" id="folderRow"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:8px;">
-          <span id="homeStatsTxt">0단어</span>
-          <div id="editFolderBtns" style="display:none;gap:5px;">
-            <button type="button" class="px-mini-btn" id="clearFolderWordsBtn">전체 비우기</button>
-            <button type="button" class="px-mini-btn" id="delFolderBtn" style="color:#C92A2A;">폴더 삭제</button>
-          </div>
+        <div id="editFolderBtns" style="display:none;justify-content:flex-end;gap:5px;margin-bottom:8px;">
+          <button type="button" class="px-mini-btn" id="clearFolderWordsBtn">전체 비우기</button>
+          <button type="button" class="px-mini-btn" id="delFolderBtn" style="color:#C92A2A;">폴더 삭제</button>
         </div>
-        <div id="wordListBox"></div>
-      </div>
-    </section>
 
-    <!-- 2. 암기 탭 -->
-    <section class="panel" id="panelStudy">
-      <div class="px-card">
-        <div class="folder-row" id="studyFolderRow"></div>
         <div class="switch-bar">
           <button type="button" class="px-btn butter" id="modeListBtn">일직선 리스트</button>
           <button type="button" class="px-btn" id="modeCardBtn">플래시카드</button>
@@ -446,26 +440,26 @@ html, body {
           </span>
         </div>
         <div style="display:flex;gap:6px;align-items:center;font-size:12px;">
-          <label><input type="checkbox" id="onlyHardChk" /> 헷갈림(🔥)만 보기</label>
-          <div style="margin-left:auto;display:flex;gap:4px;"><button type="button" class="px-mini-btn" id="shuffleStudyBtn">순서 섞기</button><button type="button" class="px-mini-btn" id="resetOrderBtn">원래대로</button></div>
+          <label><input type="checkbox" id="onlyHardChk" /> 헷갈림(🔥)만</label>
+          <span id="homeStatsTxt" style="color:var(--muted);font-size:11px;"></span>
+          <div style="margin-left:auto;display:flex;gap:4px;">
+            <button type="button" class="px-mini-btn" id="shuffleStudyBtn">순서 섞기</button>
+            <button type="button" class="px-mini-btn" id="resetOrderBtn">원래대로</button>
+          </div>
         </div>
       </div>
 
-      <!-- 일직선 리스트 + 반투명 통셀로판지 책받침 -->
       <div class="study-list-wrap" id="studyListWrap">
         <div id="studyListView"></div>
         <div class="col-cellophane red" id="colCellophane" style="display:none;"></div>
       </div>
 
-      <!-- 플래시카드 뷰 -->
       <div id="studyCardView" style="display:none;">
         <div class="flashcard" id="flashcardBox">
           <div style="position:absolute;top:10px;left:12px;font-size:11px;color:var(--muted);" id="fcIndexTxt">1 / 1</div>
           <button type="button" class="px-mini-btn" id="fcSpeakBtn" style="position:absolute;top:8px;right:10px;">🔊 발음</button>
           <div id="fcContent" style="width:100%;margin-top:10px;"></div>
-          <div class="fc-cellophane red" id="fcCellophane" style="display:none;">
-            <span style="background:rgba(255,255,255,0.9);border:1.5px solid #222;border-radius:8px;padding:2px 8px;font-size:11px;">누르거나 밀어서 확인</span>
-          </div>
+          <div class="fc-cellophane red" id="fcCellophane" style="display:none;"></div>
           <div id="fcHintTxt" style="position:absolute;bottom:8px;font-size:11px;color:var(--muted);">카드를 터치하면 뜻이 나와요!</div>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
@@ -554,41 +548,54 @@ html, body {
         <button type="button" class="px-btn coral" id="clearWrongBtn">비우기</button>
       </div>
     </section>
+    <!-- 4. 친구 탭 (함께 외우기 · 시험 미션 · 점수/틀린 단어 비교 · 한마디) -->
+    <section class="panel" id="panelFriend">
+      <div class="px-card">
+        <div class="sec-title"><span>🤝 친구와 같이 외우기</span></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
+          <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
+          <button type="button" class="px-btn matcha" id="joinRoomBtn">연결</button>
+        </div>
+      </div>
+
+      <div class="px-card">
+        <div class="sec-title"><span>🎯 오늘 시험 미션 걸기</span></div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="width:120px;" />
+          <input type="text" class="px-input" id="missionTitleInput" placeholder="예: Day 1 100개" style="flex:1;" />
+        </div>
+        <button type="button" class="px-btn sky" id="postMissionBtn" style="width:100%;">현재 단어장 폴더로 미션 올리기</button>
+        <div id="activeMissionBox" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="px-card">
+        <div class="sec-title">
+          <span>📊 오늘 시험 현황 & 틀린 단어</span>
+          <button type="button" class="px-mini-btn" id="refreshFriendBtn">새로고침</button>
+        </div>
+        <div id="friendBoardBox"></div>
+      </div>
+
+      <div class="px-card">
+        <div class="sec-title"><span>💬 서로 한마디</span></div>
+        <div id="friendChatList" style="max-height:160px;overflow-y:auto;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" class="px-input" id="friendChatInput" placeholder="친구에게 응원이나 자극 한마디!" style="flex:1;" />
+          <button type="button" class="px-btn butter" id="sendFriendChatBtn">전송</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="lvup-toast" id="lvupToast">🎉 LEVEL UP!</div>
 
   <nav class="bottom-nav">
     <button type="button" class="nav-btn active" data-tab="Home">단어장</button>
-    <button type="button" class="nav-btn" data-tab="Study">암기</button>
     <button type="button" class="nav-btn" data-tab="Quiz">퀴즈</button>
     <button type="button" class="nav-btn" data-tab="Wrong">오답노트</button>
+    <button type="button" class="nav-btn" data-tab="Friend">친구</button>
   </nav>
-</div>
-
-<!-- 친구 모달: 시험 미션 & 결과 공유 -->
-<div class="modal-bg" id="friendModal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <span>🤝 친구와 단어시험 미션</span>
-      <button type="button" class="px-mini-btn" id="closeFriendModal">X</button>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:8px;">
-      <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
-      <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
-      <button type="button" class="px-btn matcha" id="joinRoomBtn">연결</button>
-    </div>
-    <div id="missionCreateBox" style="border-top:2px dashed var(--ink);padding-top:8px;margin-bottom:10px;">
-      <div style="font-size:12px;font-weight:bold;margin-bottom:5px;">🎯 오늘 시험 미션 걸기 (현재 폴더 단어 공유)</div>
-      <div style="display:flex;gap:6px;margin-bottom:6px;">
-        <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="width:120px;" />
-        <input type="text" class="px-input" id="missionTitleInput" placeholder="예: Day 1 100개" style="flex:1;" />
-      </div>
-      <button type="button" class="px-btn sky" id="postMissionBtn" style="width:100%;">현재 폴더로 시험 미션 올리기</button>
-    </div>
-    <div id="activeMissionBox" style="margin-bottom:10px;"></div>
-    <div id="friendBoardBox" style="border-top:2px dashed var(--ink);padding-top:10px;"></div>
-  </div>
 </div>
 
 <!-- 설정 & 백업 모달 -->
@@ -731,7 +738,7 @@ function renderAllFolderRows() {
   const html = state.folders.map(f =>
     `<button type="button" class="folder-chip ${f.id === state.activeFolderId ? 'active' : ''}" onclick="selectFolder('${f.id}')">${f.name}</button>`
   ).join('');
-  ['folderRow', 'studyFolderRow', 'quizFolderRow'].forEach(id => {
+  ['folderRow', 'quizFolderRow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = html;
   });
@@ -742,31 +749,18 @@ function renderHome() {
   const list = state.words.filter(w => w.folderId === state.activeFolderId);
   const stars = list.filter(w => w.status === 'star').length;
   const hards = list.filter(w => w.status === 'hard').length;
-  document.getElementById('homeStatsTxt').textContent = `${list.length}단어 · ⭐ ${stars} · 🔥 ${hards}`;
+  document.getElementById('homeStatsTxt').textContent = `${list.length}단어 · ⭐${stars} · 🔥${hards}`;
   document.getElementById('editFolderBtns').style.display = editMode ? 'flex' : 'none';
   document.getElementById('toggleEditModeBtn').classList.toggle('on', editMode);
-
-  const box = document.getElementById('wordListBox');
-  if (!list.length) {
-    box.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;font-size:12px;">위 입력창에 단어를 붙여넣어 보세요!</div>';
-    return;
-  }
-  box.innerHTML = list.map(w => `
-    <div class="word-item">
-      ${editMode ? `<button type="button" class="edit-x-btn" onclick="deleteWord('${w.id}')">✕</button>` : ''}
-      <div style="flex:1;min-width:0;">
-        <div class="word-en">${w.en}</div>
-        <div class="word-ko">${w.ko}</div>
-      </div>
-      <div style="display:flex;gap:4px;flex-shrink:0;">
-        <button type="button" class="px-mini-btn" onclick="speakWord('${w.en.replace(/'/g, "\\'")}')">🔊</button>
-        <button type="button" class="px-mini-btn ${w.status === 'hard' ? 'on' : ''}" onclick="setWordStatus('${w.id}','hard')" title="헷갈림">🔥</button>
-        <button type="button" class="px-mini-btn ${w.status === 'star' ? 'on' : ''}" onclick="setWordStatus('${w.id}','star')" title="완벽">⭐</button>
-      </div>
-    </div>
-  `).join('');
+  renderStudy();
 }
-
+document.getElementById('togglePasteBoxBtn').onclick = () => {
+  const wrap = document.getElementById('pasteBodyWrap');
+  const btn = document.getElementById('togglePasteBoxBtn');
+  const open = wrap.style.display !== 'none';
+  wrap.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? '펼치기' : '접기';
+};
 window.selectFolder = function(id) {
   state.activeFolderId = id; fcIdx = 0;
   save(); renderHome(); renderStudy(); renderAllFolderRows();
@@ -896,7 +890,8 @@ function renderStudy() {
       return;
     }
     listView.innerHTML = list.map(w => `
-      <div class="study-row">
+      <div class="study-row" style="position:relative;">
+        ${editMode ? `<button type="button" class="edit-x-btn" onclick="deleteWord('${w.id}')">✕</button>` : ''}
         <div class="study-en">${w.en}</div>
         <div class="study-ko">${w.ko}</div>
         <div style="display:flex;gap:3px;z-index:20;background:#fff;">
@@ -1267,7 +1262,7 @@ async function loadFriendBoard() {
         <button type="button" class="px-btn butter" id="takeMissionBtn" style="width:100%;padding:6px;">⚡ 이 미션 시험 바로 보기</button>
       </div>`;
       document.getElementById('takeMissionBtn').onclick = () => {
-        document.getElementById('friendModal').classList.remove('open');
+        
         switchTab('Quiz');
         startQuizWithPool(latestMission.words, latestMission.id);
       };
@@ -1316,13 +1311,38 @@ document.getElementById('postMissionBtn').onclick = async () => {
   alert('친구 방에 시험 미션을 올렸어요!');
 };
 
-document.getElementById('openFriendBtn').onclick = () => {
+function renderFriendTab() {
   document.getElementById('myNickInput').value = state.nick || '';
   document.getElementById('roomCodeInput').value = state.room || '';
-  document.getElementById('friendModal').classList.add('open');
   loadFriendBoard();
+  loadFriendChats();
+}
+document.getElementById('refreshFriendBtn').onclick = () => renderFriendTab();
+async function loadFriendChats() {
+  const box = document.getElementById('friendChatList');
+  if (!state.room) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">방 연결 후 한마디를 남겨보세요!</div>'; return; }
+  try {
+    const res = await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/chats.json`);
+    const data = await res.json() || {};
+    const arr = Object.values(data).sort((a,b) => (a.ts||0) - (b.ts||0)).slice(-20);
+    if (!arr.length) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">아직 남긴 한마디가 없어요.</div>'; return; }
+    box.innerHTML = arr.map(c => `<div style="font-size:12px;padding:4px 6px;margin-bottom:4px;border-radius:8px;background:${c.nick===state.nick?'var(--butter)':'#F4EFE4'};border:1.5px solid var(--ink);"><strong>${c.nick}:</strong> ${c.msg}</div>`).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch (e) {}
+}
+document.getElementById('sendFriendChatBtn').onclick = async () => {
+  if (!state.room || !state.nick) return alert('먼저 닉네임과 방 코드를 연결해 주세요!');
+  const inp = document.getElementById('friendChatInput');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/chats.json`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nick: state.nick, msg, ts: Date.now() })
+  });
+  inp.value = '';
+  loadFriendChats();
 };
-document.getElementById('closeFriendModal').onclick = () => document.getElementById('friendModal').classList.remove('open');
+// 
 document.getElementById('joinRoomBtn').onclick = async () => {
   state.nick = document.getElementById('myNickInput').value.trim();
   state.room = document.getElementById('roomCodeInput').value.trim();
@@ -1351,8 +1371,9 @@ function switchTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel' + name).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-  if (name === 'Study') renderStudy();
+  if (name === 'Home') renderHome();
   if (name === 'Wrong') renderWrong();
+  if (name === 'Friend') renderFriendTab();
 }
 document.querySelectorAll('.nav-btn').forEach(btn => { btn.onclick = () => switchTab(btn.dataset.tab); });
 
