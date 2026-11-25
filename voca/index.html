@@ -303,17 +303,18 @@ html, body {
   pointer-events: auto;
   touch-action: none;
   z-index: 25;
-  border: 2.5px dashed rgba(255,255,255,0.85);
+  border: 2.5px dashed rgba(255,255,255,0.92);
   border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.18), inset 0 2px 12px rgba(255,255,255,0.45);
-  backdrop-filter: blur(1.5px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2), inset 0 2px 12px rgba(255,255,255,0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex; align-items: flex-start; justify-content: flex-end;
   padding: 6px 10px;
   cursor: grab;
 }
-.cellophane-sheet.red { background: rgba(255, 78, 78, 0.72); }
-.cellophane-sheet.green { background: rgba(74, 200, 110, 0.72); }
-.cellophane-sheet.blue { background: rgba(70, 155, 255, 0.72); }
+.cellophane-sheet.red { background: rgba(255, 78, 78, 0.94); }
+.cellophane-sheet.green { background: rgba(74, 200, 110, 0.94); }
+.cellophane-sheet.blue { background: rgba(70, 155, 255, 0.94); }
 .cellophane-handle {
   background: rgba(255,255,255,0.9);
   border: 1.5px solid var(--ink);
@@ -354,9 +355,13 @@ html, body {
   border: 1.5px solid rgba(255,255,255,0.7);
   box-shadow: inset 0 1px 6px rgba(255,255,255,0.35);
 }
-.mask-red .masked-cell::after { background: rgba(255, 78, 78, 0.84); }
-.mask-green .masked-cell::after { background: rgba(74, 200, 110, 0.84); }
-.mask-blue .masked-cell::after { background: rgba(70, 155, 255, 0.84); }
+.mask-red .masked-cell::after { background: #FF5A5F; }
+.mask-green .masked-cell::after { background: #4AC86E; }
+.mask-blue .masked-cell::after { background: #469BFF; }
+.masked-cell { color: transparent !important; user-select: none; }
+.masked-cell * { color: transparent !important; }
+.masked-cell.peek { color: inherit !important; }
+.masked-cell.peek * { color: inherit !important; }
 .masked-cell.peek::after { opacity: 0.08; content: ''; pointer-events: none; }
 
 /* Flashcard Mode */
@@ -508,6 +513,10 @@ html, body {
         <button type="button" class="px-mini-btn" id="openSettingsBtn">설정</button>
       </div>
     </div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+      <span style="font-size:12px;">📁 현재 단어장:</span>
+      <select id="globalFolderSelect" class="px-input" style="flex:1;padding:4px 8px;font-size:12px;height:30px;"></select>
+    </div>
   </header>
 
   <main class="main-area">
@@ -529,7 +538,7 @@ html, body {
         <div class="sec-title">
           <span>⚡ 3초 복붙 단어 넣기</span>
           <label class="px-mini-btn" style="cursor:pointer;">
-            파일 열기<input type="file" id="importTxtInput" accept=".txt,.csv,.json" style="display:none;" />
+            텍스트(.txt) 열기<input type="file" id="importTxtInput" accept=".txt,.csv" style="display:none;" />
           </label>
         </div>
         <textarea class="px-textarea" id="bulkInput" placeholder="예시 (줄바꿈으로 여러 개 붙여넣기):
@@ -540,7 +549,7 @@ mandatory	의무적인"></textarea>
         <div style="display:flex;gap:6px;margin-top:8px;align-items:center;">
           <button type="button" class="px-btn matcha" id="parseAddBtn" style="flex:1;">단어 추가 + 발음/예문 채우기</button>
         </div>
-        <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;"></div>
+        <div id="apiProgress" style="font-size:11px;color:var(--muted);margin-top:5px;">※ 사진·PDF는 피클 톡으로 보내주시면 정리해 드려요!</div>
       </div>
 
       <div class="px-card">
@@ -607,7 +616,7 @@ mandatory	의무적인"></textarea>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
           <button type="button" class="px-btn butter" id="qTypeMcq">4지선다 객관식</button>
-          <button type="button" class="px-btn" id="qTypeBlank">예문 빈칸 주관식</button>
+          <button type="button" class="px-btn" id="qTypeBlank">영단어 쓰기 주관식</button>
         </div>
         <button type="button" class="px-btn dark" id="startQuizBtn" style="width:100%;">⚔️ 시험 시작하기!</button>
       </div>
@@ -738,9 +747,9 @@ function defaultState() {
     activeFolderId: 'f1',
     folders: [{ id: 'f1', name: '토익 Day 1' }],
     words: [
-      { id: 'w1', folderId: 'f1', en: 'implement', ko: '시행하다, 실행에 옮기다', phon: '/ˈɪmpləmənt/', ex: 'The company will implement the new policy next month.', status: 'none' },
-      { id: 'w2', folderId: 'f1', en: 'mandatory', ko: '의무적인, 필수의', phon: '/ˈmændətɔːri/', ex: 'Attendance at the safety training is mandatory.', status: 'hard' },
-      { id: 'w3', folderId: 'f1', en: 'revenue', ko: '수익, 세입', phon: '/ˈrɛvənjuː/', ex: 'Annual revenue increased by fifteen percent.', status: 'star' }
+      { id: 'w1', folderId: 'f1', en: 'implement', ko: '시행하다, 실행에 옮기다', phon: '/ˈɪmpləmənt/', ex: '', status: 'none' },
+      { id: 'w2', folderId: 'f1', en: 'mandatory', ko: '의무적인, 필수의', phon: '/ˈmændətɔːri/', ex: '', status: 'hard' },
+      { id: 'w3', folderId: 'f1', en: 'revenue', ko: '수익, 세입', phon: '/ˈrɛvənjuː/', ex: '', status: 'star' }
     ],
     wrongLogs: [],
     lastQuizRate: null
@@ -825,6 +834,10 @@ function renderStatus() {
   document.documentElement.style.setProperty('--fs-scale', state.fsScale || 1);
   const vf = VOCA_FONTS[state.fontIdx ?? 0] || VOCA_FONTS[0];
   document.documentElement.style.setProperty('--app-font', vf.val);
+  const sel = document.getElementById('globalFolderSelect');
+  if (sel) {
+    sel.innerHTML = state.folders.map(f => `<option value="${f.id}" ${f.id === state.activeFolderId ? 'selected' : ''}>${f.name}</option>`).join('');
+  }
 }
 
 window.setFsScale = function(s) {
@@ -862,7 +875,7 @@ function renderHome() {
       <div style="flex:1;min-width:0;">
         <div><span class="word-en">${w.en}</span><span class="word-phon">${w.phon || ''}</span></div>
         <div class="word-ko">${w.ko}</div>
-        ${w.ex ? `<div class="word-ex">💬 ${w.ex}</div>` : ''}
+        
         ${w.status === 'star' ? '<span class="tag-pill star">완벽 암기 ⭐</span>' : w.status === 'hard' ? '<span class="tag-pill fire">헷갈림 🔥</span>' : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;">
@@ -875,8 +888,9 @@ function renderHome() {
 
 window.selectFolder = function(id) {
   state.activeFolderId = id;
-  save(); renderHome(); renderStudy();
+  save(); renderStatus(); renderHome(); renderStudy();
 };
+document.getElementById('globalFolderSelect').onchange = (e) => selectFolder(e.target.value);
 window.deleteWord = function(id) {
   state.words = state.words.filter(w => w.id !== id);
   save(); renderHome(); renderStudy();
@@ -937,7 +951,7 @@ async function fetchDictInfo(word) {
     let ex = '';
     for (const m of (entry.meanings || [])) {
       const found = (m.definitions || []).find(d => d.example);
-      if (found) { ex = found.example; break; }
+      if (found) { ex = ''; break; }
     }
     return { phon, ex };
   } catch (e) { return { phon: '', ex: '' }; }
@@ -1030,7 +1044,7 @@ function renderStudy() {
     if (fcIdx >= list.length) fcIdx = 0;
     const w = list[fcIdx];
     document.getElementById('fcIndexTxt').textContent = `${fcIdx + 1} / ${list.length}`;
-    const enHtml = `<div class="fc-en">${w.en}</div><div class="fc-phon">${w.phon || ''}</div>${w.ex ? `<div class="fc-ex">${w.ex}</div>` : ''}`;
+    const enHtml = `<div class="fc-en">${w.en}</div><div class="fc-phon">${w.phon || ''}</div>`;
     const koHtml = `<div class="fc-ko">${w.ko}</div>`;
     if (!fcFlipped) {
       document.getElementById('fcContent').innerHTML = `<div class="fc-film mask-${maskColor} ${maskMode === 'en' ? 'masked-cell' : ''}">${enHtml}</div>`;
@@ -1183,10 +1197,9 @@ function renderQuizQ() {
   document.getElementById('qSpeakBtn').onclick = () => speakWord(w.en);
 
   const area = document.getElementById('qAnswerArea');
-  if (qType === 'blank' && w.ex) {
-    document.getElementById('qKindLabel').textContent = '예문 빈칸 채우기';
-    const masked = w.ex.replace(new RegExp(w.en, 'ig'), '_______');
-    document.getElementById('qPromptText').innerHTML = `${masked}<div style="font-size:12px;color:var(--muted);margin-top:6px;">뜻: ${w.ko}</div>`;
+  if (qType === 'blank') {
+    document.getElementById('qKindLabel').textContent = '뜻 보고 영단어 쓰기';
+    document.getElementById('qPromptText').innerHTML = `${w.ko}`;
     area.innerHTML = `<div style="display:flex;gap:6px;"><input type="text" class="px-input" id="blankAnsInput" placeholder="영단어 입력" style="flex:1;" /><button type="button" class="px-btn matcha" id="blankSubmitBtn">공격!</button></div>`;
     document.getElementById('blankSubmitBtn').onclick = () => {
       const val = document.getElementById('blankAnsInput').value.trim().toLowerCase();
