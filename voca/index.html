@@ -233,9 +233,7 @@ html, body {
 .study-ko { font-size: calc(13px * var(--fs-scale)); word-break: keep-all; transition: color .2s; }
 
 /* Under cellophane, text takes light tint of the film so it blends/fades like real red sheet! */
-.film-active-ko.film-red .study-ko { color: #FF9C9C; }
-.film-active-ko.film-green .study-ko { color: #9DE8B2; }
-.film-active-ko.film-blue .study-ko { color: #9ECAFF; }
+
 .film-active-en.film-red .study-en { color: #FF9C9C; }
 .film-active-en.film-green .study-en { color: #9DE8B2; }
 .film-active-en.film-blue .study-en { color: #9ECAFF; }
@@ -247,10 +245,8 @@ html, body {
   top: 0; height: 100%;
   width: 41%;
   border-radius: 10px;
-  border: 1.5px solid rgba(255,255,255,0.78);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.16), inset 2px 2px 0 rgba(255,255,255,0.48), inset -1px -1px 0 rgba(0,0,0,0.08);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  border: 2px solid rgba(0,0,0,0.2);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.4), 0 3px 8px rgba(0,0,0,0.12);
   touch-action: none;
   cursor: grab;
   z-index: 15;
@@ -261,7 +257,7 @@ html, body {
 }
 .col-cellophane::before {
   content: '↔ ↕ 밀어서 확인';
-  background: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.94);
   border: 1.5px solid var(--ink);
   border-radius: 8px;
   padding: 2px 7px;
@@ -273,13 +269,16 @@ html, body {
 .col-cellophane::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(132deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 20%, rgba(255,255,255,0.46) 22%, rgba(255,255,255,0.06) 26%, rgba(255,255,255,0) 28%);
+  top: 8px; left: -10%; right: -10%;
+  height: 1.5px;
+  background: rgba(255,255,255,0.35);
+  box-shadow: 0 9px 0 rgba(255,255,255,0.28);
+  transform: rotate(-8deg);
   pointer-events: none;
 }
-.col-cellophane.red { background: rgba(235, 32, 20, 0.74); }
-.col-cellophane.green { background: rgba(18, 168, 72, 0.74); }
-.col-cellophane.blue { background: rgba(24, 118, 232, 0.74); }
+.col-cellophane.red { background: rgba(255, 59, 48, 0.92); }
+.col-cellophane.green { background: rgba(34, 177, 76, 0.92); }
+.col-cellophane.blue { background: rgba(0, 122, 255, 0.92); }
 
 /* Flashcard Mode */
 .flashcard {
@@ -1350,10 +1349,13 @@ function renderStudy() {
 
     if (maskMode === 'none' || !list.length) {
       colFilm.style.display = 'none';
+      setTimeout(() => document.querySelectorAll('.study-ko').forEach(el => { el.style.color = ''; }), 0);
     } else {
       colFilm.style.display = 'flex';
       colFilm.className = `col-cellophane ${maskColor}`;
       colFilm.style.left = '35%';
+      colFilm.style.top = '0px';
+      setTimeout(updateCellophaneMask, 20);
     }
 
     if (!list.length) {
@@ -1418,11 +1420,34 @@ colFilm.addEventListener('pointermove', e => {
   const dy = e.clientY - colStartY;
   colFilm.style.left = `${Math.max(0, Math.min(maxLeft, colOrigLeft + dx))}px`;
   colFilm.style.top = `${Math.max(0, Math.min(maxTop, colOrigTop + dy))}px`;
+  updateCellophaneMask();
 });
 colFilm.addEventListener('pointerup', () => {
   colDrag = false;
   colFilm.style.transition = 'left .22s ease, top .22s ease';
+  updateCellophaneMask();
 });
+function updateCellophaneMask() {
+  if (maskMode !== 'ko' || studyView !== 'list') {
+    document.querySelectorAll('.study-ko').forEach(el => { el.style.color = ''; });
+    return;
+  }
+  const fRect = colFilm.getBoundingClientRect();
+  const colorMap = { red: '#FF3B30', green: '#22B14C', blue: '#007AFF' };
+  const hideColor = colorMap[maskColor] || '#FF3B30';
+  document.querySelectorAll('#studyListView .study-row').forEach(row => {
+    const koEl = row.querySelector('.study-ko');
+    if (!koEl) return;
+    const kRect = koEl.getBoundingClientRect();
+    const overlapX = Math.min(fRect.right, kRect.right) - Math.max(fRect.left, kRect.left);
+    const overlapY = Math.min(fRect.bottom, kRect.bottom) - Math.max(fRect.top, kRect.top);
+    if (overlapX > kRect.width * 0.25 && overlapY > kRect.height * 0.25) {
+      koEl.style.color = hideColor;
+    } else {
+      koEl.style.color = '#222222';
+    }
+  });
+}
 
 const fcFilm = document.getElementById('fcCellophane');
 fcFilm.onclick = (e) => { e.stopPropagation(); fcFilm.style.display = 'none'; };
@@ -1881,7 +1906,7 @@ window.openQuizLogModal = (idx) => {
   document.getElementById('quizLogModalBody').innerHTML = (lg.items || []).map((it, i) => `
     <div style="padding:8px;border:1.5px solid #222;border-radius:8px;margin-bottom:6px;background:${it.ok ? '#F3FBF4' : '#FFF5F5'};">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <strong style="font-size:13px;">${i + 1}. ${it.en}</strong>
+        <strong style="font-size:13px;display:flex;align-items:center;gap:6px;"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 4px;border:1.5px solid #222;border-radius:999px;font-size:11px;background:#FFF;">${i + 1}</span><span>${it.en}</span></strong>
         <span style="font-size:13px;font-weight:bold;color:${it.ok ? '#2B8A3E' : '#C92A2A'};">${it.ok ? '⭕' : '❌'}</span>
       </div>
       <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);"><span style="color:#D92B2B;font-weight:bold;">+ ${it.others.join(', ')}</span></span>` : ''}</div>
