@@ -477,44 +477,60 @@ html, body {
       </div>
     </section>
 
-    <!-- 3. 퀴즈 탭 -->
+    <!-- 3. 퀴즈 탭: 초고속 단어시험 -->
     <section class="panel" id="panelQuiz">
       <div class="px-card" id="quizSetupBox">
         <div class="folder-row" id="quizFolderRow"></div>
-        <div class="sec-title"><span>👾 몬스터 처치 단어시험</span></div>
+        <div class="sec-title"><span>📝 초고속 단어시험</span><span id="quizMissionBadge" style="font-size:11px;color:#C92A2A;"></span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
-          <button type="button" class="px-btn sky" id="qScopeAll">전체 단어 시험</button>
-          <button type="button" class="px-btn" id="qScopeHard">헷갈림/오답 집중</button>
+          <button type="button" class="px-btn sky" id="qScopeAll">전체 단어</button>
+          <button type="button" class="px-btn" id="qScopeHard">헷갈림/오답만</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
           <button type="button" class="px-btn butter" id="qTypeMcq">4지선다 객관식</button>
-          <button type="button" class="px-btn" id="qTypeBlank">영단어 쓰기 주관식</button>
+          <button type="button" class="px-btn" id="qTypeBlank">영단어 쓰기</button>
         </div>
-        <button type="button" class="px-btn dark" id="startQuizBtn" style="width:100%;">⚔️ 시험 시작하기!</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+          <button type="button" class="px-btn matcha" id="qModeFast">한 문제씩 (초고속)</button>
+          <button type="button" class="px-btn" id="qModeSheet">시험지 (쭉 내려풀기)</button>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px;font-size:12px;">
+          <span>문제 수:</span>
+          <button type="button" class="px-mini-btn on" data-qcnt="all">전체</button>
+          <button type="button" class="px-mini-btn" data-qcnt="20">20</button>
+          <button type="button" class="px-mini-btn" data-qcnt="50">50</button>
+          <button type="button" class="px-mini-btn" data-qcnt="100">100</button>
+        </div>
+        <button type="button" class="px-btn dark" id="startQuizBtn" style="width:100%;">⚡ 시험 바로 시작하기</button>
       </div>
 
+      <!-- 단건 초고속 뷰 -->
       <div id="quizPlayBox" style="display:none;">
-        <div class="monster-stage">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:12px;font-weight:bold;" id="quizProgTxt">1 / 10</span>
-            <span class="combo-pill" id="comboTxt">0 COMBO!</span>
-          </div>
-          <div style="margin:6px 0;" id="monsterArt">
-            <img src="monster.png" alt="토익 슬라임" style="width:84px;height:84px;object-fit:contain;image-rendering:pixelated;" />
-          </div>
-          <div class="hp-bar"><div class="hp-fill" id="monsterHpFill" style="width:100%"></div></div>
-          <div style="font-size:11px;color:var(--muted);" id="monsterHpTxt">슬라임 킹 HP 100/100</div>
-        </div>
-
         <div class="px-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <span style="font-size:12px;color:var(--muted);" id="qKindLabel">뜻 고르기</span>
-            <button type="button" class="px-mini-btn" id="qSpeakBtn">🔊 듣기</button>
+            <span style="font-size:13px;font-weight:bold;" id="quizProgTxt">1 / 10</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button type="button" class="px-mini-btn" id="qSpeakBtn">🔊 듣기</button>
+              <button type="button" class="px-mini-btn" id="qQuitBtn" style="color:#C92A2A;">중단</button>
+            </div>
           </div>
-          <div id="qPromptText" style="font-size:calc(20px * var(--fs-scale));font-weight:bold;margin-bottom:12px;line-height:1.4;"></div>
+          <div class="hp-bar" style="height:10px;margin-bottom:10px;"><div class="hp-fill" id="quizProgFill" style="width:0%;background:var(--matcha);"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="qKindLabel">뜻 고르기</div>
+          <div id="qPromptText" style="font-size:calc(22px * var(--fs-scale));font-weight:bold;margin-bottom:12px;line-height:1.35;"></div>
           <div id="qAnswerArea"></div>
-          <div id="qFeedback" style="font-size:13px;margin-top:8px;font-weight:bold;"></div>
         </div>
+      </div>
+
+      <!-- 시험지 쭉 내려풀기 뷰 -->
+      <div id="quizSheetBox" style="display:none;">
+        <div class="px-card" style="position:sticky;top:68px;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;">
+          <span style="font-size:13px;font-weight:bold;" id="sheetCountTxt">0 / 0 풀음</span>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="px-mini-btn" id="sheetQuitBtn">취소</button>
+            <button type="button" class="px-btn matcha" id="sheetSubmitBtn" style="padding:5px 12px;">채점하기</button>
+          </div>
+        </div>
+        <div id="sheetItemsBox"></div>
       </div>
     </section>
 
@@ -550,19 +566,27 @@ html, body {
   </nav>
 </div>
 
-<!-- 친구 모달 -->
+<!-- 친구 모달: 시험 미션 & 결과 공유 -->
 <div class="modal-bg" id="friendModal">
   <div class="modal-card">
     <div class="modal-head">
-      <span>🤝 친구와 매일 단어시험 같이 보기</span>
+      <span>🤝 친구와 단어시험 미션</span>
       <button type="button" class="px-mini-btn" id="closeFriendModal">X</button>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">같은 방 코드를 입력하면 오늘 단어시험 점수와 레벨이 친구와 공유돼요!</div>
-    <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임 (예: 유빈)" style="margin-bottom:8px;" />
-    <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드 (예: TOEIC900)" style="flex:1;" />
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
+      <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
       <button type="button" class="px-btn matcha" id="joinRoomBtn">연결</button>
     </div>
+    <div id="missionCreateBox" style="border-top:2px dashed var(--ink);padding-top:8px;margin-bottom:10px;">
+      <div style="font-size:12px;font-weight:bold;margin-bottom:5px;">🎯 오늘 시험 미션 걸기 (현재 폴더 단어 공유)</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="width:120px;" />
+        <input type="text" class="px-input" id="missionTitleInput" placeholder="예: Day 1 100개" style="flex:1;" />
+      </div>
+      <button type="button" class="px-btn sky" id="postMissionBtn" style="width:100%;">현재 폴더로 시험 미션 올리기</button>
+    </div>
+    <div id="activeMissionBox" style="margin-bottom:10px;"></div>
     <div id="friendBoardBox" style="border-top:2px dashed var(--ink);padding-top:10px;"></div>
   </div>
 </div>
@@ -998,12 +1022,42 @@ document.getElementById('fcMasterBtn').onclick = () => {
   list[fcIdx].status = 'star'; gainExp(20); save(); renderHome(); document.getElementById('fcNextBtn').click();
 };
 
-/* Quiz Tab */
-let qScope = 'all', qType = 'mcq', qList = [], qPos = 0, qCombo = 0, qCorrect = 0, qWrongs = [];
+/* Quiz Tab: Fast & Sheet Mode (No Monster Delay) */
+let qScope = 'all', qType = 'mcq', qMode = 'fast', qCnt = 'all';
+let qList = [], qPos = 0, qCorrect = 0, qWrongs = [], qSheetAns = {}, activeMissionId = null;
+
 document.getElementById('qScopeAll').onclick = () => { qScope = 'all'; document.getElementById('qScopeAll').classList.add('sky'); document.getElementById('qScopeHard').classList.remove('coral'); };
 document.getElementById('qScopeHard').onclick = () => { qScope = 'hard'; document.getElementById('qScopeHard').classList.add('coral'); document.getElementById('qScopeAll').classList.remove('sky'); };
 document.getElementById('qTypeMcq').onclick = () => { qType = 'mcq'; document.getElementById('qTypeMcq').classList.add('butter'); document.getElementById('qTypeBlank').classList.remove('butter'); };
 document.getElementById('qTypeBlank').onclick = () => { qType = 'blank'; document.getElementById('qTypeBlank').classList.add('butter'); document.getElementById('qTypeMcq').classList.remove('butter'); };
+document.getElementById('qModeFast').onclick = () => { qMode = 'fast'; document.getElementById('qModeFast').classList.add('matcha'); document.getElementById('qModeSheet').classList.remove('matcha'); };
+document.getElementById('qModeSheet').onclick = () => { qMode = 'sheet'; document.getElementById('qModeSheet').classList.add('matcha'); document.getElementById('qModeFast').classList.remove('matcha'); };
+document.querySelectorAll('[data-qcnt]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-qcnt]').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    qCnt = btn.dataset.qcnt;
+  };
+});
+
+function startQuizWithPool(pool, missionId = null) {
+  if (!pool.length) return alert('시험 볼 단어가 없어요!');
+  activeMissionId = missionId;
+  let shuffled = [...pool].sort(() => Math.random() - 0.5);
+  if (qCnt !== 'all' && !missionId) shuffled = shuffled.slice(0, Number(qCnt));
+  qList = shuffled;
+  qPos = 0; qCorrect = 0; qWrongs = []; qSheetAns = {};
+  document.getElementById('quizSetupBox').style.display = 'none';
+  if (qMode === 'sheet') {
+    document.getElementById('quizPlayBox').style.display = 'none';
+    document.getElementById('quizSheetBox').style.display = 'block';
+    renderQuizSheet();
+  } else {
+    document.getElementById('quizSheetBox').style.display = 'none';
+    document.getElementById('quizPlayBox').style.display = 'block';
+    renderQuizQ();
+  }
+}
 
 document.getElementById('startQuizBtn').onclick = () => {
   let pool = state.words.filter(w => w.folderId === state.activeFolderId);
@@ -1011,74 +1065,134 @@ document.getElementById('startQuizBtn').onclick = () => {
     const wrongEns = new Set((state.wrongLogs || []).map(x => x.en));
     pool = pool.filter(w => w.status === 'hard' || wrongEns.has(w.en));
   }
-  if (!pool.length) return alert('시험 볼 단어가 없어요!');
-  qList = [...pool].sort(() => Math.random() - 0.5).slice(0, 15);
-  qPos = 0; qCombo = 0; qCorrect = 0; qWrongs = [];
-  document.getElementById('quizSetupBox').style.display = 'none';
-  document.getElementById('quizPlayBox').style.display = 'block';
-  renderQuizQ();
+  startQuizWithPool(pool, null);
 };
+
+document.getElementById('qQuitBtn').onclick = () => {
+  document.getElementById('quizPlayBox').style.display = 'none';
+  document.getElementById('quizSetupBox').style.display = 'block';
+};
+document.getElementById('sheetQuitBtn').onclick = () => {
+  document.getElementById('quizSheetBox').style.display = 'none';
+  document.getElementById('quizSetupBox').style.display = 'block';
+};
+
+function getMcqOptions(w, pool) {
+  const src = state.words.length >= 4 ? state.words : pool;
+  const others = src.filter(x => x.en !== w.en).sort(() => Math.random() - 0.5).slice(0, 3);
+  return [w, ...others].sort(() => Math.random() - 0.5);
+}
 
 function renderQuizQ() {
   if (qPos >= qList.length) { finishQuiz(); return; }
   const w = qList[qPos];
-  const hpPct = Math.max(0, Math.round(((qList.length - qCorrect) / qList.length) * 100));
   document.getElementById('quizProgTxt').textContent = `${qPos + 1} / ${qList.length}`;
-  document.getElementById('comboTxt').textContent = `${qCombo} COMBO!`;
-  document.getElementById('monsterHpFill').style.width = `${hpPct}%`;
-  document.getElementById('monsterHpTxt').textContent = `슬라임 킹 HP ${hpPct}/100`;
-  document.getElementById('qFeedback').textContent = '';
+  document.getElementById('quizProgFill').style.width = `${Math.round((qPos / qList.length) * 100)}%`;
   document.getElementById('qSpeakBtn').onclick = () => speakWord(w.en);
 
   const area = document.getElementById('qAnswerArea');
   if (qType === 'blank') {
     document.getElementById('qKindLabel').textContent = '뜻 보고 영단어 쓰기';
     document.getElementById('qPromptText').innerHTML = `${w.ko}`;
-    area.innerHTML = `<div style="display:flex;gap:6px;"><input type="text" class="px-input" id="blankAnsInput" placeholder="영단어 입력" style="flex:1;" /><button type="button" class="px-btn matcha" id="blankSubmitBtn">공격!</button></div>`;
-    document.getElementById('blankSubmitBtn').onclick = () => {
-      handleQuizAnswer(document.getElementById('blankAnsInput').value.trim().toLowerCase() === w.en.toLowerCase(), w);
-    };
+    area.innerHTML = `<div style="display:flex;gap:6px;"><input type="text" class="px-input" id="blankAnsInput" placeholder="영단어 입력" style="flex:1;" autocomplete="off" /><button type="button" class="px-btn matcha" id="blankSubmitBtn">확인</button></div>`;
+    const inp = document.getElementById('blankAnsInput');
+    inp.focus();
+    const submitFn = () => handleQuizAnswer(inp.value.trim().toLowerCase() === w.en.toLowerCase(), w);
+    document.getElementById('blankSubmitBtn').onclick = submitFn;
+    inp.onkeydown = (e) => { if (e.key === 'Enter') submitFn(); };
   } else {
-    document.getElementById('qKindLabel').textContent = '알맞은 뜻 고르기';
+    document.getElementById('qKindLabel').textContent = '알맞은 뜻 고르기 (누르면 바로 다음!)';
     document.getElementById('qPromptText').textContent = w.en;
-    speakWord(w.en);
-    const others = state.words.filter(x => x.id !== w.id).sort(() => Math.random() - 0.5).slice(0, 3);
-    const opts = [w, ...others].sort(() => Math.random() - 0.5);
-    area.innerHTML = opts.map(o => `<button type="button" class="px-btn quiz-opt" data-id="${o.id}">${o.ko}</button>`).join('');
+    const opts = getMcqOptions(w, qList);
+    area.innerHTML = opts.map(o => `<button type="button" class="px-btn quiz-opt" data-en="${o.en}">${o.ko}</button>`).join('');
     area.querySelectorAll('.quiz-opt').forEach(btn => {
-      btn.onclick = () => {
-        const ok = btn.dataset.id === w.id;
-        btn.classList.add(ok ? 'ok' : 'no');
-        handleQuizAnswer(ok, w);
-      };
+      btn.onclick = () => handleQuizAnswer(btn.dataset.en === w.en, w);
     });
   }
 }
 
 function handleQuizAnswer(ok, w) {
   if (ok) {
-    qCombo += 1; qCorrect += 1;
-    gainExp(15 + qCombo * 2);
-    document.getElementById('qFeedback').textContent = `💥 명중! (+${15 + qCombo * 2} EXP)`;
-    document.getElementById('qFeedback').style.color = '#2B8A3E';
+    qCorrect += 1;
+    gainExp(5);
   } else {
-    qCombo = 0; qWrongs.push({ en: w.en, ko: w.ko }); w.status = 'hard';
-    document.getElementById('qFeedback').textContent = `💦 빗나감! 정답: ${w.en} (${w.ko})`;
-    document.getElementById('qFeedback').style.color = '#C92A2A';
+    qWrongs.push({ en: w.en, ko: w.ko });
+    const real = state.words.find(x => x.en === w.en);
+    if (real) real.status = 'hard';
   }
-  save();
-  setTimeout(() => { qPos += 1; renderQuizQ(); }, 850);
+  qPos += 1;
+  renderQuizQ(); // Zero delay! Instant next question
 }
 
+function renderQuizSheet() {
+  const box = document.getElementById('sheetItemsBox');
+  document.getElementById('sheetCountTxt').textContent = `0 / ${qList.length} 풀음`;
+  box.innerHTML = qList.map((w, idx) => {
+    if (qType === 'blank') {
+      return `<div class="px-card" style="padding:10px;margin-bottom:8px;">
+        <div style="font-weight:bold;margin-bottom:6px;">${idx + 1}. ${w.ko}</div>
+        <input type="text" class="px-input sheet-blank" data-idx="${idx}" placeholder="영단어 입력" autocomplete="off" />
+      </div>`;
+    } else {
+      const opts = getMcqOptions(w, qList);
+      return `<div class="px-card" style="padding:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <strong>${idx + 1}. ${w.en}</strong>
+          <button type="button" class="px-mini-btn" onclick="speakWord('${w.en.replace(/'/g, "\'")}')">🔊</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+          ${opts.map(o => `<button type="button" class="px-btn sheet-opt" data-idx="${idx}" data-en="${o.en}" style="font-size:12px;padding:6px 8px;text-align:left;">${o.ko}</button>`).join('')}
+        </div>
+      </div>`;
+    }
+  }).join('');
+
+  box.querySelectorAll('.sheet-opt').forEach(btn => {
+    btn.onclick = () => {
+      const idx = btn.dataset.idx;
+      box.querySelectorAll(`.sheet-opt[data-idx="${idx}"]`).forEach(b => b.classList.remove('butter'));
+      btn.classList.add('butter');
+      qSheetAns[idx] = btn.dataset.en;
+      document.getElementById('sheetCountTxt').textContent = `${Object.keys(qSheetAns).length} / ${qList.length} 풀음`;
+    };
+  });
+  box.querySelectorAll('.sheet-blank').forEach(inp => {
+    inp.oninput = () => {
+      const v = inp.value.trim();
+      if (v) qSheetAns[inp.dataset.idx] = v; else delete qSheetAns[inp.dataset.idx];
+      document.getElementById('sheetCountTxt').textContent = `${Object.keys(qSheetAns).length} / ${qList.length} 풀음`;
+    };
+  });
+}
+
+document.getElementById('sheetSubmitBtn').onclick = () => {
+  qCorrect = 0; qWrongs = [];
+  qList.forEach((w, idx) => {
+    const ans = (qSheetAns[idx] || '').trim().toLowerCase();
+    const ok = ans === w.en.toLowerCase();
+    if (ok) qCorrect += 1;
+    else {
+      qWrongs.push({ en: w.en, ko: w.ko });
+      const real = state.words.find(x => x.en === w.en);
+      if (real) real.status = 'hard';
+    }
+  });
+  gainExp(qCorrect * 5);
+  finishQuiz();
+};
+
 function finishQuiz() {
-  const rate = Math.round((qCorrect / qList.length) * 100);
-  state.lastQuizRate = `${rate}% (${qCorrect}/${qList.length})`;
+  const total = qList.length;
+  const rate = Math.round((qCorrect / total) * 100);
+  state.lastQuizRate = `${rate}% (${qCorrect}/${total})`;
   state.wrongLogs = qWrongs;
-  save(); syncFriendScore(rate);
+  save();
+  syncFriendScore(rate, qCorrect, qWrongs.length, qWrongs);
   document.getElementById('quizPlayBox').style.display = 'none';
+  document.getElementById('quizSheetBox').style.display = 'none';
   document.getElementById('quizSetupBox').style.display = 'block';
   renderWrong(); switchTab('Wrong');
-  alert(`시험 완료! 정답률 ${rate}%! 오답 영수증을 확인해 보세요.`);
+  alert(`시험 완료! ${total}개 중 ${qCorrect}개 맞음 (${rate}%)`);
 }
 
 /* Wrong Receipt */
@@ -1115,32 +1229,93 @@ document.getElementById('saveReceiptImgBtn').onclick = () => {
   const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = `voca-receipt-${todayStr()}.png`; a.click();
 };
 
-/* Friend Sync */
-async function syncFriendScore(rate) {
+/* Friend Sync: Missions, Scores & Wrong Words */
+let latestMission = null;
+async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr) {
   if (!state.room || !state.nick) return;
   try {
-    await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/${encodeURIComponent(state.nick)}.json`, {
+    await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/members/${encodeURIComponent(state.nick)}.json`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lv: state.lv, streak: state.streak, rate: rate ?? state.lastQuizRate ?? '-', date: todayStr(), ts: Date.now() })
+      body: JSON.stringify({
+        lv: state.lv, streak: state.streak,
+        rate: rate ?? state.lastQuizRate ?? '-',
+        correct: correctCnt ?? null,
+        wrong: wrongCnt ?? null,
+        wrongs: (wrongsArr || []).slice(0, 50),
+        date: todayStr(), ts: Date.now()
+      })
     });
   } catch (e) {}
 }
+
 async function loadFriendBoard() {
+  const mBox = document.getElementById('activeMissionBox');
   const box = document.getElementById('friendBoardBox');
-  if (!state.room) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);">방 코드를 입력하면 친구 기록이 보여요!</div>'; return; }
+  if (!state.room) {
+    mBox.innerHTML = '';
+    box.innerHTML = '<div style="font-size:12px;color:var(--muted);">닉네임과 방 코드를 입력하고 연결해 주세요!</div>';
+    return;
+  }
   try {
     const res = await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}.json`);
     const data = await res.json() || {};
-    const entries = Object.entries(data);
-    if (!entries.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);">아직 방에 기록이 없어요!</div>'; return; }
-    box.innerHTML = entries.map(([name, d]) => `
-      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dotted #ccc;font-size:13px;">
-        <span><strong>${name}</strong> (Lv.${d.lv || 1} · 🔥${d.streak || 1})</span>
-        <span>${d.rate ?? '-'}</span>
-      </div>
-    `).join('');
+    latestMission = data.mission || null;
+    if (latestMission && latestMission.words && latestMission.words.length) {
+      mBox.innerHTML = `<div style="background:var(--sky-soft);border:2px solid var(--ink);border-radius:10px;padding:9px;">
+        <div style="font-size:12px;font-weight:bold;">🎯 진행중 미션: ${latestMission.title}</div>
+        <div style="font-size:11px;color:var(--muted);margin:3px 0 6px;">마감: 오늘 ${latestMission.dueTime}까지 · ${latestMission.words.length}단어 (${latestMission.by})</div>
+        <button type="button" class="px-btn butter" id="takeMissionBtn" style="width:100%;padding:6px;">⚡ 이 미션 시험 바로 보기</button>
+      </div>`;
+      document.getElementById('takeMissionBtn').onclick = () => {
+        document.getElementById('friendModal').classList.remove('open');
+        switchTab('Quiz');
+        startQuizWithPool(latestMission.words, latestMission.id);
+      };
+    } else {
+      mBox.innerHTML = '<div style="font-size:11px;color:var(--muted);">아직 등록된 시험 미션이 없어요.</div>';
+    }
+
+    const members = data.members || {};
+    const entries = Object.entries(members);
+    if (!entries.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);">아직 시험 본 친구가 없어요!</div>'; return; }
+    box.innerHTML = entries.map(([name, d]) => {
+      const scoreLine = d.correct !== null && d.correct !== undefined
+        ? `${d.rate}% (맞음 ${d.correct} · 틀림 ${d.wrong})`
+        : (d.rate ?? '대기중');
+      const wrongTxt = (d.wrongs && d.wrongs.length)
+        ? `<details style="margin-top:4px;font-size:11px;color:#C92A2A;"><summary>틀린 단어 ${d.wrongs.length}개 보기</summary><div style="padding-top:4px;color:var(--ink);">${d.wrongs.map(w => `${w.en}(${w.ko})`).join(', ')}</div></details>`
+        : '';
+      return `<div style="padding:7px 0;border-bottom:1px dotted #ccc;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;">
+          <span><strong>${name}</strong> (Lv.${d.lv || 1})</span>
+          <span><strong>${scoreLine}</strong></span>
+        </div>
+        ${wrongTxt}
+      </div>`;
+    }).join('');
   } catch (e) { box.innerHTML = '<div style="font-size:12px;color:#C92A2A;">불러오기 실패</div>'; }
 }
+
+document.getElementById('postMissionBtn').onclick = async () => {
+  if (!state.room || !state.nick) return alert('먼저 닉네임과 방 코드를 연결해 주세요!');
+  const pool = state.words.filter(w => w.folderId === state.activeFolderId);
+  if (!pool.length) return alert('현재 폴더에 단어가 없어요!');
+  const dueTime = document.getElementById('missionTimeInput').value || '23:00';
+  const curFolder = state.folders.find(f => f.id === state.activeFolderId);
+  const title = document.getElementById('missionTitleInput').value.trim() || `${curFolder?.name || '단어장'} 시험`;
+  const mission = {
+    id: 'm_' + Date.now(),
+    title, dueTime, by: state.nick,
+    words: pool.map(w => ({ en: w.en, ko: w.ko }))
+  };
+  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission.json`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(mission)
+  });
+  loadFriendBoard();
+  alert('친구 방에 시험 미션을 올렸어요!');
+};
+
 document.getElementById('openFriendBtn').onclick = () => {
   document.getElementById('myNickInput').value = state.nick || '';
   document.getElementById('roomCodeInput').value = state.room || '';
