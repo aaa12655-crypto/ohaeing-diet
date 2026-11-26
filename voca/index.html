@@ -2694,12 +2694,17 @@ async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr, missionId,
         details: (typeof qDetails !== 'undefined' ? qDetails : []).slice(0, 120),
         ts: Date.now()
       });
-      await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
+      await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/missions/${encodeURIComponent(missionId)}/results/${encodeURIComponent(state.nick)}.json`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: resPayload
       });
       await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(missionId)}/results/${encodeURIComponent(state.nick)}.json`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: resPayload
       });
+      if (latestMission && latestMission.id === missionId) {
+        await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: resPayload
+        });
+      }
     }
   } catch (e) {}
 }
@@ -2761,6 +2766,44 @@ function renderMissionCardRows(names, members, mResults, hasWords, missionMeta) 
   }).join('');
 }
 
+window._activeMissionsMap = {};
+window.cancelActiveMission = async (mid) => {
+  const m = window._activeMissionsMap[mid];
+  if (!state.room || !m) return;
+  if (!confirm(`'${m.title}' 미션을 취소할까요?`)) return;
+  const mRes = m.results || {};
+  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/missions/${encodeURIComponent(mid)}.json`, { method: 'DELETE' });
+  if (latestMission && latestMission.id === mid) {
+    await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission.json`, { method: 'DELETE' });
+  }
+  if (!Object.keys(mRes).length) {
+    await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(mid)}.json`, { method: 'DELETE' });
+  }
+  loadFriendBoard();
+};
+window.takeActiveMission = async (mid) => {
+  const m = window._activeMissionsMap[mid];
+  if (!m) return;
+  if (!state.nick) return alert('먼저 내 닉네임을 입력하고 연결해 주세요!');
+  if (!confirm('이 미션 시험은 딱 1번만 응시할 수 있으며, 중간에 나가거나 재응시할 수 없습니다. 시작할까요?')) return;
+  const startPayload = JSON.stringify({ completed: true, score: 0, correct: 0, total: m.words.length, elapsedSec: 0, wrongs: [], ts: Date.now() });
+  try {
+    await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/missions/${encodeURIComponent(mid)}/results/${encodeURIComponent(state.nick)}.json`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: startPayload
+    });
+    await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(mid)}/results/${encodeURIComponent(state.nick)}.json`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: startPayload
+    });
+    if (latestMission && latestMission.id === mid) {
+      await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: startPayload
+      });
+    }
+  } catch (e) {}
+  switchTab('Quiz');
+  startQuizWithPool(m.words, m.id);
+};
+
 async function loadFriendBoard() {
   const mBox = document.getElementById('activeMissionBox');
   const box = document.getElementById('friendBoardBox');
@@ -2773,67 +2816,67 @@ async function loadFriendBoard() {
     const res = await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}.json`);
     const data = await res.json() || {};
     latestMission = data.mission || null;
-    const mResults = (latestMission && latestMission.results) || {};
-    const myResult = state.nick ? mResults[state.nick] : null;
-    const alreadyDone = !!(myResult && myResult.completed);
+    const missionsObj = Object.assign({}, data.missions || {});
+    if (latestMission && latestMission.id && latestMission.words && latestMission.words.length && !missionsObj[latestMission.id]) {
+      missionsObj[latestMission.id] = latestMission;
+    }
+    const activeMissions = Object.values(missionsObj)
+      .filter(m => m && m.id && m.words && m.words.length)
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-    if (latestMission && latestMission.words && latestMission.words.length) {
-      const orderLabel = latestMission.order === 'seq' ? '순서대로' : '랜덤';
-      mBox.innerHTML = `<div style="background:var(--sky-soft);border:2px solid var(--ink);border-radius:10px;padding:9px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-          <div style="font-size:12px;font-weight:bold;">🎯 진행중: ${latestMission.title}</div>
-          ${latestMission.by === state.nick ? `<button type="button" class="px-mini-btn" id="cancelMissionBtn" style="color:#C92A2A;border-color:#C92A2A;padding:3px 7px;font-size:11px;">미션 취소</button>` : ''}
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;">마감: ${latestMission.dueTime}까지 · ${latestMission.words.length}단어 (${orderLabel} · 한글뜻 시험지 · ${latestMission.by})</div>
-        <button type="button" class="px-btn ${alreadyDone ? '' : 'coral'}" id="takeMissionBtn" ${alreadyDone ? 'disabled' : ''} style="width:100%;padding:7px;${alreadyDone ? 'background:#E9ECEF;color:#666;cursor:not-allowed;' : ''}">
-          ${alreadyDone ? '✅ 응시 완료 (재응시 불가)' : '🔥 미션 시험 풀기 (단 1회 기회!)'}
-        </button>
-      </div>`;
-      const cBtn = document.getElementById('cancelMissionBtn');
-      if (cBtn) cBtn.onclick = async () => {
-        if (!confirm('진행 중인 미션을 취소할까요?')) return;
-        const mid = latestMission.id;
-        await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission.json`, { method: 'DELETE' });
-        if (mid && !Object.keys(mResults).length) {
-          await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(mid)}.json`, { method: 'DELETE' });
+    window._activeMissionsMap = {};
+    activeMissions.forEach(m => { window._activeMissionsMap[m.id] = m; });
+
+    const members = data.members || {};
+    const friendNames = Object.keys(members).filter(n => n && n !== state.nick);
+    if (Array.isArray(state.savedRooms)) {
+      const sr = state.savedRooms.find(x => x.room === state.room);
+      if (sr) {
+        const fLabel = friendNames.length > 1 ? `${friendNames[0]} 외 ${friendNames.length - 1}명` : (friendNames[0] || '');
+        if (fLabel && sr.friendName !== fLabel) {
+          sr.friendName = fLabel;
+          save();
+          renderSavedRooms();
         }
-        loadFriendBoard();
-      };
-      if (!alreadyDone) {
-        document.getElementById('takeMissionBtn').onclick = async () => {
-          if (!state.nick) return alert('먼저 내 닉네임을 입력하고 연결해 주세요!');
-          if (!confirm('이 미션 시험은 딱 1번만 응시할 수 있으며, 중간에 나가거나 재응시할 수 없습니다. 시작할까요?')) return;
-          const startPayload = JSON.stringify({ completed: true, score: 0, correct: 0, total: latestMission.words.length, elapsedSec: 0, wrongs: [], ts: Date.now() });
-          try {
-            await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
-              method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: startPayload
-            });
-            await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(latestMission.id)}/results/${encodeURIComponent(state.nick)}.json`, {
-              method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: startPayload
-            });
-          } catch (e) {}
-          switchTab('Quiz');
-          startQuizWithPool(latestMission.words, latestMission.id);
-        };
       }
+    }
+
+    if (activeMissions.length) {
+      mBox.innerHTML = activeMissions.map(m => {
+        const mResults = m.results || {};
+        const myResult = state.nick ? mResults[state.nick] : null;
+        const alreadyDone = !!(myResult && myResult.completed);
+        const orderLabel = m.order === 'seq' ? '순서대로' : '랜덤';
+        return `<div style="background:var(--sky-soft);border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+            <div style="font-size:12px;font-weight:bold;">🎯 진행중: ${m.title}</div>
+            ${m.by === state.nick ? `<button type="button" class="px-mini-btn" onclick="cancelActiveMission('${m.id}')" style="color:#C92A2A;border-color:#C92A2A;padding:3px 7px;font-size:11px;">미션 취소</button>` : ''}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;">마감: ${m.dueTime}까지 · ${m.words.length}단어 (${orderLabel} · 한글뜻 시험지 · ${m.by})</div>
+          <button type="button" class="px-btn ${alreadyDone ? '' : 'coral'}" onclick="takeActiveMission('${m.id}')" ${alreadyDone ? 'disabled' : ''} style="width:100%;padding:7px;${alreadyDone ? 'background:#E9ECEF;color:#666;cursor:not-allowed;' : ''}">
+            ${alreadyDone ? '✅ 응시 완료 (재응시 불가)' : '🔥 미션 시험 풀기 (단 1회 기회!)'}
+          </button>
+        </div>`;
+      }).join('');
     } else {
       mBox.innerHTML = '<div style="font-size:11px;color:var(--muted);">아직 등록된 시험 미션이 없어요.</div>';
     }
 
-    const members = data.members || {};
-    const names = Array.from(new Set([...Object.keys(members), ...Object.keys(mResults)]));
+    const activeIds = new Set(activeMissions.map(m => m.id));
     let htmlOut = '';
 
-    if (latestMission && latestMission.words && latestMission.words.length) {
+    activeMissions.forEach(m => {
+      const mResults = m.results || {};
+      const names = Array.from(new Set([...Object.keys(members), ...Object.keys(mResults)]));
       htmlOut += `<div style="background:#FFFDF6;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:10px;">
-        <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🔥 지금 진행 중 · ${latestMission.title} (${latestMission.words.length}문제)</div>
-        ${renderMissionCardRows(names, members, mResults, true, latestMission) || '<div style="font-size:11px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'}
+        <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🔥 지금 진행 중 · ${m.title} (${m.words.length}문제)</div>
+        ${renderMissionCardRows(names, members, mResults, true, m) || '<div style="font-size:11px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'}
       </div>`;
-    }
+    });
 
     const historyObj = data.mission_history || {};
     const allHist = Object.values(historyObj)
-      .filter(h => h && h.id && (!latestMission || h.id !== latestMission.id))
+      .filter(h => h && h.id && !activeIds.has(h.id))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
     if (!window._friendHistDate) window._friendHistDate = todayStr();
@@ -2870,10 +2913,11 @@ async function loadFriendBoard() {
     }
 
     if (!htmlOut) {
-      if (!names.length) {
+      const mNames = Object.keys(members);
+      if (!mNames.length) {
         box.innerHTML = '<div style="font-size:12px;color:var(--muted);">아직 연결된 친구가 없어요!</div>';
       } else {
-        box.innerHTML = names.map(name => {
+        box.innerHTML = mNames.map(name => {
           const m = members[name] || {};
           const scoreLine = m.correct !== null && m.correct !== undefined ? `${m.rate}점 (${m.correct}/${(m.correct || 0) + (m.wrong || 0)}개)` : '대기중';
           return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;display:flex;justify-content:space-between;"><span><strong>${name}</strong> (Lv.${m.lv || 1})</span><span><strong>${scoreLine}</strong></span></div>`;
@@ -2905,7 +2949,8 @@ function renderMissionSelectors() {
 function saveRoomShortcut(room, nick) {
   if (!room || !nick) return;
   if (!Array.isArray(state.savedRooms)) state.savedRooms = [];
-  state.savedRooms = [{ room, nick }, ...state.savedRooms.filter(x => x.room !== room)].slice(0, 8);
+  const prev = state.savedRooms.find(x => x.room === room);
+  state.savedRooms = [{ room, nick, friendName: prev?.friendName || '' }, ...state.savedRooms.filter(x => x.room !== room)].slice(0, 8);
 }
 window.switchSavedRoom = async (room, nick) => {
   state.room = room;
@@ -2916,12 +2961,6 @@ window.switchSavedRoom = async (room, nick) => {
   await loadFriendBoard();
   await loadFriendChats();
 };
-window.removeSavedRoom = (room, e) => {
-  e.stopPropagation();
-  state.savedRooms = (state.savedRooms || []).filter(x => x.room !== room);
-  save();
-  renderSavedRooms();
-};
 function renderSavedRooms() {
   const box = document.getElementById('savedRoomsBox');
   if (!box) return;
@@ -2929,9 +2968,9 @@ function renderSavedRooms() {
   if (!list.length) { box.innerHTML = ''; return; }
   box.innerHTML = `<span style="font-size:11px;color:var(--muted);align-self:center;">저장된 방:</span>` + list.map(x => {
     const active = x.room === state.room;
-    return `<button type="button" onclick="switchSavedRoom('${x.room}','${x.nick.replace(/'/g,"\'")}')" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 7px;border:1.5px solid var(--ink);border-radius:999px;background:${active?'var(--butter)':'#FFF'};cursor:pointer;">
-      <span>${x.room} (${x.nick})</span>
-      <span onclick="removeSavedRoom('${x.room}', event)" style="color:#C92A2A;font-weight:bold;padding-left:2px;">✕</span>
+    const label = x.friendName ? `${x.friendName} (${x.room})` : `${x.room} (대기중)`;
+    return `<button type="button" onclick="switchSavedRoom('${x.room}','${x.nick.replace(/'/g,"\'")}')" style="display:inline-flex;align-items:center;font-size:11px;padding:4px 9px;border:1.5px solid var(--ink);border-radius:999px;background:${active?'var(--butter)':'#FFF'};cursor:pointer;font-weight:${active?'bold':'normal'};">
+      ${label}
     </button>`;
   }).join('');
 }
@@ -2963,14 +3002,14 @@ document.getElementById('postMissionBtn').onclick = async () => {
     date: todayStr(), createdAt, order: orderVal, total: missionWords.length,
     results: {}
   };
-  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission.json`, {
+  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/missions/${encodeURIComponent(mid)}.json`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mission)
   });
   await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(mid)}.json`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(histEntry)
   });
   loadFriendBoard();
-  alert(`새 시험 미션(${missionWords.length}문제 · 한글 뜻 쓰기 시험지)을 올렸어요! 지난 기록은 기록지에 그대로 남아요.`);
+  alert(`새 시험 미션(${missionWords.length}문제 · 한글 뜻 쓰기 시험지)을 추가했어요!`);
 };
 
 function renderFriendTab() {
