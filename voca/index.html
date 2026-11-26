@@ -882,7 +882,10 @@ html, body {
       </div>
       <div style="font-size:12px;font-weight:bold;margin:6px 0 4px;">📚 큰 폴더 (단어집)</div>
       <div id="mgrBooksList"></div>
-      <div style="font-size:12px;font-weight:bold;margin:12px 0 4px;">📁 Day 폴더 (이름 수정 · 큰 폴더 이동 · 삭제)</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;">
+        <span style="font-size:12px;font-weight:bold;">📁 Day 폴더 (순서 · 이름 · 이동 · 삭제)</span>
+        <button type="button" class="px-mini-btn" onclick="sortFoldersNumeric()" style="font-size:11px;padding:2px 7px;">🔢 숫자순 정렬</button>
+      </div>
       <div id="mgrFoldersList"></div>
     </div>
   </div>
@@ -1201,27 +1204,56 @@ document.getElementById('addBookBtn').onclick = () => {
 function renderFolderMgrModal() {
   ensureBookState();
   document.getElementById('mgrBooksList').innerHTML = state.books.map(b => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFFDF9;">
-      <strong style="font-size:12px;">${b.name}</strong>
-      <div style="display:flex;gap:4px;">
-        <button type="button" class="px-mini-btn" onclick="exportBookShare('${b.id}')">📤 공유</button>
-        <button type="button" class="px-mini-btn" onclick="renameBook('${b.id}')">이름</button>
-        <button type="button" class="px-mini-btn" style="color:#C92A2A;" onclick="deleteBook('${b.id}')">삭제</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFFDF9;gap:4px;">
+      <strong style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name}</strong>
+      <div style="display:flex;gap:3px;flex-shrink:0;">
+        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:11px;" onclick="moveBookOrder('${b.id}',-1)">▲</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:11px;" onclick="moveBookOrder('${b.id}',1)">▼</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;" onclick="exportBookShare('${b.id}')">📤 공유</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;" onclick="renameBook('${b.id}')">이름</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;color:#C92A2A;" onclick="deleteBook('${b.id}')">삭제</button>
       </div>
     </div>
   `).join('');
   document.getElementById('mgrFoldersList').innerHTML = state.folders.map(f => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFF;">
-      <div style="font-size:12px;"><b>${f.name}</b> <span style="color:var(--muted);font-size:11px;">(${(state.books.find(b=>b.id===f.bookId)||{}).name||''})</span></div>
-      <div style="display:flex;gap:4px;">
-        <button type="button" class="px-mini-btn" onclick="exportFolderShare('${f.id}')">📤</button>
-        <button type="button" class="px-mini-btn" onclick="renameFolder('${f.id}')">이름</button>
-        <button type="button" class="px-mini-btn" onclick="moveFolderBook('${f.id}')">이동</button>
-        <button type="button" class="px-mini-btn" style="color:#C92A2A;" onclick="deleteFolderById('${f.id}')">삭제</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 7px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFF;gap:4px;">
+      <div style="font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b>${f.name}</b> <span style="color:var(--muted);font-size:10px;">(${(state.books.find(b=>b.id===f.bookId)||{}).name||''})</span></div>
+      <div style="display:flex;gap:2.5px;flex-shrink:0;">
+        <button type="button" class="px-mini-btn" style="padding:2px 4px;font-size:10px;" onclick="moveFolderOrder('${f.id}',-1)">▲</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 4px;font-size:10px;" onclick="moveFolderOrder('${f.id}',1)">▼</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="exportFolderShare('${f.id}')">📤</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="renameFolder('${f.id}')">이름</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="moveFolderBook('${f.id}')">이동</button>
+        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;color:#C92A2A;" onclick="deleteFolderById('${f.id}')">삭제</button>
       </div>
     </div>
   `).join('');
 }
+window.moveBookOrder = (bid, dir) => {
+  const i = state.books.findIndex(b => b.id === bid);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= state.books.length) return;
+  [state.books[i], state.books[j]] = [state.books[j], state.books[i]];
+  save(); renderFolderMgrModal(); renderHome();
+};
+window.moveFolderOrder = (fid, dir) => {
+  const i = state.folders.findIndex(f => f.id === fid);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= state.folders.length) return;
+  [state.folders[i], state.folders[j]] = [state.folders[j], state.folders[i]];
+  save(); renderFolderMgrModal(); renderHome();
+};
+window.sortFoldersNumeric = () => {
+  state.folders.sort((a, b) => {
+    const ba = (a.bookId || '').localeCompare(b.bookId || '');
+    if (ba !== 0) return ba;
+    const na = parseInt((a.name.match(/\d+/) || [9999])[0], 10);
+    const nb = parseInt((b.name.match(/\d+/) || [9999])[0], 10);
+    if (na !== nb) return na - nb;
+    return a.name.localeCompare(b.name, 'ko');
+  });
+  save(); renderFolderMgrModal(); renderHome();
+};
 document.getElementById('openFolderMgrBtn').onclick = () => {
   renderFolderMgrModal();
   document.getElementById('folderMgrModal').classList.add('open');
