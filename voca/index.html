@@ -732,45 +732,58 @@ html, body {
     <!-- 4. 친구 탭 (함께 외우기 · 시험 미션 · 점수/틀린 단어 비교 · 한마디) -->
     <section class="panel" id="panelFriend">
       <div class="px-card">
-        <div class="sec-title"><span>🤝 친구와 같이 외우기</span><span id="roomStatusBadge" style="font-size:11px;color:var(--muted);">연결 대기중</span></div>
-        <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
-          <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
-          <button type="button" class="px-btn matcha" id="joinRoomBtn">연결</button>
-          <button type="button" class="px-btn coral" id="disconnectRoomBtn" style="display:none;font-size:12px;padding:7px 8px;">끊기</button>
+        <div class="sec-title">
+          <span>🤝 친구와 같이 외우기</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span id="roomStatusBadge" style="font-size:11px;color:var(--muted);">연결 대기중</span>
+            <button type="button" class="px-mini-btn" id="toggleFriendRoomBtn">접기</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px;">
-          <button type="button" class="px-btn butter" id="genRoomCodeBtn" style="flex:1;font-size:12px;padding:7px 8px;">🎲 방 코드 랜덤생성</button>
-          <button type="button" class="px-btn sky" id="copyInviteBtn" style="flex:1;font-size:12px;padding:7px 8px;">💌 초대장 복사</button>
+        <div id="friendRoomBody">
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
+            <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
+            <button type="button" class="px-btn matcha" id="joinRoomBtn">연결</button>
+            <button type="button" class="px-btn coral" id="disconnectRoomBtn" style="display:none;font-size:12px;padding:7px 8px;">끊기</button>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="px-btn butter" id="genRoomCodeBtn" style="flex:1;font-size:12px;padding:7px 8px;">🎲 방 코드 랜덤생성</button>
+            <button type="button" class="px-btn sky" id="copyInviteBtn" style="flex:1;font-size:12px;padding:7px 8px;">💌 초대장 복사</button>
+          </div>
+          <div id="savedRoomsBox" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;"></div>
         </div>
-        <div id="savedRoomsBox" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;"></div>
       </div>
 
       <div class="px-card">
-        <div class="sec-title"><span>🎯 오늘 시험 미션 걸기</span></div>
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <select class="px-input" id="missionBookSelect" style="flex:1;"></select>
-          <select class="px-input" id="missionFolderSelect" style="flex:1;"></select>
+        <div class="sec-title">
+          <span>🎯 오늘 시험 미션 걸기</span>
+          <button type="button" class="px-mini-btn" id="toggleFriendMissionBtn">접기</button>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <span style="font-size:12px;font-weight:bold;white-space:nowrap;">⏰ 마감 시간:</span>
-          <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="flex:1;" />
+        <div id="friendMissionBody">
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <select class="px-input" id="missionBookSelect" style="flex:1;"></select>
+            <select class="px-input" id="missionFolderSelect" style="flex:1;"></select>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:12px;font-weight:bold;white-space:nowrap;">⏰ 마감 시간:</span>
+            <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="flex:1;" />
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <select class="px-input" id="missionCntSelect" style="flex:1;">
+              <option value="all">문제 수: 전체</option>
+              <option value="20">20문제</option>
+              <option value="50">50문제</option>
+              <option value="100">100문제</option>
+            </select>
+            <select class="px-input" id="missionOrderSelect" style="flex:1;">
+              <option value="rand">🔀 순서 섞기</option>
+              <option value="seq">🔢 순서대로</option>
+            </select>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">※ 미션은 무조건 <b>한글 뜻 쓰기 + 시험지</b>로 진행돼요!</div>
+          <button type="button" class="px-btn sky" id="postMissionBtn" style="width:100%;">현재 단어장 폴더로 미션 올리기</button>
+          <div id="activeMissionBox" style="margin-top:10px;"></div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <select class="px-input" id="missionCntSelect" style="flex:1;">
-            <option value="all">문제 수: 전체</option>
-            <option value="20">20문제</option>
-            <option value="50">50문제</option>
-            <option value="100">100문제</option>
-          </select>
-          <select class="px-input" id="missionOrderSelect" style="flex:1;">
-            <option value="rand">🔀 순서 섞기</option>
-            <option value="seq">🔢 순서대로</option>
-          </select>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">※ 미션은 무조건 <b>한글 뜻 쓰기 + 시험지</b>로 진행돼요!</div>
-        <button type="button" class="px-btn sky" id="postMissionBtn" style="width:100%;">현재 단어장 폴더로 미션 올리기</button>
-        <div id="activeMissionBox" style="margin-top:10px;"></div>
       </div>
 
       <div class="px-card">
@@ -3026,7 +3039,33 @@ document.getElementById('postMissionBtn').onclick = async () => {
   alert(`새 시험 미션(${missionWords.length}문제 · 한글 뜻 쓰기 시험지)을 추가했어요!`);
 };
 
+function applyFriendFoldState() {
+  const rb = document.getElementById('friendRoomBody');
+  const rt = document.getElementById('toggleFriendRoomBtn');
+  if (rb && rt) {
+    const f = !!state.foldFriendRoom;
+    rb.style.display = f ? 'none' : 'block';
+    rt.textContent = f ? '펼치기' : '접기';
+  }
+  const mb = document.getElementById('friendMissionBody');
+  const mt = document.getElementById('toggleFriendMissionBtn');
+  if (mb && mt) {
+    const f = !!state.foldFriendMission;
+    mb.style.display = f ? 'none' : 'block';
+    mt.textContent = f ? '펼치기' : '접기';
+  }
+}
+document.getElementById('toggleFriendRoomBtn').onclick = () => {
+  state.foldFriendRoom = !state.foldFriendRoom;
+  save(); applyFriendFoldState();
+};
+document.getElementById('toggleFriendMissionBtn').onclick = () => {
+  state.foldFriendMission = !state.foldFriendMission;
+  save(); applyFriendFoldState();
+};
+
 function renderFriendTab() {
+  applyFriendFoldState();
   updateRoomBadge();
   renderSavedRooms();
   renderMissionSelectors();
