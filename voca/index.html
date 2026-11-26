@@ -863,7 +863,7 @@ html, body {
       <div id="lvHelpCurrent" style="background:#FFF8E7;border:2px solid #222;border-radius:10px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
       <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">⚡ 경험치(EXP) 규칙</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px;">
-        • 하루 출석 도장: <b>+10 P</b> (연속 공부 시 <b>+5 P</b> 더! · 25 P 제한 제외)<br>
+        • 하루 출석 도장: <b>+10 P</b> (연속 공부 시 <b>+5 P</b> 더!)<br>
         • 단어 시험 정답: +1 P<br>
         • 하루 최대 획득: <b>시험 25 P 제한</b> · 50 P당 1레벨 업!
       </div>
@@ -1061,7 +1061,13 @@ document.getElementById('streakBadge').onclick = () => {
   document.getElementById('stampModal').classList.add('open');
 };
 document.getElementById('manualStampBtn').onclick = () => {
-  stampToday();
+  const t = todayStr();
+  if (Array.isArray(state.stamps) && state.stamps.includes(t)) {
+    if (!confirm('오늘 출석 도장을 취소할까요? (받은 포인트도 함께 회수돼요!)')) return;
+    cancelStampToday();
+  } else {
+    stampToday();
+  }
   save();
   renderStatus();
   renderStampModal();
@@ -2268,13 +2274,29 @@ function calcConsecutiveStreak() {
 function stampToday() {
   const t = todayStr();
   if (!Array.isArray(state.stamps)) state.stamps = [];
+  if (!state.stampBonus) state.stampBonus = {};
   const isNew = !state.stamps.includes(t);
   if (isNew) state.stamps.push(t);
   state.streak = calcConsecutiveStreak();
   if (isNew) {
     const bonus = state.streak >= 2 ? 15 : 10;
+    state.stampBonus[t] = bonus;
     gainExp(bonus, true);
   }
+}
+function cancelStampToday() {
+  const t = todayStr();
+  if (!Array.isArray(state.stamps)) return;
+  state.stamps = state.stamps.filter(d => d !== t);
+  const bonus = (state.stampBonus && state.stampBonus[t]) ? state.stampBonus[t] : 10;
+  if (state.stampBonus) delete state.stampBonus[t];
+  state.exp = (state.exp || 0) - bonus;
+  while (state.exp < 0 && (state.level || 1) > 1) {
+    state.level -= 1;
+    state.exp += 50;
+  }
+  if (state.exp < 0) state.exp = 0;
+  state.streak = calcConsecutiveStreak();
 }
 
 function finishQuiz(overrideTotal) {
