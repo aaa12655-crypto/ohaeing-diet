@@ -2841,8 +2841,9 @@ async function loadFriendBoard() {
       }
     }
 
-    if (activeMissions.length) {
-      mBox.innerHTML = activeMissions.map(m => {
+    const myActiveMissions = activeMissions.filter(m => !m.by || m.by === state.nick);
+    if (myActiveMissions.length) {
+      mBox.innerHTML = myActiveMissions.map(m => {
         const mResults = m.results || {};
         const myResult = state.nick ? mResults[state.nick] : null;
         const alreadyDone = !!(myResult && myResult.completed);
@@ -2850,7 +2851,7 @@ async function loadFriendBoard() {
         return `<div style="background:var(--sky-soft);border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
             <div style="font-size:12px;font-weight:bold;">🎯 진행중: ${m.title}</div>
-            ${m.by === state.nick ? `<button type="button" class="px-mini-btn" onclick="cancelActiveMission('${m.id}')" style="color:#C92A2A;border-color:#C92A2A;padding:3px 7px;font-size:11px;">미션 취소</button>` : ''}
+            <button type="button" class="px-mini-btn" onclick="cancelActiveMission('${m.id}')" style="color:#C92A2A;border-color:#C92A2A;padding:3px 7px;font-size:11px;">미션 취소</button>
           </div>
           <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;">마감: ${m.dueTime}까지 · ${m.words.length}단어 (${orderLabel} · 한글뜻 시험지 · ${m.by})</div>
           <button type="button" class="px-btn ${alreadyDone ? '' : 'coral'}" onclick="takeActiveMission('${m.id}')" ${alreadyDone ? 'disabled' : ''} style="width:100%;padding:7px;${alreadyDone ? 'background:#E9ECEF;color:#666;cursor:not-allowed;' : ''}">
@@ -2859,20 +2860,33 @@ async function loadFriendBoard() {
         </div>`;
       }).join('');
     } else {
-      mBox.innerHTML = '<div style="font-size:11px;color:var(--muted);">아직 등록된 시험 미션이 없어요.</div>';
+      mBox.innerHTML = '<div style="font-size:11px;color:var(--muted);">내가 올린 진행 중 시험 미션이 없어요.</div>';
     }
 
     const activeIds = new Set(activeMissions.map(m => m.id));
     let htmlOut = '';
 
+    const activeOwners = new Set();
     activeMissions.forEach(m => {
       const mResults = m.results || {};
-      const names = Array.from(new Set([...Object.keys(members), ...Object.keys(mResults)]));
+      const names = m.by ? [m.by] : Array.from(new Set([...Object.keys(members), ...Object.keys(mResults)]));
+      names.forEach(n => activeOwners.add(n));
       htmlOut += `<div style="background:#FFFDF6;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:10px;">
         <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🔥 지금 진행 중 · ${m.title} (${m.words.length}문제)</div>
         ${renderMissionCardRows(names, members, mResults, true, m) || '<div style="font-size:11px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'}
       </div>`;
     });
+
+    const waitingMembers = Object.keys(members).filter(n => !activeOwners.has(n));
+    if (waitingMembers.length) {
+      htmlOut += waitingMembers.map(name => {
+        const m = members[name] || {};
+        return `<div style="background:#FFF;border:1.5px solid var(--ink);border-radius:10px;padding:7px 9px;margin-bottom:8px;font-size:12px;display:flex;justify-content:space-between;align-items:center;">
+          <span><strong>${name}</strong> (Lv.${m.lv || 1})</span>
+          <span style="color:var(--muted);font-size:11px;">대기중</span>
+        </div>`;
+      }).join('');
+    }
 
     const historyObj = data.mission_history || {};
     const allHist = Object.values(historyObj)
@@ -2894,7 +2908,7 @@ async function loadFriendBoard() {
       if (histList.length) {
         htmlOut += histList.map(h => {
           const hRes = h.results || {};
-          const hNames = Array.from(new Set([...Object.keys(members), ...Object.keys(hRes)]));
+          const hNames = h.by ? [h.by] : Array.from(new Set([...Object.keys(members), ...Object.keys(hRes)]));
           const rows = renderMissionCardRows(hNames, members, hRes, true, h);
           return `<div style="background:#F8F6F0;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:bold;margin-bottom:3px;gap:6px;">
