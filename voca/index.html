@@ -909,8 +909,11 @@ html, body {
       <div style="font-size:12px;font-weight:bold;margin:6px 0 4px;">📚 큰 폴더 (단어집)</div>
       <div id="mgrBooksList"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;">
-        <span style="font-size:12px;font-weight:bold;">📁 Day 폴더 (순서 · 이름 · 이동 · 삭제)</span>
-        <button type="button" class="px-mini-btn" onclick="sortFoldersNumeric()" style="font-size:11px;padding:2px 7px;">🔢 숫자순 정렬</button>
+        <span style="font-size:12px;font-weight:bold;">📁 Day 폴더</span>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <button type="button" class="px-mini-btn" id="toggleMgrEditBtn" onclick="toggleMgrEdit()" style="font-size:11px;padding:2px 7px;">✏️ 편집</button>
+          <button type="button" class="px-mini-btn" onclick="sortFoldersNumeric()" style="font-size:11px;padding:2px 7px;">🔢 숫자순 정렬</button>
+        </div>
       </div>
       <div id="mgrFoldersList"></div>
     </div>
@@ -1253,33 +1256,54 @@ document.getElementById('addBookBtn').onclick = () => {
   save(); renderHome(); renderStudy();
 };
 
+let mgrEditMode = false;
+window.toggleMgrEdit = () => {
+  mgrEditMode = !mgrEditMode;
+  renderFolderMgrModal();
+};
 function renderFolderMgrModal() {
   ensureBookState();
+  const editBtn = document.getElementById('toggleMgrEditBtn');
+  if (editBtn) {
+    editBtn.classList.toggle('butter', mgrEditMode);
+    editBtn.style.background = mgrEditMode ? 'var(--butter)' : '';
+    editBtn.textContent = mgrEditMode ? '✏️ 완료' : '✏️ 편집';
+  }
   document.getElementById('mgrBooksList').innerHTML = state.books.map(b => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFFDF9;gap:4px;">
       <strong style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name}</strong>
       <div style="display:flex;gap:3px;flex-shrink:0;">
-        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:11px;" onclick="moveBookOrder('${b.id}',-1)">▲</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:11px;" onclick="moveBookOrder('${b.id}',1)">▼</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;" onclick="exportBookShare('${b.id}')">📤 공유</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;" onclick="renameBook('${b.id}')">이름</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;color:#C92A2A;" onclick="deleteBook('${b.id}')">삭제</button>
+        ${mgrEditMode ? `
+          <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:11px;" onclick="moveBookOrder('${b.id}',-1)">▲</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:11px;" onclick="moveBookOrder('${b.id}',1)">▼</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;" onclick="exportBookShare('${b.id}')">📤 공유</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;" onclick="renameBook('${b.id}')">이름</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 6px;font-size:11px;color:#C92A2A;" onclick="deleteBook('${b.id}')">삭제</button>
+        ` : `
+          <span style="font-size:11px;color:var(--muted);">${state.folders.filter(f=>f.bookId===b.id).length}개</span>
+        `}
       </div>
     </div>
   `).join('');
-  document.getElementById('mgrFoldersList').innerHTML = state.folders.map(f => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 7px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFF;gap:4px;">
+  document.getElementById('mgrFoldersList').innerHTML = state.folders.map(f => {
+    const wCnt = state.words.filter(w => w.folderId === f.id).length;
+    return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFF;gap:4px;">
       <div style="font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b>${f.name}</b> <span style="color:var(--muted);font-size:10px;">(${(state.books.find(b=>b.id===f.bookId)||{}).name||''})</span></div>
       <div style="display:flex;gap:2.5px;flex-shrink:0;">
-        <button type="button" class="px-mini-btn" style="padding:2px 4px;font-size:10px;" onclick="moveFolderOrder('${f.id}',-1)">▲</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 4px;font-size:10px;" onclick="moveFolderOrder('${f.id}',1)">▼</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="exportFolderShare('${f.id}')">📤</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="renameFolder('${f.id}')">이름</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="moveFolderBook('${f.id}')">이동</button>
-        <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;color:#C92A2A;" onclick="deleteFolderById('${f.id}')">삭제</button>
+        ${mgrEditMode ? `
+          <button type="button" class="px-mini-btn" style="padding:2px 4px;font-size:10px;" onclick="moveFolderOrder('${f.id}',-1)">▲</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 4px;font-size:10px;" onclick="moveFolderOrder('${f.id}',1)">▼</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="exportFolderShare('${f.id}')">📤</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="renameFolder('${f.id}')">이름</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;" onclick="moveFolderBook('${f.id}')">이동</button>
+          <button type="button" class="px-mini-btn" style="padding:2px 5px;font-size:10px;color:#C92A2A;" onclick="deleteFolderById('${f.id}')">삭제</button>
+        ` : `
+          <span style="font-size:11px;color:var(--muted);">${wCnt}단어</span>
+        `}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 window.moveBookOrder = (bid, dir) => {
   const i = state.books.findIndex(b => b.id === bid);
@@ -1307,6 +1331,7 @@ window.sortFoldersNumeric = () => {
   save(); renderFolderMgrModal(); renderHome();
 };
 document.getElementById('openFolderMgrBtn').onclick = () => {
+  mgrEditMode = false;
   renderFolderMgrModal();
   document.getElementById('folderMgrModal').classList.add('open');
 };
@@ -1556,11 +1581,21 @@ document.getElementById('inlineAddWordBtn').onclick = () => {
   enEl.value = ''; koEl.value = ''; posEl.value = '';
   enEl.focus();
 };
-window.setWordStatus = function(id, st) {
+window.setWordStatus = function(id, st, btnEl) {
   const w = state.words.find(x => x.id === id);
   if (!w) return;
   w.status = w.status === st ? 'none' : st;
-  save(); renderHome(); renderStudy();
+  save();
+  const hardOnly = document.getElementById('filterHardChk')?.checked;
+  if (studyView === 'list' && !hardOnly && btnEl) {
+    btnEl.classList.toggle('on', w.status === 'hard');
+    renderAllFolderRows();
+    const list = getStudyWords();
+    const hCnt = list.filter(x => x.status === 'hard').length;
+    document.getElementById('listCount').textContent = `${list.length}단어 · 🔥${hCnt}`;
+    return;
+  }
+  renderHome(); renderStudy();
 };
 
 document.getElementById('toggleEditModeBtn').onclick = () => {
@@ -1718,13 +1753,17 @@ function renderStudy() {
 
     if (maskMode === 'none' || !list.length) {
       colFilm.style.display = 'none';
+      colFilm.dataset.posInit = '';
       setTimeout(() => document.querySelectorAll('.study-ko').forEach(el => { el.style.opacity = ''; el.style.clipPath = ''; el.style.color = ''; }), 0);
     } else {
+      const wasVisible = colFilm.style.display === 'flex' && colFilm.dataset.posInit === '1';
       colFilm.style.display = 'flex';
       colFilm.className = `col-cellophane ${maskColor}`;
-      colFilm.style.left = '35%';
-      colFilm.style.top = '0px';
-      setTimeout(updateCellophaneMask, 20);
+      if (!wasVisible) {
+        colFilm.style.left = '35%';
+        colFilm.style.top = '0px';
+        colFilm.dataset.posInit = '1';
+      }
     }
 
     if (!list.length) {
@@ -1750,12 +1789,16 @@ function renderStudy() {
         <div class="study-ko">${formatStudyKo(w.ko)}</div>
         <div style="display:flex;gap:2px;z-index:20;background:#fff;margin-left:-3px;">
           <button type="button" class="px-mini-btn study-act-btn" onclick="speakWord('${w.en.replace(/'/g, "\\'")}')">🔊</button>
-          <button type="button" class="px-mini-btn study-act-btn ${w.status==='hard'?'on':''}" onclick="setWordStatus('${w.id}','hard')">🔥</button>
+          <button type="button" class="px-mini-btn study-act-btn ${w.status==='hard'?'on':''}" onclick="setWordStatus('${w.id}','hard',this)">🔥</button>
         </div>
       </div>
     `).join('');
     fitStudyEnFonts();
     applySmartKoBreaks();
+    if (maskMode === 'ko') {
+      updateCellophaneMask();
+      requestAnimationFrame(updateCellophaneMask);
+    }
   } else {
     wrap.style.display = 'none';
     cardView.style.display = 'block';
