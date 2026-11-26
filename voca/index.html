@@ -1641,7 +1641,7 @@ function fitStudyEnFonts() {
     el.style.fontSize = '';
     if (el.clientWidth <= 10) return;
     let sz = parseFloat(getComputedStyle(el).fontSize) || 14;
-    while (el.scrollWidth > el.clientWidth - 2 && sz > 10) {
+    while (el.scrollWidth > el.clientWidth + 1 && sz > 10) {
       sz -= 0.5;
       el.style.fontSize = sz + 'px';
     }
