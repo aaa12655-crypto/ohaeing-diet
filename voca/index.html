@@ -1667,6 +1667,11 @@ document.getElementById('qQuitBtn').onclick = () => {
   document.getElementById('quizSetupBox').style.display = 'block';
 };
 document.getElementById('sheetQuitBtn').onclick = () => {
+  const answered = qList.map((w, idx) => ({ w, idx })).filter(({ idx }) => (qSheetAns[idx] || '').trim() !== '');
+  if (answered.length > 0 && confirm(`지금까지 푼 ${answered.length}문제를 채점하고 나갈까요?`)) {
+    document.getElementById('sheetSubmitBtn').click();
+    return;
+  }
   document.getElementById('quizSheetBox').style.display = 'none';
   document.getElementById('quizSetupBox').style.display = 'block';
 };
