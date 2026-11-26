@@ -1011,7 +1011,7 @@ function renderStatus() {
 
 
 const VOCA_THEMES = [
-  { name: '크림 바닐라', bg: '#FAF2DF', butter: '#FFE074', sky: '#A5D8FF', matcha: '#A7E8B5', coral: '#FFB5B5' },
+  { name: '크림 바닐라', bg: '#F6EFE6', butter: '#E6D3B8', sky: '#C9DCE8', matcha: '#C6DFC9', coral: '#EAD0CB' },
   { name: '딸기 밀크', bg: '#FFE0E9', butter: '#FFA8C5', sky: '#FFF1A8', matcha: '#B2E8C8', coral: '#FF85AE' },
   { name: '말차 라떼', bg: '#DFF2DF', butter: '#93D695', sky: '#F9E79F', matcha: '#7BC87E', coral: '#F7C59F' },
   { name: '소다 스카이', bg: '#D8EEFF', butter: '#82CCFF', sky: '#FFF2A6', matcha: '#9EE8C2', coral: '#FFB8D9' },
@@ -1981,7 +1981,6 @@ function finishQuiz(overrideTotal) {
     items: qDetails.slice(0, 150)
   });
   if (state.quizLogs.length > 60) state.quizLogs = state.quizLogs.slice(0, 60);
-  stampToday();
   wrongViewDate = t;
   qLogViewDate = t;
   save();
