@@ -863,9 +863,9 @@ html, body {
       <div id="lvHelpCurrent" style="background:#FFF8E7;border:2px solid #222;border-radius:10px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
       <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">⚡ 경험치(EXP) 규칙</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px;">
-        • 하루 출석 도장: 0 P (연속 공부 일수만 올라가요!)<br>
-        • 단어 시험 정답: +1 P (완벽암기 ⭐ 제외)<br>
-        • 하루 최대 획득: <b>25 P 제한</b> · 50 P당 1레벨 업!
+        • 하루 출석 도장: <b>+10 P</b> (연속 공부 시 <b>+5 P</b> 더! · 25 P 제한 제외)<br>
+        • 단어 시험 정답: +1 P<br>
+        • 하루 최대 획득: <b>시험 25 P 제한</b> · 50 P당 1레벨 업!
       </div>
       <button type="button" class="px-btn butter" id="toggleGuideBookBtn" style="width:100%;font-size:12px;">🌱 8단계 성장 도감 보기 ▾</button>
       <div id="lvGuideBookGrid" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;"></div>
@@ -998,15 +998,18 @@ function updateStreak() {
   save();
 }
 
-function gainExp(amt) {
+function gainExp(amt, bypassDailyLimit = false) {
   updateStreak();
-  if (!state.dailyExp) state.dailyExp = {};
-  const t = todayStr();
-  const used = state.dailyExp[t] || 0;
-  const allow = Math.max(0, Math.min(amt, 25 - used));
-  if (allow <= 0) return;
-  state.dailyExp[t] = used + allow;
-  amt = allow;
+  if (!bypassDailyLimit) {
+    if (!state.dailyExp) state.dailyExp = {};
+    const t = todayStr();
+    const used = state.dailyExp[t] || 0;
+    const allow = Math.max(0, Math.min(amt, 25 - used));
+    if (allow <= 0) return;
+    state.dailyExp[t] = used + allow;
+    amt = allow;
+  }
+  if (amt <= 0) return;
   state.exp += amt;
   let leveled = false;
   while (state.exp >= 50 && state.lv < 99) {
@@ -1085,6 +1088,7 @@ function renderStatus() {
   document.documentElement.style.setProperty('--fs-scale', state.fsScale || 1);
   const vf = VOCA_FONTS[state.fontIdx ?? 0] || VOCA_FONTS[0];
   document.documentElement.style.setProperty('--app-font', vf.val);
+  document.body.style.webkitTextStroke = vf.name === '바른히피체' ? '0.35px currentColor' : '';
   document.documentElement.style.setProperty('--app-ls', state.letterSp || '0px');
   const vt = VOCA_THEMES[state.themeIdx ?? 0] || VOCA_THEMES[0];
   document.documentElement.style.setProperty('--bg', vt.bg);
@@ -1914,7 +1918,7 @@ document.getElementById('fcHardBtn').onclick = () => {
 };
 document.getElementById('fcMasterBtn').onclick = () => {
   const list = getStudyWords(); if (!list[fcIdx]) return;
-  list[fcIdx].status = 'star'; gainExp(1); save(); renderHome(); document.getElementById('fcNextBtn').click();
+  list[fcIdx].status = 'star'; save(); renderHome(); document.getElementById('fcNextBtn').click();
 };
 
 /* Quiz Tab: Fast & Sheet Mode (No Monster Delay) */
@@ -2264,8 +2268,13 @@ function calcConsecutiveStreak() {
 function stampToday() {
   const t = todayStr();
   if (!Array.isArray(state.stamps)) state.stamps = [];
-  if (!state.stamps.includes(t)) state.stamps.push(t);
+  const isNew = !state.stamps.includes(t);
+  if (isNew) state.stamps.push(t);
   state.streak = calcConsecutiveStreak();
+  if (isNew) {
+    const bonus = state.streak >= 2 ? 15 : 10;
+    gainExp(bonus, true);
+  }
 }
 
 function finishQuiz(overrideTotal) {
