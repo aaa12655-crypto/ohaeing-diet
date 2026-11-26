@@ -220,17 +220,26 @@ html, body {
 }
 .study-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  gap: 4px;
   align-items: center;
   border: 2px solid var(--ink);
   border-radius: 10px;
-  padding: 7px 8px;
+  padding: 6px 7px;
   margin-bottom: 6px;
   background: #FFFFFF;
 }
 .study-en { font-weight: bold; font-size: calc(14px * var(--fs-scale)); white-space: nowrap; overflow: hidden; }
-.study-ko { font-size: calc(13px * var(--fs-scale)); word-break: keep-all; transition: color .2s; }
+.study-idx { font-size: 9.5px; color: var(--muted); font-weight: normal; margin-right: 2px; letter-spacing: -0.3px; }
+.study-ko { font-size: calc(13px * var(--fs-scale)); word-break: keep-all; transition: color .2s; line-height: 1.35; }
+.study-act-btn {
+  padding: 2px 5px !important;
+  font-size: 11px !important;
+  border-radius: 6px !important;
+  border-width: 1.5px !important;
+  line-height: 1.2 !important;
+  min-width: 0 !important;
+}
 
 /* Under cellophane, text takes light tint of the film so it blends/fades like real red sheet! */
 
@@ -1474,10 +1483,12 @@ document.getElementById('toggleEditModeBtn').onclick = () => {
   editMode = !editMode; renderHome();
 };
 document.getElementById('addFolderBtn').onclick = () => {
-  const name = prompt('새 단어장 폴더 이름 (예: Day 2)');
-  if (!name || !name.trim()) return;
+  const raw = prompt('Day 몇 일차를 추가할까요? 숫자만 입력 (예: 2)');
+  if (!raw || !raw.trim()) return;
+  const num = raw.replace(/[^0-9]/g, '');
+  if (!num) return alert('숫자를 입력해 주세요! (예: 2)');
   const id = 'f_' + Date.now();
-  ensureBookState(); const bid = state.curBookId || state.books[0].id; state.curBookId = bid; state.folders.push({ id, name: name.trim(), bookId: bid });
+  ensureBookState(); const bid = state.curBookId || state.books[0].id; state.curBookId = bid; state.folders.push({ id, name: 'Day ' + num, bookId: bid });
   state.activeFolderId = id;
   save(); renderHome(); renderStudy();
 };
@@ -1565,6 +1576,26 @@ function getStudyWords() {
   return [...studyOrder.map(id => map.get(id)).filter(Boolean), ...list.filter(w => !studyOrder.includes(w.id))];
 }
 
+function formatStudyKo(ko) {
+  const esc = String(ko || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const posSplit = esc.replace(/\s+((?:n|v|a|ad|adj|adv|prep|conj|pron|int|vt|vi)\.)/g, '<br>$1');
+  return posSplit.split('<br>').map(part =>
+    part.replace(/\s+(\d+\.)\s*([^]*?)(?=(?:\s+\d+\.)|$)/g, (_, num, body) => ` <span class="ko-num-seg">${num} ${body.trim()}</span>`)
+  ).join('<br>');
+}
+
+function applySmartKoBreaks() {
+  document.querySelectorAll('#studyListView .study-ko').forEach(koEl => {
+    const baseLeft = koEl.getBoundingClientRect().left;
+    koEl.querySelectorAll('.ko-num-seg').forEach(seg => {
+      const rects = seg.getClientRects();
+      if (rects.length > 1 && rects[0].left > baseLeft + 4) {
+        seg.insertAdjacentHTML('beforebegin', '<br>');
+      }
+    });
+  });
+}
+
 function fitStudyEnFonts() {
   const baseSize = 14 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs-scale')) || 1);
   document.querySelectorAll('#studyListView .study-en').forEach(el => {
@@ -1623,15 +1654,16 @@ function renderStudy() {
             </div>
           </div>
         ` : ''}
-        <div class="study-en"><span style="font-size:0.78em;color:var(--muted);font-weight:normal;margin-right:4px;">${idx + 1}.</span>${w.en}</div>
-        <div class="study-ko">${w.ko}</div>
-        <div style="display:flex;gap:3px;z-index:20;background:#fff;">
-          <button type="button" class="px-mini-btn" onclick="speakWord('${w.en.replace(/'/g, "\\'")}')">🔊</button>
-          <button type="button" class="px-mini-btn ${w.status==='hard'?'on':''}" onclick="setWordStatus('${w.id}','hard')">🔥</button>
+        <div class="study-en"><span class="study-idx">${idx + 1}.</span>${w.en}</div>
+        <div class="study-ko">${formatStudyKo(w.ko)}</div>
+        <div style="display:flex;gap:2px;z-index:20;background:#fff;">
+          <button type="button" class="px-mini-btn study-act-btn" onclick="speakWord('${w.en.replace(/'/g, "\\'")}')">🔊</button>
+          <button type="button" class="px-mini-btn study-act-btn ${w.status==='hard'?'on':''}" onclick="setWordStatus('${w.id}','hard')">🔥</button>
         </div>
       </div>
     `).join('');
     fitStudyEnFonts();
+    applySmartKoBreaks();
   } else {
     wrap.style.display = 'none';
     cardView.style.display = 'block';
