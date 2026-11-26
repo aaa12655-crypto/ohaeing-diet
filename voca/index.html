@@ -220,12 +220,12 @@ html, body {
 }
 .study-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1.1fr) auto;
+  gap: 8px;
   align-items: center;
   border: 2px solid var(--ink);
   border-radius: 10px;
-  padding: 6px 7px;
+  padding: 6px 6px 6px 7px;
   margin-bottom: 6px;
   background: #FFFFFF;
 }
@@ -1629,12 +1629,17 @@ function applySmartKoBreaks() {
   });
 }
 
+function formatStudyEn(en) {
+  const esc = String(en || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc.replace(/([À-ÖØ-öø-ÿ])/g, '<span style="font-family:system-ui,sans-serif;font-weight:900;font-size:0.96em;">$1</span>');
+}
+
 function fitStudyEnFonts() {
   const baseSize = 14 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs-scale')) || 1);
   document.querySelectorAll('#studyListView .study-en').forEach(el => {
     el.style.fontSize = baseSize + 'px';
     let sz = baseSize;
-    while (el.scrollWidth > el.clientWidth + 1 && sz > 9) {
+    while (el.scrollWidth > el.clientWidth - 4 && sz > 9) {
       sz -= 0.5;
       el.style.fontSize = sz + 'px';
     }
@@ -1687,9 +1692,9 @@ function renderStudy() {
             </div>
           </div>
         ` : ''}
-        <div class="study-en"><span class="study-idx">${idx + 1}.</span>${w.en}</div>
+        <div class="study-en"><span class="study-idx">${idx + 1}.</span>${formatStudyEn(w.en)}</div>
         <div class="study-ko">${formatStudyKo(w.ko)}</div>
-        <div style="display:flex;gap:2px;z-index:20;background:#fff;">
+        <div style="display:flex;gap:2px;z-index:20;background:#fff;margin-left:-3px;">
           <button type="button" class="px-mini-btn study-act-btn" onclick="speakWord('${w.en.replace(/'/g, "\\'")}')">🔊</button>
           <button type="button" class="px-mini-btn study-act-btn ${w.status==='hard'?'on':''}" onclick="setWordStatus('${w.id}','hard')">🔥</button>
         </div>
