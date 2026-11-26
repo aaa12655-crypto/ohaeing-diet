@@ -586,7 +586,15 @@ html, body {
     <!-- 3. 퀴즈 탭: 초고속 단어시험 -->
     <section class="panel" id="panelQuiz">
       <div class="px-card" id="quizSetupBox">
-        <div class="folder-row" id="quizFolderRow"></div>
+        <div style="margin-bottom:10px;padding:8px;border:2px solid var(--ink);border-radius:10px;background:var(--card-soft);">
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+            <select class="px-input" id="quizBookSelect" style="flex:1;"></select>
+            <button type="button" class="px-mini-btn" id="quizAllDaysBtn">전체 Day</button>
+            <button type="button" class="px-mini-btn on" id="quizPickDaysBtn">Day 선택 ▾</button>
+          </div>
+          <div id="quizSelectedSummary" style="font-size:11px;color:var(--muted);">선택된 폴더: Day 1</div>
+          <div id="quizDayPickerBox" style="display:none;flex-wrap:wrap;gap:5px;margin-top:7px;max-height:140px;overflow-y:auto;"></div>
+        </div>
         <div class="sec-title"><span>📝 초고속 단어시험</span><span id="quizMissionBadge" style="font-size:11px;color:#C92A2A;"></span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
           <button type="button" class="px-btn sky" id="qScopeAll">전체 단어</button>
@@ -750,6 +758,47 @@ html, body {
         </div>
       </div>
     </section>
+
+    <!-- 5. 혼자 공부 탭 (설정에서 4번째 탭 전환 시 표시) -->
+    <section class="panel" id="panelSolo">
+      <div class="px-card">
+        <div class="sec-title"><span>🎯 오늘의 목표</span><span id="soloGoalBadge" style="font-size:11px;font-weight:bold;"></span></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+          <span style="font-size:12px;white-space:nowrap;">목표 단어:</span>
+          <input type="number" class="px-input" id="soloGoalInput" value="50" min="5" max="500" style="width:76px;" />
+          <input type="text" class="px-input" id="soloGoalNoteInput" placeholder="예: Day 1~2 끝내기" style="flex:1;" />
+          <button type="button" class="px-mini-btn on" id="saveSoloGoalBtn">저장</button>
+        </div>
+        <div style="background:#EEE;border:2px solid var(--ink);border-radius:999px;height:18px;overflow:hidden;position:relative;">
+          <div id="soloGoalBar" style="height:100%;width:0%;background:var(--matcha);transition:width .25s;"></div>
+          <span id="soloGoalBarTxt" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;">0 / 50 (0%)</span>
+        </div>
+      </div>
+
+      <div class="px-card">
+        <div class="sec-title"><span>⏱️ 60초 타임어택</span><span id="taBestBadge" style="font-size:11px;font-weight:bold;">최고 기록: 0개</span></div>
+        <div id="taReadyBox">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">1분 동안 4지선다 단어를 최대한 많이 맞혀보세요!</div>
+          <button type="button" class="px-btn butter" id="startTaBtn" style="width:100%;">⚡ 60초 타임어택 시작!</button>
+        </div>
+        <div id="taPlayBox" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;font-weight:bold;">
+            <span id="taTimerTxt" style="color:#C92A2A;">⏱️ 60초</span>
+            <span id="taScoreTxt">맞힘: 0개</span>
+            <button type="button" class="px-mini-btn" id="quitTaBtn">그만두기</button>
+          </div>
+          <div id="taWordTxt" style="font-size:22px;font-weight:bold;text-align:center;padding:12px 6px;border:2px solid var(--ink);border-radius:10px;background:var(--sky);margin-bottom:8px;">word</div>
+          <div id="taOptionsBox" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+        </div>
+      </div>
+
+      <div class="px-card">
+        <div class="sec-title"><span>📊 내 통계 & 취약 단어 TOP</span></div>
+        <div id="soloStatsSummary" style="font-size:12px;margin-bottom:10px;line-height:1.55;"></div>
+        <div id="soloWeakList" style="margin-bottom:8px;"></div>
+        <button type="button" class="px-btn sky" id="startWeakQuizBtn" style="width:100%;font-size:12px;">🔥 취약 단어 TOP 10 바로 시험 보기</button>
+      </div>
+    </section>
   </main>
 
   <div class="lvup-toast" id="lvupToast">🎉 LEVEL UP!</div>
@@ -758,7 +807,7 @@ html, body {
     <button type="button" class="nav-btn active" data-tab="Home">단어장</button>
     <button type="button" class="nav-btn" data-tab="Quiz">퀴즈</button>
     <button type="button" class="nav-btn" data-tab="Wrong">오답노트</button>
-    <button type="button" class="nav-btn" data-tab="Friend">친구</button>
+    <button type="button" class="nav-btn" id="fourthNavBtn" data-tab="Friend">친구</button>
   </nav>
 </div>
 
@@ -842,6 +891,11 @@ html, body {
       </div>
       <div style="font-size:12px;margin-bottom:5px;">🎨 귀여운 테마 색깔 (8종)</div>
       <div id="vocaThemeGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+      <div style="font-size:12px;margin:10px 0 5px;">🧭 4번째 탭 화면 선택</div>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="px-btn" id="modeFriendBtn" onclick="setFourthTabMode('friend')" style="flex:1;font-size:12px;">🤝 친구</button>
+        <button type="button" class="px-btn" id="modeSoloBtn" onclick="setFourthTabMode('solo')" style="flex:1;font-size:12px;">🎯 혼자 공부</button>
+      </div>
     </div>
     <div style="border-top:2px dashed var(--ink);padding-top:10px;display:flex;flex-direction:column;gap:8px;">
       <button type="button" class="px-btn sky" id="exportJsonBtn">💾 JSON 백업 내보내기</button>
@@ -1106,7 +1160,9 @@ window.enterBook = (bid) => {
   state.curBookId = bid;
   const sub = state.folders.filter(f => f.bookId === bid);
   if (sub.length && !sub.some(f => f.id === state.activeFolderId)) state.activeFolderId = sub[0].id;
-  save(); renderHome(); renderStudy();
+  save(); applyFourthTabMode();
+renderQuizScopePicker();
+renderHome(); renderStudy();
 };
 document.getElementById('backToBooksBtn').onclick = () => {
   state.curBookId = null; save(); renderHome();
@@ -1307,12 +1363,7 @@ function renderAllFolderRows() {
     ).join('');
   }
 
-  const qRow = document.getElementById('quizFolderRow');
-  if (qRow) {
-    qRow.innerHTML = state.folders.map(f =>
-      `<button type="button" class="folder-chip ${f.id === state.activeFolderId ? 'active' : ''}" onclick="selectFolder('${f.id}')">${f.name}</button>`
-    ).join('');
-  }
+  if (typeof renderQuizScopePicker === 'function') renderQuizScopePicker();
 }
 
 function renderHome() {
@@ -1733,8 +1784,83 @@ function startQuizWithPool(pool, missionId = null) {
   }
 }
 
+let quizBookId = null;
+let quizAllDaysMode = false;
+let quizSelectedFolderIds = [];
+
+function renderQuizScopePicker() {
+  ensureBookState();
+  const bSel = document.getElementById('quizBookSelect');
+  const pBox = document.getElementById('quizDayPickerBox');
+  const sum = document.getElementById('quizSelectedSummary');
+  const allBtn = document.getElementById('quizAllDaysBtn');
+  const pickBtn = document.getElementById('quizPickDaysBtn');
+  if (!bSel || !pBox) return;
+
+  if (!quizBookId || !state.books.some(b => b.id === quizBookId)) quizBookId = state.curBookId || state.books[0].id;
+  bSel.innerHTML = state.books.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  bSel.value = quizBookId;
+
+  const subFolders = state.folders.filter(f => f.bookId === quizBookId);
+  quizSelectedFolderIds = quizSelectedFolderIds.filter(id => subFolders.some(f => f.id === id));
+  if (!quizSelectedFolderIds.length && subFolders.length) {
+    const def = subFolders.find(f => f.id === state.activeFolderId) || subFolders[0];
+    quizSelectedFolderIds = [def.id];
+  }
+
+  allBtn.classList.toggle('on', quizAllDaysMode);
+  pickBtn.classList.toggle('on', !quizAllDaysMode);
+
+  if (quizAllDaysMode) {
+    const bk = state.books.find(b => b.id === quizBookId);
+    sum.textContent = `선택: ${bk ? bk.name : ''} 전체 (${subFolders.length}개 Day)`;
+    qFolderLabel = `${bk ? bk.name : '전체'} 전체`;
+    pBox.style.display = 'none';
+  } else {
+    const chosen = subFolders.filter(f => quizSelectedFolderIds.includes(f.id));
+    sum.textContent = chosen.length <= 2
+      ? `선택: ${chosen.map(f => f.name).join(', ')}`
+      : `선택: ${chosen[0].name} 외 ${chosen.length - 1}개`;
+    qFolderLabel = chosen.length === 1 ? chosen[0].name : `${chosen[0]?.name || '단어'} 외 ${chosen.length - 1}개`;
+    pBox.innerHTML = subFolders.map(f => {
+      const on = quizSelectedFolderIds.includes(f.id);
+      return `<button type="button" class="folder-chip ${on ? 'active' : ''}" onclick="toggleQuizDay('${f.id}')">${on ? '✓ ' : ''}${f.name}</button>`;
+    }).join('');
+  }
+}
+
+window.toggleQuizDay = (fid) => {
+  quizAllDaysMode = false;
+  if (quizSelectedFolderIds.includes(fid)) {
+    if (quizSelectedFolderIds.length > 1) quizSelectedFolderIds = quizSelectedFolderIds.filter(x => x !== fid);
+  } else {
+    quizSelectedFolderIds.push(fid);
+  }
+  renderQuizScopePicker();
+};
+
+document.getElementById('quizBookSelect').onchange = (e) => {
+  quizBookId = e.target.value;
+  quizSelectedFolderIds = [];
+  renderQuizScopePicker();
+};
+document.getElementById('quizAllDaysBtn').onclick = () => {
+  quizAllDaysMode = true;
+  renderQuizScopePicker();
+};
+document.getElementById('quizPickDaysBtn').onclick = () => {
+  quizAllDaysMode = false;
+  const pBox = document.getElementById('quizDayPickerBox');
+  pBox.style.display = pBox.style.display === 'none' ? 'flex' : 'none';
+  renderQuizScopePicker();
+};
+
 document.getElementById('startQuizBtn').onclick = () => {
-  let pool = state.words.filter(w => w.folderId === state.activeFolderId);
+  renderQuizScopePicker();
+  const targetIds = quizAllDaysMode
+    ? state.folders.filter(f => f.bookId === quizBookId).map(f => f.id)
+    : quizSelectedFolderIds;
+  let pool = state.words.filter(w => targetIds.includes(w.folderId));
   if (qScope === 'hard') {
     const wrongEns = new Set((state.wrongLogs || []).map(x => x.en));
     pool = pool.filter(w => w.status === 'hard' || wrongEns.has(w.en));
@@ -1964,6 +2090,10 @@ function finishQuiz(overrideTotal) {
   const now = new Date();
   const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   state.lastQuizRate = `${rate}% (${qCorrect}/${total})`;
+  if (!state.dailySolved) state.dailySolved = {};
+  state.dailySolved[t] = (state.dailySolved[t] || 0) + total;
+  if (!state.wrongCounts) state.wrongCounts = {};
+  qWrongs.forEach(w => { state.wrongCounts[w.en] = (state.wrongCounts[w.en] || 0) + 1; });
   state.wrongLogs = qWrongs;
   if (!state.wrongByDate) state.wrongByDate = {};
   const prevMap = new Map((state.wrongByDate[t] || []).map(x => [x.en, x]));
@@ -2713,7 +2843,133 @@ document.getElementById('joinRoomBtn').onclick = async () => {
   }, 50);
 })();
 
-document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); renderVocaThemeGrid(); renderFsLsButtons(); document.getElementById('settingsModal').classList.add('open'); };
+
+window.setFourthTabMode = function(mode) {
+  state.fourthTabMode = mode;
+  save();
+  applyFourthTabMode();
+};
+function applyFourthTabMode() {
+  const mode = state.fourthTabMode || 'friend';
+  const nav4 = document.getElementById('fourthNavBtn');
+  if (nav4) {
+    nav4.dataset.tab = mode === 'solo' ? 'Solo' : 'Friend';
+    nav4.textContent = mode === 'solo' ? '혼자 공부' : '친구';
+  }
+  const fBtn = document.getElementById('modeFriendBtn');
+  const sBtn = document.getElementById('modeSoloBtn');
+  if (fBtn) fBtn.classList.toggle('butter', mode === 'friend');
+  if (sBtn) sBtn.classList.toggle('butter', mode === 'solo');
+  if (mode === 'solo' && document.getElementById('panelFriend').classList.contains('active')) {
+    document.getElementById('panelFriend').classList.remove('active');
+    document.getElementById('panelSolo').classList.add('active');
+    renderSoloTab();
+  } else if (mode === 'friend' && document.getElementById('panelSolo').classList.contains('active')) {
+    document.getElementById('panelSolo').classList.remove('active');
+    document.getElementById('panelFriend').classList.add('active');
+    renderFriendTab();
+  }
+}
+
+function renderSoloTab() {
+  const t = todayStr();
+  const goal = Math.max(5, Number(state.soloGoal || 50));
+  const solved = (state.dailySolved && state.dailySolved[t]) || 0;
+  const pct = Math.min(100, Math.round((solved / goal) * 100));
+  document.getElementById('soloGoalInput').value = goal;
+  document.getElementById('soloGoalNoteInput').value = state.soloGoalNote || '';
+  document.getElementById('soloGoalBar').style.width = pct + '%';
+  document.getElementById('soloGoalBarTxt').textContent = `${solved} / ${goal} (${pct}%)`;
+  document.getElementById('soloGoalBadge').textContent = pct >= 100 ? '🎉 오늘 목표 달성!' : '진행 중';
+  document.getElementById('taBestBadge').textContent = `최고 기록: ${state.bestTimeAttack || 0}개`;
+
+  const logs = state.quizLogs || [];
+  const weekAgo = getDateOffset(t, -6);
+  const weekLogs = logs.filter(l => l.date >= weekAgo);
+  const weekSolved = weekLogs.reduce((s, l) => s + (l.total || 0), 0);
+  const avgRate = weekLogs.length ? Math.round(weekLogs.reduce((s, l) => s + (l.rate || 0), 0) / weekLogs.length) : 0;
+  document.getElementById('soloStatsSummary').innerHTML = `• 최근 7일 푼 문제: <b>${weekSolved}문제</b> (평균 정답률 <b>${avgRate}%</b>)<br>• 총 누적 시험 횟수: <b>${logs.length}회</b>`;
+
+  const wc = state.wrongCounts || {};
+  const weakArr = Object.entries(wc).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const wBox = document.getElementById('soloWeakList');
+  if (!weakArr.length) {
+    wBox.innerHTML = '<div style="font-size:11px;color:var(--muted);">아직 틀린 기록이 없어요! 시험을 풀면 자주 틀리는 단어가 모여요.</div>';
+  } else {
+    wBox.innerHTML = weakArr.map(([en, cnt], idx) => {
+      const found = state.words.find(w => w.en === en);
+      return `<div style="display:flex;justify-content:space-between;padding:4px 6px;border-bottom:1px dotted #ccc;font-size:12px;">
+        <span><b>${idx+1}. ${en}</b> <span style="color:var(--muted);">${found ? found.ko : ''}</span></span>
+        <span style="color:#C92A2A;font-weight:bold;">${cnt}회 오답</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+document.getElementById('saveSoloGoalBtn').onclick = () => {
+  state.soloGoal = Math.max(5, Number(document.getElementById('soloGoalInput').value || 50));
+  state.soloGoalNote = document.getElementById('soloGoalNoteInput').value.trim();
+  save();
+  renderSoloTab();
+};
+
+document.getElementById('startWeakQuizBtn').onclick = () => {
+  const wc = state.wrongCounts || {};
+  const topEns = Object.entries(wc).sort((a, b) => b[1] - a[1]).slice(0, 10).map(x => x[0]);
+  const pool = topEns.map(en => state.words.find(w => w.en === en)).filter(Boolean);
+  if (!pool.length) return alert('아직 취약 단어 기록이 없어요!');
+  document.querySelector('.nav-btn[data-tab="Quiz"]').click();
+  qFolderLabel = '취약 단어 TOP 10';
+  startQuizWithPool(pool, null);
+};
+
+let taTimer = null, taLeft = 60, taScore = 0;
+function stopTimeAttack(showResult) {
+  if (taTimer) { clearInterval(taTimer); taTimer = null; }
+  document.getElementById('taPlayBox').style.display = 'none';
+  document.getElementById('taReadyBox').style.display = 'block';
+  if (showResult) {
+    const prev = state.bestTimeAttack || 0;
+    const isNew = taScore > prev;
+    if (isNew) { state.bestTimeAttack = taScore; save(); }
+    renderSoloTab();
+    alert(`⏱️ 타임어택 종료! 60초 동안 ${taScore}개 맞혔어요!${isNew ? ' 🎉 최고 기록 갱신!' : ''}`);
+  }
+}
+function nextTaQuestion() {
+  if (state.words.length < 4) return;
+  const w = state.words[Math.floor(Math.random() * state.words.length)];
+  const opts = getMcqOptions(w, state.words);
+  document.getElementById('taWordTxt').textContent = w.en;
+  const box = document.getElementById('taOptionsBox');
+  box.innerHTML = opts.map(o => `<button type="button" class="px-btn" style="font-size:12px;padding:10px 6px;">${o.ko}</button>`).join('');
+  box.querySelectorAll('button').forEach((btn, i) => {
+    btn.onclick = () => {
+      if (opts[i].en === w.en) {
+        taScore++;
+        document.getElementById('taScoreTxt').textContent = `맞힘: ${taScore}개`;
+      }
+      nextTaQuestion();
+    };
+  });
+}
+document.getElementById('startTaBtn').onclick = () => {
+  if (state.words.length < 4) return alert('타임어택을 하려면 단어가 최소 4개 필요해요!');
+  taLeft = 60; taScore = 0;
+  document.getElementById('taReadyBox').style.display = 'none';
+  document.getElementById('taPlayBox').style.display = 'block';
+  document.getElementById('taTimerTxt').textContent = `⏱️ ${taLeft}초`;
+  document.getElementById('taScoreTxt').textContent = `맞힘: 0개`;
+  nextTaQuestion();
+  taTimer = setInterval(() => {
+    taLeft--;
+    document.getElementById('taTimerTxt').textContent = `⏱️ ${taLeft}초`;
+    if (taLeft <= 0) stopTimeAttack(true);
+  }, 1000);
+};
+document.getElementById('quitTaBtn').onclick = () => stopTimeAttack(false);
+
+document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); renderVocaThemeGrid(); renderFsLsButtons(); applyFourthTabMode(); document.getElementById('settingsModal').classList.add('open'); };
 document.getElementById('closeSettingsModal').onclick = () => document.getElementById('settingsModal').classList.remove('open');
 document.getElementById('exportJsonBtn').onclick = () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
