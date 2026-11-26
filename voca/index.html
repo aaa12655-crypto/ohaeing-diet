@@ -965,8 +965,8 @@ const STORAGE_KEY = 'pixel_voca_v1';
 const FB_URL = 'https://diet-9b0f5-default-rtdb.firebaseio.com';
 
 const VOCA_FONTS = [
-  { name: '네오둥근모', val: "'NeoDunggeunmo', monospace" },
   { name: '비트비트체', val: "'DNFBitBitv2', monospace" },
+  { name: '네오둥근모', val: "'NeoDunggeunmo', monospace" },
   { name: '빙그레체', val: "'Binggrae', sans-serif" },
   { name: '느림보고딕', val: "'neurimboGothicRegular', sans-serif" },
   { name: '망고보드 별별', val: "'MangoByeolbyeol', sans-serif" },
@@ -991,7 +991,7 @@ function todayStr() {
 
 function defaultState() {
   return {
-    lv: 1, exp: 0, streak: 1, lastStudyDate: todayStr(), fsScale: 1, fontIdx: 1,
+    lv: 1, exp: 0, streak: 1, lastStudyDate: todayStr(), fsScale: 1, fontIdx: 0,
     nick: '', room: '',
     activeFolderId: 'f1',
     books: [{ id: 'b1', name: '관리를 눌러 단어장 이름 입력' }], curBookId: 'b1', folders: [{ id: 'f1', name: 'Day 1', bookId: 'b1' }],
