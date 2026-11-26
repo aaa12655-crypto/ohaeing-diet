@@ -219,18 +219,19 @@ html, body {
   overflow: hidden;
 }
 .study-row {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 1.1fr) auto;
   gap: 8px;
   align-items: center;
   border: 2px solid var(--ink);
   border-radius: 10px;
-  padding: 6px 6px 6px 7px;
+  padding: 10px 6px 7px 8px;
   margin-bottom: 6px;
   background: #FFFFFF;
 }
 .study-en { font-weight: bold; font-size: calc(14px * var(--fs-scale)); white-space: nowrap; overflow: hidden; }
-.study-idx { font-size: 9.5px; color: var(--muted); font-weight: normal; margin-right: 2px; letter-spacing: -0.3px; }
+.study-idx { position: absolute; top: 2px; left: 6px; font-size: 8.5px; color: var(--muted); font-weight: normal; line-height: 1; letter-spacing: -0.3px; }
 .study-ko { font-size: calc(13px * var(--fs-scale)); word-break: keep-all; transition: color .2s; line-height: 1.35; }
 .study-act-btn {
   padding: 2px 5px !important;
@@ -1612,15 +1613,16 @@ function getStudyWords() {
 function formatStudyKo(ko) {
   const esc = String(ko || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const posSplit = esc.replace(/\s+((?:n|v|a|ad|adj|adv|prep|conj|pron|int|vt|vi)\.)/g, '<br>$1');
-  return posSplit.split('<br>').map(part =>
-    part.replace(/\s+(\d+\.)\s*([^]*?)(?=(?:\s+\d+\.)|$)/g, (_, num, body) => ` <span class="ko-num-seg">${num} ${body.trim()}</span>`)
-  ).join('<br>');
+  return posSplit.split('<br>').map(part => {
+    const withNum = part.replace(/\s+(\d+\.)\s*([^]*?)(?=(?:\s+\d+\.)|$)/g, (_, num, body) => ` <span class="ko-seg">${num} ${body.trim()}</span>`);
+    return withNum.replace(/([,;])\s+([^<,;]+)/g, '$1 <span class="ko-seg">$2</span>');
+  }).join('<br>');
 }
 
 function applySmartKoBreaks() {
   document.querySelectorAll('#studyListView .study-ko').forEach(koEl => {
     const baseLeft = koEl.getBoundingClientRect().left;
-    koEl.querySelectorAll('.ko-num-seg').forEach(seg => {
+    koEl.querySelectorAll('.ko-seg').forEach(seg => {
       const rects = seg.getClientRects();
       if (rects.length > 1 && rects[0].left > baseLeft + 4) {
         seg.insertAdjacentHTML('beforebegin', '<br>');
@@ -1635,11 +1637,11 @@ function formatStudyEn(en) {
 }
 
 function fitStudyEnFonts() {
-  const baseSize = 14 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs-scale')) || 1);
   document.querySelectorAll('#studyListView .study-en').forEach(el => {
-    el.style.fontSize = baseSize + 'px';
-    let sz = baseSize;
-    while (el.scrollWidth > el.clientWidth - 4 && sz > 9) {
+    el.style.fontSize = '';
+    if (el.clientWidth <= 10) return;
+    let sz = parseFloat(getComputedStyle(el).fontSize) || 14;
+    while (el.scrollWidth > el.clientWidth - 2 && sz > 10) {
       sz -= 0.5;
       el.style.fontSize = sz + 'px';
     }
@@ -1692,7 +1694,8 @@ function renderStudy() {
             </div>
           </div>
         ` : ''}
-        <div class="study-en"><span class="study-idx">${idx + 1}.</span>${formatStudyEn(w.en)}</div>
+        ${editMode ? '' : `<span class="study-idx">${idx + 1}</span>`}
+        <div class="study-en">${formatStudyEn(w.en)}</div>
         <div class="study-ko">${formatStudyKo(w.ko)}</div>
         <div style="display:flex;gap:2px;z-index:20;background:#fff;margin-left:-3px;">
           <button type="button" class="px-mini-btn study-act-btn" onclick="speakWord('${w.en.replace(/'/g, "\\'")}')">🔊</button>
