@@ -1541,8 +1541,9 @@ if (document.getElementById('delFolderBtn')) document.getElementById('delFolderB
 
 function parseBulkLines(raw) {
   const posAbbr = '(?:n|v|a|ad|adj|adv|prep|conj|pron|int|vt|vi)';
+  const enCh = "A-Za-zÀ-ÖØ-öø-ÿ";
   const meaningStart = `(?:[가-힣(\\[~]|\\d+[.)]|${posAbbr}\\.)`;
-  const splitRegex = new RegExp(`([가-힣)\\]\\d.~;!?])\\s+(?=(?!${posAbbr}\\.)[A-Za-z]{2,}(?:[\\s'\\-/][A-Za-z]+){0,3}\\s+${meaningStart})`, 'g');
+  const splitRegex = new RegExp(`([가-힣)\\]\\d.~;!?])\\s+(?=(?!${posAbbr}\\.)[${enCh}]{2,}(?:[\\s'\\-/][${enCh}]+){0,3}\\s+${meaningStart})`, 'g');
   const normalized = raw.replace(splitRegex, '$1\n');
   const rawLines = normalized.split(/\r?\n/).map(l => l.trim().replace(/^(?:\d+[.)]\s+|[•\-*]\s+)/, '')).filter(Boolean);
   const out = [];
@@ -1551,16 +1552,16 @@ function parseBulkLines(raw) {
     let en = '', ko = '';
     if (line.includes('\t')) {
       const p = line.split('\t'); en = p[0].trim(); ko = p.slice(1).join(' ').trim();
-    } else if (/^[A-Za-z][A-Za-z\s'.\/-]{0,45}$/.test(line) && i + 1 < rawLines.length && /[가-힣]/.test(rawLines[i + 1]) && !/^[A-Za-z]{2,}/.test(rawLines[i + 1])) {
+    } else if (new RegExp(`^[${enCh}][${enCh}\\s'.\\/-]{0,45}$`).test(line) && i + 1 < rawLines.length && /[가-힣]/.test(rawLines[i + 1]) && !new RegExp(`^[${enCh}]{2,}`).test(rawLines[i + 1])) {
       en = line; ko = rawLines[++i];
     } else if (/\s+[-–:]\s+|\s*[-:]\s+/.test(line)) {
-      const m = line.match(/^([A-Za-z][A-Za-z\s'.\/-]*?)\s*[-–:]\s*(.+)$/);
+      const m = line.match(new RegExp(`^([${enCh}][${enCh}\\s'.\\/-]*?)\\s*[-–:]\\s*(.+)$`));
       if (m) { en = m[1].trim(); ko = m[2].trim(); }
     } else {
-      const m = line.match(new RegExp(`^([A-Za-z][A-Za-z'.\\/-]*(?:\\s+(?!${posAbbr}\\.)[A-Za-z'.\\/-]+){0,3})\\s+(${meaningStart}.*)$`));
+      const m = line.match(new RegExp(`^([${enCh}][${enCh}'.\\/-]*(?:\\s+(?!${posAbbr}\\.)[${enCh}'.\\/-]+){0,3})\\s+(${meaningStart}.*)$`));
       if (m) { en = m[1].trim(); ko = m[2].trim(); }
       else {
-        const m2 = line.match(/^([A-Za-z][A-Za-z'.\/-]*(?:\s+[A-Za-z'.\/-]+){0,2})\s+(.+)$/);
+        const m2 = line.match(new RegExp(`^([${enCh}][${enCh}'.\\/-]*(?:\\s+[${enCh}'.\\/-]+){0,2})\\s+(.+)$`));
         if (m2) { en = m2[1].trim(); ko = m2[2].trim(); }
       }
     }
