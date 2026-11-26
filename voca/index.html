@@ -802,9 +802,15 @@ html, body {
   <div class="modal-bg" id="folderMgrModal">
     <div class="modal-card" style="max-height:82vh;overflow-y:auto;">
       <div class="sec-title"><span>⚙️ 폴더 · 단어집 관리</span><button type="button" class="px-mini-btn" onclick="document.getElementById('folderMgrModal').classList.remove('open')">닫기</button></div>
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
         <button type="button" class="px-btn butter" id="addBookBtn" style="flex:1;padding:6px 8px;font-size:12px;">+ 큰 폴더 추가</button>
         <button type="button" class="px-btn sky" id="addFolderBtn" style="flex:1;padding:6px 8px;font-size:12px;">+ Day 추가</button>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label class="px-btn matcha" style="width:100%;padding:7px 8px;font-size:12px;display:block;text-align:center;cursor:pointer;">
+          📥 공유받은 단어 폴더 파일(.json) 불러오기
+          <input type="file" id="importShareFileInput" accept=".json,application/json" style="display:none;" />
+        </label>
       </div>
       <div style="font-size:12px;font-weight:bold;margin:6px 0 4px;">📚 큰 폴더 (단어집)</div>
       <div id="mgrBooksList"></div>
@@ -1123,6 +1129,7 @@ function renderFolderMgrModal() {
     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFFDF9;">
       <strong style="font-size:12px;">${b.name}</strong>
       <div style="display:flex;gap:4px;">
+        <button type="button" class="px-mini-btn" onclick="exportBookShare('${b.id}')">📤 공유</button>
         <button type="button" class="px-mini-btn" onclick="renameBook('${b.id}')">이름</button>
         <button type="button" class="px-mini-btn" style="color:#C92A2A;" onclick="deleteBook('${b.id}')">삭제</button>
       </div>
@@ -1132,6 +1139,7 @@ function renderFolderMgrModal() {
     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1.5px solid #222;border-radius:8px;margin-bottom:5px;background:#FFF;">
       <div style="font-size:12px;"><b>${f.name}</b> <span style="color:var(--muted);font-size:11px;">(${(state.books.find(b=>b.id===f.bookId)||{}).name||''})</span></div>
       <div style="display:flex;gap:4px;">
+        <button type="button" class="px-mini-btn" onclick="exportFolderShare('${f.id}')">📤</button>
         <button type="button" class="px-mini-btn" onclick="renameFolder('${f.id}')">이름</button>
         <button type="button" class="px-mini-btn" onclick="moveFolderBook('${f.id}')">이동</button>
         <button type="button" class="px-mini-btn" style="color:#C92A2A;" onclick="deleteFolderById('${f.id}')">삭제</button>
@@ -1142,6 +1150,71 @@ function renderFolderMgrModal() {
 document.getElementById('openFolderMgrBtn').onclick = () => {
   renderFolderMgrModal();
   document.getElementById('folderMgrModal').classList.add('open');
+};
+function downloadShareJson(filename, payload) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+window.exportBookShare = (bid) => {
+  const b = state.books.find(x => x.id === bid); if (!b) return;
+  const flist = state.folders.filter(f => f.bookId === bid);
+  const foldersPayload = flist.map(f => ({
+    name: f.name,
+    words: state.words.filter(w => w.folderId === f.id).map(w => ({ en: w.en, ko: w.ko }))
+  }));
+  const totalW = foldersPayload.reduce((s, f) => s + f.words.length, 0);
+  if (!totalW) return alert('이 큰 폴더에 아직 단어가 없어요!');
+  downloadShareJson(`${b.name}_단어집공유.json`, { kind: 'voca-share', scope: 'book', bookName: b.name, folders: foldersPayload });
+};
+window.exportFolderShare = (fid) => {
+  const f = state.folders.find(x => x.id === fid); if (!f) return;
+  const b = state.books.find(x => x.id === f.bookId);
+  const words = state.words.filter(w => w.folderId === f.id).map(w => ({ en: w.en, ko: w.ko }));
+  if (!words.length) return alert('이 폴더에 아직 단어가 없어요!');
+  downloadShareJson(`${f.name}_단어공유.json`, { kind: 'voca-share', scope: 'folder', bookName: b ? b.name : '공유 단어장', folders: [{ name: f.name, words }] });
+};
+document.getElementById('importShareFileInput').onchange = async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const txt = await file.text();
+    const d = JSON.parse(txt);
+    if (!d || d.kind !== 'voca-share' || !Array.isArray(d.folders)) {
+      return alert('단어 폴더 공유 파일(.json)이 아니에요! (전체 백업 파일은 설정에서 불러와 주세요)');
+    }
+    ensureBookState();
+    let targetBookId = state.curBookId;
+    if (d.scope === 'book') {
+      const existing = state.books.find(b => b.name === d.bookName);
+      if (existing) targetBookId = existing.id;
+      else {
+        targetBookId = 'b_' + Date.now();
+        state.books.push({ id: targetBookId, name: d.bookName || '공유 단어집' });
+      }
+    }
+    let addedFolders = 0, addedWords = 0;
+    const baseTs = Date.now();
+    d.folders.forEach((fp, idx) => {
+      const fid = 'f_' + (baseTs + idx) + '_' + Math.random().toString(36).slice(2, 6);
+      state.folders.push({ id: fid, name: fp.name || '공유 폴더', bookId: targetBookId });
+      addedFolders++;
+      (fp.words || []).forEach((w, wi) => {
+        if (!w || !w.en || !w.ko) return;
+        state.words.push({ id: 'w_' + (baseTs + idx) + '_' + wi + '_' + Math.random().toString(36).slice(2, 5), folderId: fid, en: w.en, ko: w.ko, status: 'new' });
+        addedWords++;
+      });
+    });
+    state.curBookId = targetBookId;
+    save(); renderFolderMgrModal(); renderHome(); renderStudy();
+    alert(`공유 파일 불러오기 완료! (${addedFolders}개 폴더 · ${addedWords}개 단어가 추가됐어요!)`);
+  } catch (err) {
+    alert('파일을 읽지 못했어요. 올바른 공유 파일인지 확인해 주세요!');
+  }
 };
 window.renameBook = (bid) => {
   const b = state.books.find(x => x.id === bid); if (!b) return;
