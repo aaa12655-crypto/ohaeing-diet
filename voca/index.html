@@ -220,7 +220,7 @@ html, body {
 }
 .study-row {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto;
   gap: 6px;
   align-items: center;
   border: 2px solid var(--ink);
@@ -229,7 +229,7 @@ html, body {
   margin-bottom: 6px;
   background: #FFFFFF;
 }
-.study-en { font-weight: bold; font-size: calc(14px * var(--fs-scale)); word-break: break-word; }
+.study-en { font-weight: bold; font-size: calc(14px * var(--fs-scale)); white-space: nowrap; overflow: hidden; }
 .study-ko { font-size: calc(13px * var(--fs-scale)); word-break: keep-all; transition: color .2s; }
 
 /* Under cellophane, text takes light tint of the film so it blends/fades like real red sheet! */
@@ -561,6 +561,16 @@ html, body {
         </div>
       </div>
 
+      <div id="editAddInlineBox" class="px-card" style="display:none;padding:9px 10px;background:#FFFDF6;border-style:dashed;">
+        <div style="font-size:12px;font-weight:bold;margin-bottom:6px;">✏️ 편집 모드 · 빠진 단어 바로 추가 / 순서 이동</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <input type="text" id="inlineAddEn" class="px-input" placeholder="영단어 (예: renewal)" style="flex:1.1;min-width:95px;padding:6px 8px;font-size:12px;" />
+          <input type="text" id="inlineAddKo" class="px-input" placeholder="한글 뜻" style="flex:1.4;min-width:110px;padding:6px 8px;font-size:12px;" />
+          <input type="number" id="inlineAddPos" class="px-input" placeholder="번호(끝)" min="1" style="width:68px;padding:6px 6px;font-size:12px;" />
+          <button type="button" class="px-btn matcha" id="inlineAddWordBtn" style="padding:6px 11px;font-size:12px;">+ 추가</button>
+        </div>
+      </div>
+
       <div class="study-list-wrap" id="studyListWrap">
         <div id="studyListView"></div>
         <div class="col-cellophane red" id="colCellophane" style="display:none;"></div>
@@ -875,6 +885,11 @@ html, body {
       <button type="button" class="px-mini-btn" id="closeSettingsModal">X</button>
     </div>
     <div style="margin-bottom:10px;">
+      <div style="font-size:12px;margin-bottom:5px;">🧭 4번째 탭 화면 선택</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button type="button" class="px-btn" id="modeFriendBtn" onclick="setFourthTabMode('friend')" style="flex:1;font-size:12px;">🤝 친구</button>
+        <button type="button" class="px-btn" id="modeSoloBtn" onclick="setFourthTabMode('solo')" style="flex:1;font-size:12px;">🎯 혼자 공부</button>
+      </div>
       <div style="font-size:12px;margin-bottom:5px;">서체 (14종)</div>
       <div id="vocaFontGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;"></div>
       <div style="font-size:12px;margin-bottom:5px;">글자 크기</div>
@@ -891,11 +906,6 @@ html, body {
       </div>
       <div style="font-size:12px;margin-bottom:5px;">🎨 귀여운 테마 색깔 (8종)</div>
       <div id="vocaThemeGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
-      <div style="font-size:12px;margin:10px 0 5px;">🧭 4번째 탭 화면 선택</div>
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="px-btn" id="modeFriendBtn" onclick="setFourthTabMode('friend')" style="flex:1;font-size:12px;">🤝 친구</button>
-        <button type="button" class="px-btn" id="modeSoloBtn" onclick="setFourthTabMode('solo')" style="flex:1;font-size:12px;">🎯 혼자 공부</button>
-      </div>
     </div>
     <div style="border-top:2px dashed var(--ink);padding-top:10px;display:flex;flex-direction:column;gap:8px;">
       <button type="button" class="px-btn sky" id="exportJsonBtn">💾 JSON 백업 내보내기</button>
@@ -1369,10 +1379,11 @@ function renderAllFolderRows() {
 function renderHome() {
   renderAllFolderRows();
   const list = state.words.filter(w => w.folderId === state.activeFolderId);
-  const stars = list.filter(w => w.status === 'star').length;
   const hards = list.filter(w => w.status === 'hard').length;
-  document.getElementById('homeStatsTxt').textContent = `${list.length}단어 · ⭐${stars} · 🔥${hards}`;
+  document.getElementById('homeStatsTxt').textContent = `${list.length}단어 · 🔥${hards}`;
   document.getElementById('toggleEditModeBtn').classList.toggle('on', editMode);
+  const inlineBox = document.getElementById('editAddInlineBox');
+  if (inlineBox) inlineBox.style.display = editMode ? 'block' : 'none';
   renderStudy();
 }
 document.getElementById('togglePasteBoxBtn').onclick = () => {
@@ -1388,13 +1399,74 @@ window.selectFolder = function(id) {
 };
 window.deleteWord = function(id) {
   state.words = state.words.filter(w => w.id !== id);
+  studyOrder = studyOrder.filter(x => x !== id);
   save(); renderHome(); renderStudy();
+};
+window.editWordText = function(id) {
+  const w = state.words.find(x => x.id === id);
+  if (!w) return;
+  const nextEn = prompt('영단어 수정', w.en);
+  if (nextEn === null) return;
+  const nextKo = prompt('한글 뜻 수정', w.ko);
+  if (nextKo === null) return;
+  if (nextEn.trim()) w.en = nextEn.trim();
+  if (nextKo.trim()) w.ko = nextKo.trim();
+  save(); renderHome(); renderStudy();
+};
+function moveFolderWordToIndex(id, targetFolderIdx) {
+  const folderIds = state.words.filter(w => w.folderId === state.activeFolderId).map(w => w.id);
+  const curIdx = folderIds.indexOf(id);
+  if (curIdx < 0) return;
+  const clamped = Math.max(0, Math.min(folderIds.length - 1, targetFolderIdx));
+  if (curIdx === clamped) return;
+  const reordered = [...folderIds];
+  const [movedId] = reordered.splice(curIdx, 1);
+  reordered.splice(clamped, 0, movedId);
+  const folderMap = new Map(state.words.filter(w => w.folderId === state.activeFolderId).map(w => [w.id, w]));
+  let ptr = 0;
+  state.words = state.words.map(w => w.folderId === state.activeFolderId ? folderMap.get(reordered[ptr++]) : w);
+  studyOrder = [];
+  save(); renderHome(); renderStudy();
+}
+window.moveWordStep = function(id, dir) {
+  const folderIds = state.words.filter(w => w.folderId === state.activeFolderId).map(w => w.id);
+  const curIdx = folderIds.indexOf(id);
+  if (curIdx < 0) return;
+  moveFolderWordToIndex(id, curIdx + dir);
+};
+window.jumpWordOrder = function(id) {
+  const folderIds = state.words.filter(w => w.folderId === state.activeFolderId).map(w => w.id);
+  const curIdx = folderIds.indexOf(id);
+  if (curIdx < 0) return;
+  const ans = prompt(`현재 ${curIdx + 1}번째예요. 몇 번째로 옮길까요? (1 ~ ${folderIds.length})`, String(curIdx + 1));
+  if (ans === null) return;
+  const num = parseInt(ans.trim(), 10);
+  if (!num || num < 1 || num > folderIds.length) return alert(`1부터 ${folderIds.length} 사이의 숫자를 입력해 주세요!`);
+  moveFolderWordToIndex(id, num - 1);
+};
+document.getElementById('inlineAddWordBtn').onclick = () => {
+  const enEl = document.getElementById('inlineAddEn');
+  const koEl = document.getElementById('inlineAddKo');
+  const posEl = document.getElementById('inlineAddPos');
+  const en = (enEl.value || '').trim();
+  const ko = (koEl.value || '').trim();
+  if (!en || !ko) return alert('영단어와 한글 뜻을 모두 입력해 주세요!');
+  const newWord = { id: 'w_' + Date.now() + '_' + Math.floor(Math.random()*1000), folderId: state.activeFolderId, en, ko, status: 'none' };
+  const folderWords = state.words.filter(w => w.folderId === state.activeFolderId);
+  const rawPos = parseInt((posEl.value || '').trim(), 10);
+  state.words.push(newWord);
+  if (rawPos && rawPos >= 1 && rawPos <= folderWords.length) {
+    moveFolderWordToIndex(newWord.id, rawPos - 1);
+  } else {
+    save(); renderHome(); renderStudy();
+  }
+  enEl.value = ''; koEl.value = ''; posEl.value = '';
+  enEl.focus();
 };
 window.setWordStatus = function(id, st) {
   const w = state.words.find(x => x.id === id);
   if (!w) return;
   w.status = w.status === st ? 'none' : st;
-  if (w.status === 'star') gainExp(1);
   save(); renderHome(); renderStudy();
 };
 
@@ -1425,20 +1497,29 @@ if (document.getElementById('delFolderBtn')) document.getElementById('delFolderB
 };
 
 function parseBulkLines(raw) {
-  const normalized = raw.replace(/([가-힣)\]\d])\s+(?=(?!(?:n|v|a|ad|adj|adv|prep|conj|pron|int)\.)[A-Za-z]{2,}(?:[\s'-][A-Za-z]+)*\s+(?:[가-힣(]|(?:n|v|a|ad|adj|adv|prep|conj)\.) )/g, '$1\n')
-    .replace(/([가-힣)\]\d])\s+(?=(?!(?:n|v|a|ad|adj|adv|prep|conj|pron|int)\.)[A-Za-z]{2,}(?:[\s'-][A-Za-z]+)*\s+[가-힣(])/g, '$1\n');
-  const lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const posAbbr = '(?:n|v|a|ad|adj|adv|prep|conj|pron|int|vt|vi)';
+  const meaningStart = `(?:[가-힣(\\[~]|\\d+[.)]|${posAbbr}\\.)`;
+  const splitRegex = new RegExp(`([가-힣)\\]\\d.~;!?])\\s+(?=(?!${posAbbr}\\.)[A-Za-z]{2,}(?:[\\s'\\-/][A-Za-z]+){0,3}\\s+${meaningStart})`, 'g');
+  const normalized = raw.replace(splitRegex, '$1\n');
+  const rawLines = normalized.split(/\r?\n/).map(l => l.trim().replace(/^(?:\d+[.)]\s+|[•\-*]\s+)/, '')).filter(Boolean);
   const out = [];
-  for (const line of lines) {
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i];
     let en = '', ko = '';
     if (line.includes('\t')) {
       const p = line.split('\t'); en = p[0].trim(); ko = p.slice(1).join(' ').trim();
+    } else if (/^[A-Za-z][A-Za-z\s'.\/-]{0,45}$/.test(line) && i + 1 < rawLines.length && /[가-힣]/.test(rawLines[i + 1]) && !/^[A-Za-z]{2,}/.test(rawLines[i + 1])) {
+      en = line; ko = rawLines[++i];
     } else if (/\s+[-–:]\s+|\s*[-:]\s+/.test(line)) {
-      const m = line.match(/^([A-Za-z][A-Za-z\s'-]*?)\s*[-–:]\s*(.+)$/);
+      const m = line.match(/^([A-Za-z][A-Za-z\s'.\/-]*?)\s*[-–:]\s*(.+)$/);
       if (m) { en = m[1].trim(); ko = m[2].trim(); }
     } else {
-      const m = line.match(/^([A-Za-z][A-Za-z'-]*(?:\s+[A-Za-z'-]+)?)\s+(.+)$/);
+      const m = line.match(new RegExp(`^([A-Za-z][A-Za-z'.\\/-]*(?:\\s+(?!${posAbbr}\\.)[A-Za-z'.\\/-]+){0,3})\\s+(${meaningStart}.*)$`));
       if (m) { en = m[1].trim(); ko = m[2].trim(); }
+      else {
+        const m2 = line.match(/^([A-Za-z][A-Za-z'.\/-]*(?:\s+[A-Za-z'.\/-]+){0,2})\s+(.+)$/);
+        if (m2) { en = m2[1].trim(); ko = m2[2].trim(); }
+      }
     }
     if (en && ko) out.push({ en, ko });
   }
@@ -1484,6 +1565,18 @@ function getStudyWords() {
   return [...studyOrder.map(id => map.get(id)).filter(Boolean), ...list.filter(w => !studyOrder.includes(w.id))];
 }
 
+function fitStudyEnFonts() {
+  const baseSize = 14 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs-scale')) || 1);
+  document.querySelectorAll('#studyListView .study-en').forEach(el => {
+    el.style.fontSize = baseSize + 'px';
+    let sz = baseSize;
+    while (el.scrollWidth > el.clientWidth + 1 && sz > 9) {
+      sz -= 0.5;
+      el.style.fontSize = sz + 'px';
+    }
+  });
+}
+
 function renderStudy() {
   renderAllFolderRows();
   const list = getStudyWords();
@@ -1516,18 +1609,29 @@ function renderStudy() {
       listView.innerHTML = '<div class="px-card" style="text-align:center;color:var(--muted);">표시할 단어가 없어요!</div>';
       return;
     }
-    listView.innerHTML = list.map(w => `
-      <div class="study-row" style="position:relative;">
-        ${editMode ? `<button type="button" class="edit-x-btn" onclick="deleteWord('${w.id}')">✕</button>` : ''}
-        <div class="study-en">${w.en}</div>
+    listView.innerHTML = list.map((w, idx) => `
+      <div class="study-row" style="position:relative;${editMode ? 'padding-top:32px;' : ''}">
+        ${editMode ? `
+          <div style="position:absolute;top:4px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:center;gap:4px;">
+            <span style="font-size:11px;font-weight:bold;color:var(--muted);">#${idx + 1}</span>
+            <div style="display:flex;gap:3px;">
+              <button type="button" class="px-mini-btn" style="padding:1px 6px;font-size:11px;" onclick="editWordText('${w.id}')">수정</button>
+              <button type="button" class="px-mini-btn" style="padding:1px 6px;font-size:11px;" onclick="moveWordStep('${w.id}',-1)">▲</button>
+              <button type="button" class="px-mini-btn" style="padding:1px 6px;font-size:11px;" onclick="moveWordStep('${w.id}',1)">▼</button>
+              <button type="button" class="px-mini-btn" style="padding:1px 6px;font-size:11px;" onclick="jumpWordOrder('${w.id}')">↕</button>
+              <button type="button" class="px-mini-btn" style="padding:1px 6px;font-size:11px;background:var(--coral);color:#fff;" onclick="deleteWord('${w.id}')">✕</button>
+            </div>
+          </div>
+        ` : ''}
+        <div class="study-en"><span style="font-size:0.78em;color:var(--muted);font-weight:normal;margin-right:4px;">${idx + 1}.</span>${w.en}</div>
         <div class="study-ko">${w.ko}</div>
         <div style="display:flex;gap:3px;z-index:20;background:#fff;">
           <button type="button" class="px-mini-btn" onclick="speakWord('${w.en.replace(/'/g, "\\'")}')">🔊</button>
           <button type="button" class="px-mini-btn ${w.status==='hard'?'on':''}" onclick="setWordStatus('${w.id}','hard')">🔥</button>
-          <button type="button" class="px-mini-btn ${w.status==='star'?'on':''}" onclick="setWordStatus('${w.id}','star')">⭐</button>
         </div>
       </div>
     `).join('');
+    fitStudyEnFonts();
   } else {
     wrap.style.display = 'none';
     cardView.style.display = 'block';
