@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="픽셀 영단어장" />
 <title>영단어장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
 <style>
 @font-face { font-family: 'NeoDunggeunmo'; src: url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@1.530/neodgm/style.css'); font-display: swap; }
 @font-face { font-family: 'NeoDunggeunmo'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff'); font-display: swap; }
@@ -13,15 +16,17 @@
 @font-face { font-family: 'Binggrae'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Binggrae.woff') format('woff'); font-display: swap; }
 @font-face { font-family: 'neurimboGothicRegular'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/neurimboGothicRegular.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'MangoByeolbyeol'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2405-3@1.1/MangoByeolbyeol.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'PyeongChangPeace'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2206-02@1.0/PyeongChangPeace-Light.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'PyeongChangPeace'; src: url('https://cdn.jsdelivr.net/gh/fonts-archive/PyeongChangPeace/PyeongChangPeace-Bold.woff2') format('woff2'), url('https://cdn.jsdelivr.net/gh/fonts-archive/PyeongChangPeace/PyeongChangPeace-Bold.ttf') format('truetype'); font-display: swap; }
 @font-face { font-family: 'Jalnan'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_four@1.2/JalnanOTF00.woff') format('woff'); font-display: swap; }
 @font-face { font-family: 'GmarketSans'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff'); font-display: swap; }
-@font-face { font-family: 'SEOLEIMcool'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2312-1@1.1/SEOLEIMcool.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'SEOLEIMcool'; src: url('https://cdn.jsdelivr.net/gh/fonts-archive/SEOLEIMcool/SEOLEIMcool.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'SlowSlow'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/SlowSlow.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'Bareun_hipi'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2310@1.0/Bareun_hipi.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Bareun_hipi'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/naverfont_01@1.0/Bareun_hipi.woff') format('woff'); font-display: swap; }
 @font-face { font-family: 'SokchoBadaDotum'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SokchoBadaDotum.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'Cafe24Supermagic'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/Cafe24Supermagic-Bold-v1.0.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'TTHakgyoansimMulgyeolB'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_keris@1.0/TTHakgyoansimMulgyeolB.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'SUITE'; src: url('https://cdn.jsdelivr.net/gh/sunn-us/SUITE/fonts/static/woff2/SUITE-Bold.woff2') format('woff2'), url('https://cdn.jsdelivr.net/gh/sunn-us/SUITE/fonts/static/ttf/SUITE-Bold.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Paperlogy'; src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-6SemiBold.woff2') format('woff2'), url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-6SemiBold.ttf') format('truetype'); font-display: swap; }
 
 :root {
   --bg: #FAF6EE;
@@ -903,7 +908,7 @@ html, body {
         <button type="button" class="px-btn" id="modeFriendBtn" onclick="setFourthTabMode('friend')" style="flex:1;font-size:12px;">🤝 친구</button>
         <button type="button" class="px-btn" id="modeSoloBtn" onclick="setFourthTabMode('solo')" style="flex:1;font-size:12px;">🎯 혼자 공부</button>
       </div>
-      <div style="font-size:12px;margin-bottom:5px;">서체 (14종)</div>
+      <div style="font-size:12px;margin-bottom:5px;">서체 (17종)</div>
       <div id="vocaFontGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;"></div>
       <div style="font-size:12px;margin-bottom:5px;">글자 크기</div>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -939,7 +944,7 @@ const VOCA_FONTS = [
   { name: '빙그레체', val: "'Binggrae', sans-serif" },
   { name: '느림보고딕', val: "'neurimboGothicRegular', sans-serif" },
   { name: '망고보드 별별', val: "'MangoByeolbyeol', sans-serif" },
-  { name: '평창평화체', val: "'PyeongChangPeace', sans-serif" },
+  { name: '평창평화체 Bold', val: "'PyeongChangPeace', sans-serif" },
   { name: '여기어때 잘난체', val: "'Jalnan', sans-serif" },
   { name: '지마켓 산스', val: "'GmarketSans', sans-serif" },
   { name: '시원한설레임', val: "'SEOLEIMcool', sans-serif" },
@@ -947,7 +952,10 @@ const VOCA_FONTS = [
   { name: '바른히피체', val: "'Bareun_hipi', sans-serif" },
   { name: '속초바다', val: "'SokchoBadaDotum', sans-serif" },
   { name: '슈퍼매직', val: "'Cafe24Supermagic', sans-serif" },
-  { name: '학교안심 물결', val: "'TTHakgyoansimMulgyeolB', sans-serif" }
+  { name: '학교안심 물결', val: "'TTHakgyoansimMulgyeolB', sans-serif" },
+  { name: '스위트', val: "'SUITE', sans-serif" },
+  { name: '페이퍼로지', val: "'Paperlogy', sans-serif" },
+  { name: '배민 주아체', val: "'Jua', sans-serif" }
 ];
 
 function todayStr() {
