@@ -44,6 +44,10 @@
   --app-font: 'NeoDunggeunmo', monospace;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+button { color: var(--ink); }
+body.fw-thin, body.fw-thin * { font-weight: 300 !important; -webkit-text-stroke: 0px !important; }
+body.fw-bold { font-weight: 800; -webkit-text-stroke: 0.45px currentColor; }
+body.fw-bold .study-ko, body.fw-bold .study-en, body.fw-bold .px-btn { font-weight: 800; }
 html, body {
   margin: 0; padding: 0;
   background: #EAE3D5;
@@ -916,6 +920,12 @@ html, body {
         <button type="button" class="px-btn" data-fs="1" onclick="setFsScale(1)" style="flex:1;">보통</button>
         <button type="button" class="px-btn" data-fs="1.18" onclick="setFsScale(1.18)" style="flex:1;">크게</button>
       </div>
+      <div style="font-size:12px;margin-bottom:5px;">🖋️ 글씨 두께</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button type="button" class="px-btn" data-fw="thin" onclick="setFontWeightMode('thin')" style="flex:1;">얇게</button>
+        <button type="button" class="px-btn" data-fw="normal" onclick="setFontWeightMode('normal')" style="flex:1;">보통</button>
+        <button type="button" class="px-btn" data-fw="bold" onclick="setFontWeightMode('bold')" style="flex:1;">두껍게</button>
+      </div>
       <div style="font-size:12px;margin-bottom:5px;">↔️ 글씨 간격</div>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
         <button type="button" class="px-btn" data-ls="-0.5px" onclick="setLetterSp('-0.5px')" style="flex:1;">좁게</button>
@@ -968,7 +978,7 @@ function defaultState() {
     lv: 1, exp: 0, streak: 1, lastStudyDate: todayStr(), fsScale: 1, fontIdx: 0,
     nick: '', room: '',
     activeFolderId: 'f1',
-    books: [{ id: 'b1', name: '850+ 토익 단어' }], curBookId: 'b1', folders: [{ id: 'f1', name: 'Day 1', bookId: 'b1' }],
+    books: [{ id: 'b1', name: '관리를 눌러 단어장 이름 입력' }], curBookId: 'b1', folders: [{ id: 'f1', name: 'Day 1', bookId: 'b1' }],
     words: [
       { id: 'w1', folderId: 'f1', en: 'implement', ko: '시행하다, 실행에 옮기다', status: 'none' },
       { id: 'w2', folderId: 'f1', en: 'mandatory', ko: '의무적인, 필수의', status: 'hard' },
@@ -1094,7 +1104,11 @@ function renderStatus() {
   document.documentElement.style.setProperty('--fs-scale', state.fsScale || 1);
   const vf = VOCA_FONTS[state.fontIdx ?? 0] || VOCA_FONTS[0];
   document.documentElement.style.setProperty('--app-font', vf.val);
-  document.body.style.webkitTextStroke = vf.name === '바른히피체' ? '0.35px currentColor' : '';
+  const fwm = state.fontWeightMode || 'normal';
+  document.body.classList.remove('fw-thin', 'fw-bold');
+  if (fwm === 'thin') document.body.classList.add('fw-thin');
+  else if (fwm === 'bold') document.body.classList.add('fw-bold');
+  document.body.style.webkitTextStroke = fwm === 'bold' ? (vf.name === '바른히피체' ? '0.65px currentColor' : '0.45px currentColor') : (fwm === 'normal' && vf.name === '바른히피체' ? '0.35px currentColor' : '');
   document.documentElement.style.setProperty('--app-ls', state.letterSp || '0px');
   const vt = VOCA_THEMES[state.themeIdx ?? 0] || VOCA_THEMES[0];
   document.documentElement.style.setProperty('--bg', vt.bg);
@@ -1128,10 +1142,13 @@ function renderVocaThemeGrid() {
 function renderFsLsButtons() {
   const fs = String(state.fsScale ?? 1);
   const ls = state.letterSp ?? '0px';
+  const fw = state.fontWeightMode ?? 'normal';
   document.querySelectorAll('[data-fs]').forEach(b => b.classList.toggle('butter', b.dataset.fs === fs));
   document.querySelectorAll('[data-ls]').forEach(b => b.classList.toggle('butter', b.dataset.ls === ls));
+  document.querySelectorAll('[data-fw]').forEach(b => b.classList.toggle('butter', b.dataset.fw === fw));
 }
 window.setFsScale = function(s) { state.fsScale = s; save(); renderStatus(); renderFsLsButtons(); };
+window.setFontWeightMode = function(m) { state.fontWeightMode = m; save(); renderStatus(); renderFsLsButtons(); };
 function renderVocaFontGrid() {
   const fIdx = state.fontIdx ?? 0;
   document.getElementById('vocaFontGrid').innerHTML = VOCA_FONTS.map((f, i) =>
@@ -1150,7 +1167,7 @@ function speakWord(text) {
 
 
 function ensureBookState() {
-  if (!state.books || !state.books.length) state.books = [{ id: 'b1', name: '850+ 토익 단어' }];
+  if (!state.books || !state.books.length) state.books = [{ id: 'b1', name: '관리를 눌러 단어장 이름 입력' }];
   if (state.curBookId === undefined) state.curBookId = state.books[0].id;
   state.folders.forEach(f => { if (!f.bookId) f.bookId = state.books[0].id; });
 }
