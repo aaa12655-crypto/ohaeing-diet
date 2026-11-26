@@ -711,13 +711,26 @@ html, body {
           <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="width:120px;" />
           <input type="text" class="px-input" id="missionTitleInput" placeholder="예: Day 1 100개" style="flex:1;" />
         </div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <select class="px-input" id="missionCntSelect" style="flex:1;">
+            <option value="all">문제 수: 전체</option>
+            <option value="20">20문제</option>
+            <option value="50">50문제</option>
+            <option value="100">100문제</option>
+          </select>
+          <select class="px-input" id="missionOrderSelect" style="flex:1;">
+            <option value="rand">🔀 순서 섞기</option>
+            <option value="seq">🔢 순서대로</option>
+          </select>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">※ 미션은 무조건 <b>한글 뜻 쓰기 + 시험지</b>로 진행돼요!</div>
         <button type="button" class="px-btn sky" id="postMissionBtn" style="width:100%;">현재 단어장 폴더로 미션 올리기</button>
         <div id="activeMissionBox" style="margin-top:10px;"></div>
       </div>
 
       <div class="px-card">
         <div class="sec-title">
-          <span>📊 오늘 시험 현황 & 틀린 단어</span>
+          <span>📜 친구 미션 기록지 & 틀린 단어</span>
           <button type="button" class="px-mini-btn" id="refreshFriendBtn">새로고침</button>
         </div>
         <div id="friendBoardBox"></div>
@@ -1609,11 +1622,22 @@ document.querySelectorAll('[data-qcnt]').forEach(btn => {
   };
 });
 
+let prevQuizOpts = null;
 function startQuizWithPool(pool, missionId = null) {
   if (!pool.length) return alert('시험 볼 단어가 없어요!');
   activeMissionId = missionId;
-  let shuffled = (qOrder === 'seq' && !missionId) ? [...pool] : [...pool].sort(() => Math.random() - 0.5);
-  if (qCnt !== 'all' && !missionId) shuffled = shuffled.slice(0, Number(qCnt));
+  const isFriendMission = !!(missionId && missionId !== 'yesterday');
+  let shuffled;
+  if (isFriendMission) {
+    prevQuizOpts = { qType, qMode };
+    qType = 'type';
+    qMode = 'sheet';
+    shuffled = [...pool];
+  } else {
+    if (prevQuizOpts) { qType = prevQuizOpts.qType; qMode = prevQuizOpts.qMode; prevQuizOpts = null; }
+    shuffled = (qOrder === 'seq') ? [...pool] : [...pool].sort(() => Math.random() - 0.5);
+    if (qCnt !== 'all') shuffled = shuffled.slice(0, Number(qCnt));
+  }
   qList = shuffled;
   qPos = 0; qCorrect = 0; qWrongs = []; qSheetAns = {};
   window.quizStartTime = Date.now();
@@ -2193,20 +2217,58 @@ async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr, missionId,
       })
     });
     if (missionId && missionId !== 'yesterday' && totalCnt) {
+      const resPayload = JSON.stringify({
+        completed: true,
+        score: rate,
+        correct: correctCnt,
+        total: totalCnt,
+        elapsedSec: elapsedSec || 0,
+        wrongs: (wrongsArr || []).slice(0, 50),
+        ts: Date.now()
+      });
       await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          completed: true,
-          score: rate,
-          correct: correctCnt,
-          total: totalCnt,
-          elapsedSec: elapsedSec || 0,
-          wrongs: (wrongsArr || []).slice(0, 50),
-          ts: Date.now()
-        })
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: resPayload
+      });
+      await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(missionId)}/results/${encodeURIComponent(state.nick)}.json`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: resPayload
       });
     }
   } catch (e) {}
+}
+
+function renderMissionCardRows(names, members, mResults, hasWords) {
+  let winnerName = null;
+  const completedEntries = names.map(n => ({ name: n, r: mResults[n] })).filter(x => x.r && x.r.completed);
+  if (names.length >= 2 && completedEntries.length === names.length) {
+    completedEntries.sort((a, b) => (b.r.score - a.r.score) || ((a.r.elapsedSec || 999999) - (b.r.elapsedSec || 999999)));
+    winnerName = completedEntries[0].name;
+  }
+  return names.map(name => {
+    const m = members[name] || {};
+    const r = mResults[name];
+    const crown = winnerName === name ? ' 👑' : '';
+    if (hasWords && (!r || !r.completed)) {
+      return `<div style="padding:7px 0;border-bottom:1px dotted #ccc;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span><strong>${name}</strong> (Lv.${m.lv || 1})</span>
+          <span style="color:var(--muted);font-size:11px;">아직 응시 전 (도전 대기 중!)</span>
+        </div>
+      </div>`;
+    }
+    if (r && r.completed) {
+      const wrongList = (r.wrongs && r.wrongs.length)
+        ? `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">틀린 단어: ${r.wrongs.map(w => w.en).join(', ')}</div>`
+        : `<div style="margin-top:4px;font-size:11px;color:#2B8A3E;">틀린 단어 없음! 완벽해요 🎉</div>`;
+      return `<div style="padding:7px 0;border-bottom:1px dotted #ccc;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span><strong>${name}${crown}</strong> (Lv.${m.lv || 1})</span>
+          <span><strong>${r.score}점 (${r.correct}/${r.total}개 · ${formatElapsed(r.elapsedSec)})</strong></span>
+        </div>
+        ${wrongList}
+      </div>`;
+    }
+    return '';
+  }).join('');
 }
 
 async function loadFriendBoard() {
@@ -2226,21 +2288,37 @@ async function loadFriendBoard() {
     const alreadyDone = !!(myResult && myResult.completed);
 
     if (latestMission && latestMission.words && latestMission.words.length) {
+      const orderLabel = latestMission.order === 'seq' ? '순서대로' : '랜덤';
       mBox.innerHTML = `<div style="background:var(--sky-soft);border:2px solid var(--ink);border-radius:10px;padding:9px;">
-        <div style="font-size:12px;font-weight:bold;">🎯 진행중 미션: ${latestMission.title}</div>
-        <div style="font-size:11px;color:var(--muted);margin:3px 0 8px;">마감: 오늘 ${latestMission.dueTime}까지 · ${latestMission.words.length}단어 (${latestMission.by})</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+          <div style="font-size:12px;font-weight:bold;">🎯 진행중: ${latestMission.title}</div>
+          <button type="button" class="px-mini-btn" id="cancelMissionBtn" style="color:#C92A2A;border-color:#C92A2A;padding:3px 7px;font-size:11px;">미션 취소</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;">마감: ${latestMission.dueTime}까지 · ${latestMission.words.length}단어 (${orderLabel} · 한글뜻 시험지 · ${latestMission.by})</div>
         <button type="button" class="px-btn ${alreadyDone ? '' : 'coral'}" id="takeMissionBtn" ${alreadyDone ? 'disabled' : ''} style="width:100%;padding:7px;${alreadyDone ? 'background:#E9ECEF;color:#666;cursor:not-allowed;' : ''}">
           ${alreadyDone ? '✅ 응시 완료 (재응시 불가)' : '🔥 미션 시험 풀기 (단 1회 기회!)'}
         </button>
       </div>`;
+      document.getElementById('cancelMissionBtn').onclick = async () => {
+        if (!confirm('진행 중인 미션을 취소할까요?')) return;
+        const mid = latestMission.id;
+        await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission.json`, { method: 'DELETE' });
+        if (mid && !Object.keys(mResults).length) {
+          await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(mid)}.json`, { method: 'DELETE' });
+        }
+        loadFriendBoard();
+      };
       if (!alreadyDone) {
         document.getElementById('takeMissionBtn').onclick = async () => {
           if (!state.nick) return alert('먼저 내 닉네임을 입력하고 연결해 주세요!');
           if (!confirm('이 미션 시험은 딱 1번만 응시할 수 있으며, 중간에 나가거나 재응시할 수 없습니다. 시작할까요?')) return;
+          const startPayload = JSON.stringify({ completed: true, score: 0, correct: 0, total: latestMission.words.length, elapsedSec: 0, wrongs: [], ts: Date.now() });
           try {
             await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
-              method: 'PUT', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ completed: true, score: 0, correct: 0, total: latestMission.words.length, elapsedSec: 0, wrongs: [], ts: Date.now() })
+              method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: startPayload
+            });
+            await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(latestMission.id)}/results/${encodeURIComponent(state.nick)}.json`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: startPayload
             });
           } catch (e) {}
           switchTab('Quiz');
@@ -2253,71 +2331,86 @@ async function loadFriendBoard() {
 
     const members = data.members || {};
     const names = Array.from(new Set([...Object.keys(members), ...Object.keys(mResults)]));
-    if (!names.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'; return; }
+    let htmlOut = '';
 
-    let winnerName = null;
-    const completedEntries = names.map(n => ({ name: n, r: mResults[n] })).filter(x => x.r && x.r.completed);
-    if (names.length >= 2 && completedEntries.length === names.length) {
-      completedEntries.sort((a, b) => (b.r.score - a.r.score) || ((a.r.elapsedSec || 999999) - (b.r.elapsedSec || 999999)));
-      winnerName = completedEntries[0].name;
+    if (latestMission && latestMission.words && latestMission.words.length) {
+      htmlOut += `<div style="background:#FFFDF6;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🔥 지금 진행 중 · ${latestMission.title} (${latestMission.words.length}문제)</div>
+        ${renderMissionCardRows(names, members, mResults, true) || '<div style="font-size:11px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'}
+      </div>`;
     }
 
-    box.innerHTML = names.map(name => {
-      const m = members[name] || {};
-      const r = mResults[name];
-      const crown = winnerName === name ? ' 👑' : '';
-      if (latestMission && latestMission.words && (!r || !r.completed)) {
-        return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span><strong>${name}</strong> (Lv.${m.lv || 1})</span>
-            <span style="color:var(--muted);font-size:11px;">아직 응시 전입니다 (도전 대기 중!)</span>
+    const historyObj = data.mission_history || {};
+    const histList = Object.values(historyObj)
+      .filter(h => h && h.id && (!latestMission || h.id !== latestMission.id))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    if (histList.length) {
+      htmlOut += `<div style="font-size:12px;font-weight:bold;margin:6px 0;">📚 지난 미션 기록지 (${histList.length}건)</div>`;
+      htmlOut += histList.map(h => {
+        const hRes = h.results || {};
+        const hNames = Array.from(new Set([...Object.keys(members), ...Object.keys(hRes)]));
+        const rows = renderMissionCardRows(hNames, members, hRes, true);
+        return `<div style="background:#F8F6F0;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:bold;margin-bottom:3px;">
+            <span>📝 ${h.title} (${h.total || '?'}문제)</span>
+            <span style="font-size:11px;color:var(--muted);">${h.date || ''}</span>
           </div>
+          ${rows || '<div style="font-size:11px;color:var(--muted);">응시 기록 없음</div>'}
         </div>`;
+      }).join('');
+    }
+
+    if (!htmlOut) {
+      if (!names.length) {
+        box.innerHTML = '<div style="font-size:12px;color:var(--muted);">아직 연결된 친구가 없어요!</div>';
+      } else {
+        box.innerHTML = names.map(name => {
+          const m = members[name] || {};
+          const scoreLine = m.correct !== null && m.correct !== undefined ? `${m.rate}점 (${m.correct}/${(m.correct || 0) + (m.wrong || 0)}개)` : '대기중';
+          return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;display:flex;justify-content:space-between;"><span><strong>${name}</strong> (Lv.${m.lv || 1})</span><span><strong>${scoreLine}</strong></span></div>`;
+        }).join('');
       }
-      if (r && r.completed) {
-        const wrongList = (r.wrongs && r.wrongs.length)
-          ? `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">틀린 단어: ${r.wrongs.map(w => w.en).join(', ')}</div>`
-          : `<div style="margin-top:4px;font-size:11px;color:#2B8A3E;">틀린 단어 없음! 완벽해요 🎉</div>`;
-        return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span><strong>${name}${crown}</strong> (Lv.${m.lv || 1})</span>
-            <span><strong>${r.score}점 (${r.correct}/${r.total}개 · ${formatElapsed(r.elapsedSec)})</strong></span>
-          </div>
-          ${wrongList}
-        </div>`;
-      }
-      const scoreLine = m.correct !== null && m.correct !== undefined
-        ? `${m.rate}점 (${m.correct}/${(m.correct || 0) + (m.wrong || 0)}개)`
-        : '대기중';
-      return `<div style="padding:8px 0;border-bottom:1px dotted #ccc;font-size:12px;">
-        <div style="display:flex;justify-content:space-between;">
-          <span><strong>${name}</strong> (Lv.${m.lv || 1})</span>
-          <span><strong>${scoreLine}</strong></span>
-        </div>
-      </div>`;
-    }).join('');
+      return;
+    }
+    box.innerHTML = htmlOut;
   } catch (e) { box.innerHTML = '<div style="font-size:12px;color:#C92A2A;">불러오기 실패</div>'; }
 }
 
 document.getElementById('postMissionBtn').onclick = async () => {
   if (!state.room || !state.nick) return alert('먼저 닉네임과 방 코드를 연결해 주세요!');
-  const pool = state.words.filter(w => w.folderId === state.activeFolderId);
+  let pool = state.words.filter(w => w.folderId === state.activeFolderId);
   if (!pool.length) return alert('현재 폴더에 단어가 없어요!');
+  const cntVal = document.getElementById('missionCntSelect').value;
+  const orderVal = document.getElementById('missionOrderSelect').value;
+  if (orderVal === 'rand') pool = [...pool].sort(() => Math.random() - 0.5);
+  else pool = [...pool];
+  if (cntVal !== 'all') pool = pool.slice(0, Number(cntVal));
+
   const dueTime = document.getElementById('missionTimeInput').value || '23:00';
   const curFolder = state.folders.find(f => f.id === state.activeFolderId);
   const title = document.getElementById('missionTitleInput').value.trim() || `${curFolder?.name || '단어장'} 시험`;
+  const mid = 'm_' + Date.now();
+  const createdAt = Date.now();
+  const missionWords = pool.map(w => ({ en: w.en, ko: w.ko }));
   const mission = {
-    id: 'm_' + Date.now(),
-    title, dueTime, by: state.nick,
-    words: pool.map(w => ({ en: w.en, ko: w.ko })),
+    id: mid, title, dueTime, by: state.nick,
+    date: todayStr(), createdAt, order: orderVal, total: missionWords.length,
+    words: missionWords, results: {}
+  };
+  const histEntry = {
+    id: mid, title, dueTime, by: state.nick,
+    date: todayStr(), createdAt, order: orderVal, total: missionWords.length,
     results: {}
   };
   await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission.json`, {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(mission)
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mission)
+  });
+  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(mid)}.json`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(histEntry)
   });
   loadFriendBoard();
-  alert('새 시험 미션을 올렸어요! 이전 미션 기록은 초기화되었습니다.');
+  alert(`새 시험 미션(${missionWords.length}문제 · 한글 뜻 쓰기 시험지)을 올렸어요! 지난 기록은 기록지에 그대로 남아요.`);
 };
 
 function renderFriendTab() {
@@ -2340,18 +2433,29 @@ async function loadFriendChats() {
     box.scrollTop = box.scrollHeight;
   } catch (e) {}
 }
-document.getElementById('sendFriendChatBtn').onclick = async () => {
+let isSendingChat = false;
+async function handleSendFriendChat() {
+  if (isSendingChat) return;
   if (!state.room || !state.nick) return alert('먼저 닉네임과 방 코드를 연결해 주세요!');
   const inp = document.getElementById('friendChatInput');
+  const btn = document.getElementById('sendFriendChatBtn');
   const msg = inp.value.trim();
   if (!msg) return;
-  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/chats.json`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nick: state.nick, msg, ts: Date.now() })
-  });
+  isSendingChat = true;
+  btn.disabled = true;
   inp.value = '';
-  loadFriendChats();
-};
+  try {
+    await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/chats.json`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nick: state.nick, msg, ts: Date.now() })
+    });
+    await loadFriendChats();
+  } finally {
+    isSendingChat = false;
+    btn.disabled = false;
+  }
+}
+document.getElementById('sendFriendChatBtn').onclick = handleSendFriendChat;
 
 function updateRoomBadge() {
   const b = document.getElementById('roomStatusBadge');
