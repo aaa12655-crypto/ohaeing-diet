@@ -1817,30 +1817,34 @@ function renderQuizSheet() {
 }
 
 document.getElementById('sheetSubmitBtn').onclick = () => {
+  const isFriendMission = !!(activeMissionId && activeMissionId !== 'yesterday');
   const answered = qList.map((w, idx) => ({ w, idx })).filter(({ idx }) => (qSheetAns[idx] || '').trim() !== '');
   if (!answered.length) {
     alert('먼저 문제를 1개 이상 풀어주세요!');
     return;
   }
+  const targetList = isFriendMission ? qList.map((w, idx) => ({ w, idx })) : answered;
   qCorrect = 0; qWrongs = []; qDetails = [];
-  answered.forEach(({ w, idx }) => {
-    let ok = false, others = [], userAns = qSheetAns[idx] || '';
-    if (qType === 'blank') {
-      const g = gradeKoreanMeaning(userAns, w.ko);
-      ok = g.ok;
-      others = g.others || [];
-    } else {
-      const ans = userAns.trim().toLowerCase();
-      ok = ans === w.en.toLowerCase();
-      const picked = state.words.find(x => x.en.toLowerCase() === ans);
-      if (picked) userAns = picked.ko;
+  targetList.forEach(({ w, idx }) => {
+    let ok = false, others = [], userAns = (qSheetAns[idx] || '').trim();
+    if (userAns) {
+      if (qType === 'blank') {
+        const g = gradeKoreanMeaning(userAns, w.ko);
+        ok = g.ok;
+        others = g.others || [];
+      } else {
+        const ans = userAns.toLowerCase();
+        ok = ans === w.en.toLowerCase();
+        const picked = state.words.find(x => x.en.toLowerCase() === ans);
+        if (picked) userAns = picked.ko;
+      }
     }
     if (ok) qCorrect += 1;
     else qWrongs.push({ en: w.en, ko: w.ko });
     qDetails.push({ en: w.en, ko: w.ko, userAns: userAns || '(미입력)', ok, others });
   });
   gainExp(qCorrect * 1);
-  finishQuiz(answered.length);
+  finishQuiz(isFriendMission ? qList.length : answered.length);
 };
 
 function getDateOffset(baseStr, delta) {
@@ -2251,6 +2255,16 @@ async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr, missionId,
   } catch (e) {}
 }
 
+window.shiftFriendHistDate = (delta) => {
+  window._friendHistDate = getDateOffset(window._friendHistDate || todayStr(), delta);
+  loadFriendBoard();
+};
+window.deleteMissionHistory = async (mid) => {
+  if (!state.room || !mid) return;
+  if (!confirm('이 지난 미션 기록을 삭제할까요?')) return;
+  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission_history/${encodeURIComponent(mid)}.json`, { method: 'DELETE' });
+  loadFriendBoard();
+};
 function renderMissionCardRows(names, members, mResults, hasWords, missionMeta) {
   let winnerName = null;
   const completedEntries = names.map(n => ({ name: n, r: mResults[n] })).filter(x => x.r && x.r.completed);
@@ -2370,24 +2384,41 @@ async function loadFriendBoard() {
     }
 
     const historyObj = data.mission_history || {};
-    const histList = Object.values(historyObj)
+    const allHist = Object.values(historyObj)
       .filter(h => h && h.id && (!latestMission || h.id !== latestMission.id))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-    if (histList.length) {
-      htmlOut += `<div style="font-size:12px;font-weight:bold;margin:6px 0;">📚 지난 미션 기록지 (${histList.length}건)</div>`;
-      htmlOut += histList.map(h => {
-        const hRes = h.results || {};
-        const hNames = Array.from(new Set([...Object.keys(members), ...Object.keys(hRes)]));
-        const rows = renderMissionCardRows(hNames, members, hRes, true, h);
-        return `<div style="background:#F8F6F0;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:bold;margin-bottom:3px;">
-            <span>📝 ${h.title} (${h.total || '?'}문제)</span>
-            <span style="font-size:11px;color:var(--muted);">${h.date || ''}</span>
-          </div>
-          ${rows || '<div style="font-size:11px;color:var(--muted);">응시 기록 없음</div>'}
-        </div>`;
-      }).join('');
+    if (!window._friendHistDate) window._friendHistDate = todayStr();
+    const histList = allHist.filter(h => (h.date || todayStr()) === window._friendHistDate);
+
+    if (allHist.length) {
+      htmlOut += `<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 6px;">
+        <span style="font-size:12px;font-weight:bold;">📚 지난 미션 기록지 (${histList.length}건)</span>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button type="button" class="px-mini-btn" onclick="shiftFriendHistDate(-1)">◀</button>
+          <span style="font-size:11px;font-weight:bold;">${window._friendHistDate}</span>
+          <button type="button" class="px-mini-btn" onclick="shiftFriendHistDate(1)">▶</button>
+        </div>
+      </div>`;
+      if (histList.length) {
+        htmlOut += histList.map(h => {
+          const hRes = h.results || {};
+          const hNames = Array.from(new Set([...Object.keys(members), ...Object.keys(hRes)]));
+          const rows = renderMissionCardRows(hNames, members, hRes, true, h);
+          return `<div style="background:#F8F6F0;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:bold;margin-bottom:3px;gap:6px;">
+              <span>📝 ${h.title} (${h.total || '?'}문제)</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:11px;color:var(--muted);">${h.date || ''}</span>
+                <button type="button" class="px-mini-btn" onclick="deleteMissionHistory('${h.id}')" style="color:#C92A2A;border-color:#C92A2A;padding:1px 6px;font-size:11px;">✕</button>
+              </div>
+            </div>
+            ${rows || '<div style="font-size:11px;color:var(--muted);">응시 기록 없음</div>'}
+          </div>`;
+        }).join('');
+      } else {
+        htmlOut += `<div style="font-size:11px;color:var(--muted);padding:8px 0;">${window._friendHistDate}에 끝난 미션 기록이 없어요!</div>`;
+      }
     }
 
     if (!htmlOut) {
