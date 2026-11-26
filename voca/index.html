@@ -929,13 +929,23 @@ function gainExp(amt) {
     state.lv += 1;
     leveled = true;
   }
-  save(); 
+  save();
+  renderStatus();
+  if (leveled) {
+    const toast = document.getElementById('lvupToast');
+    toast.textContent = `🎉 LEVEL UP! Lv.${state.lv}`;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2200);
+  }
+  syncFriendScore();
+}
+
 function renderStampModal() {
   const grid = document.getElementById('stampGrid');
   if (!grid) return;
   const set = new Set(state.stamps || []);
   const now = new Date();
-  const day = now.getDay(); // 0=Sun..6=Sat
+  const day = now.getDay();
   const diffToMon = (day === 0 ? -6 : 1 - day);
   const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
   const names = ['월', '화', '수', '목', '금', '토', '일'];
@@ -947,7 +957,7 @@ function renderStampModal() {
     const stamped = set.has(ds);
     const isToday = ds === t;
     return `
-      <div style="border:2px solid ${isToday ? 'var(--coral)' : '#222'};border-radius:10px;padding:6px 2px;text-align:center;background:${stamped ? '#FFF3D1' : '#FFF'};">
+      <div style="border:2px solid ${isToday ? 'var(--coral)' : '#222'};border-radius:10px;padding:6px 2px;text-align:center;background:${stamped ? 'var(--butter)' : '#FFF'};">
         <div style="font-size:10px;color:${isToday ? 'var(--coral)' : 'var(--muted)'};font-weight:bold;">${nm}</div>
         <div style="font-size:10px;color:var(--muted);margin:1px 0 3px;">${d.getDate()}</div>
         <div style="height:38px;display:flex;align-items:center;justify-content:center;">
@@ -968,16 +978,6 @@ document.getElementById('manualStampBtn').onclick = () => {
   renderStatus();
   renderStampModal();
 };
-
-renderStatus();
-  if (leveled) {
-    const toast = document.getElementById('lvupToast');
-    toast.textContent = `🎉 LEVEL UP! Lv.${state.lv}`;
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2200);
-  }
-  syncFriendScore();
-}
 
 function renderStatus() {
   const need = 50;
