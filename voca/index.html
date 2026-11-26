@@ -1957,12 +1957,11 @@ document.getElementById('toggleQLogBtn').onclick = () => {
 document.getElementById('qLogPrevBtn').onclick = () => shiftQLogDate(-1);
 document.getElementById('qLogNextBtn').onclick = () => shiftQLogDate(1);
 
-window.openQuizLogModal = (idx) => {
-  const lg = (state.quizLogs || [])[idx];
-  if (!lg) return;
-  document.getElementById('quizLogModalTitle').textContent = `📝 ${lg.folderName} (${lg.correct}/${lg.total})`;
-  document.getElementById('quizLogModalMeta').textContent = `${lg.date} ${lg.time} · 정답률 ${lg.rate}%`;
-  document.getElementById('quizLogModalBody').innerHTML = (lg.items || []).map((it, i) => `
+window._friendSheetCache = {};
+function renderSheetResultModal(title, meta, items) {
+  document.getElementById('quizLogModalTitle').textContent = title;
+  document.getElementById('quizLogModalMeta').textContent = meta;
+  document.getElementById('quizLogModalBody').innerHTML = (items || []).map((it, i) => `
     <div style="padding:8px;border:1.5px solid #222;border-radius:8px;margin-bottom:6px;background:${it.ok ? '#F3FBF4' : '#FFF5F5'};">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <strong style="font-size:13px;display:flex;align-items:center;gap:7px;">
@@ -1980,6 +1979,16 @@ window.openQuizLogModal = (idx) => {
     </div>
   `).join('');
   document.getElementById('quizLogModal').classList.add('open');
+}
+window.openQuizLogModal = (idx) => {
+  const lg = (state.quizLogs || [])[idx];
+  if (!lg) return;
+  renderSheetResultModal(`📝 ${lg.folderName} (${lg.correct}/${lg.total})`, `${lg.date} ${lg.time} · 정답률 ${lg.rate}%`, lg.items || []);
+};
+window.openFriendSheetModal = (key) => {
+  const d = window._friendSheetCache[key];
+  if (!d || !d.items || !d.items.length) return alert('상세 채점지가 저장되지 않은 이전 기록이거나 미응시 상태예요!');
+  renderSheetResultModal(d.title, d.meta, d.items);
 };
 
 document.getElementById('startYesterdayWrongBtn').onclick = () => {
@@ -2229,6 +2238,7 @@ async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr, missionId,
         total: totalCnt,
         elapsedSec: elapsedSec || 0,
         wrongs: (wrongsArr || []).slice(0, 50),
+        details: (typeof qDetails !== 'undefined' ? qDetails : []).slice(0, 120),
         ts: Date.now()
       });
       await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/mission/results/${encodeURIComponent(state.nick)}.json`, {
@@ -2241,7 +2251,7 @@ async function syncFriendScore(rate, correctCnt, wrongCnt, wrongsArr, missionId,
   } catch (e) {}
 }
 
-function renderMissionCardRows(names, members, mResults, hasWords) {
+function renderMissionCardRows(names, members, mResults, hasWords, missionMeta) {
   let winnerName = null;
   const completedEntries = names.map(n => ({ name: n, r: mResults[n] })).filter(x => x.r && x.r.completed);
   if (names.length >= 2 && completedEntries.length === names.length) {
@@ -2269,9 +2279,18 @@ function renderMissionCardRows(names, members, mResults, hasWords) {
       } else {
         wrongList = `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">시험 중도 포기 / 미제출 (0점 처리)</div>`;
       }
-      return `<div style="padding:7px 0;border-bottom:1px dotted #ccc;font-size:12px;">
+      const cKey = `${(missionMeta && missionMeta.id) || 'cur'}_${name}`;
+      if (r.details && r.details.length) {
+        window._friendSheetCache[cKey] = {
+          title: `📝 ${name} · ${(missionMeta && missionMeta.title) || '미션'} (${r.correct}/${r.total})`,
+          meta: `${(missionMeta && missionMeta.date) || ''} · ${r.score}점 · ${formatElapsed(r.elapsedSec)}`,
+          items: r.details
+        };
+      }
+      const hasSheet = !!(r.details && r.details.length);
+      return `<div onclick="openFriendSheetModal('${cKey.replace(/'/g, "\'")}')" style="padding:7px 4px;border-bottom:1px dotted #ccc;font-size:12px;cursor:pointer;border-radius:6px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span><strong>${name}${crown}</strong> (Lv.${m.lv || 1})</span>
+          <span><strong>${name}${crown}</strong> (Lv.${m.lv || 1}) ${hasSheet ? '<span style="font-size:10px;background:var(--sky);border:1px solid var(--ink);border-radius:4px;padding:1px 4px;">📄 채점지</span>' : ''}</span>
           <span><strong>${r.score}점 (${r.correct}/${r.total}개 · ${formatElapsed(r.elapsedSec)})</strong></span>
         </div>
         ${wrongList}
@@ -2346,7 +2365,7 @@ async function loadFriendBoard() {
     if (latestMission && latestMission.words && latestMission.words.length) {
       htmlOut += `<div style="background:#FFFDF6;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:10px;">
         <div style="font-size:12px;font-weight:bold;margin-bottom:4px;">🔥 지금 진행 중 · ${latestMission.title} (${latestMission.words.length}문제)</div>
-        ${renderMissionCardRows(names, members, mResults, true) || '<div style="font-size:11px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'}
+        ${renderMissionCardRows(names, members, mResults, true, latestMission) || '<div style="font-size:11px;color:var(--muted);">아직 연결된 친구가 없어요!</div>'}
       </div>`;
     }
 
@@ -2360,7 +2379,7 @@ async function loadFriendBoard() {
       htmlOut += histList.map(h => {
         const hRes = h.results || {};
         const hNames = Array.from(new Set([...Object.keys(members), ...Object.keys(hRes)]));
-        const rows = renderMissionCardRows(hNames, members, hRes, true);
+        const rows = renderMissionCardRows(hNames, members, hRes, true, h);
         return `<div style="background:#F8F6F0;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:bold;margin-bottom:3px;">
             <span>📝 ${h.title} (${h.total || '?'}문제)</span>
