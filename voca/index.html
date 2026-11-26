@@ -1630,7 +1630,7 @@ function startQuizWithPool(pool, missionId = null) {
   let shuffled;
   if (isFriendMission) {
     prevQuizOpts = { qType, qMode };
-    qType = 'type';
+    qType = 'blank';
     qMode = 'sheet';
     shuffled = [...pool];
   } else {
