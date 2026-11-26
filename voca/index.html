@@ -712,9 +712,9 @@ html, body {
           <select class="px-input" id="missionBookSelect" style="flex:1;"></select>
           <select class="px-input" id="missionFolderSelect" style="flex:1;"></select>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="width:120px;" />
-          <input type="text" class="px-input" id="missionTitleInput" placeholder="제목 (안 쓰면 폴더명 자동)" style="flex:1;" />
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <span style="font-size:12px;font-weight:bold;white-space:nowrap;">⏰ 마감 시간:</span>
+          <input type="time" class="px-input" id="missionTimeInput" value="23:00" style="flex:1;" />
         </div>
         <div style="display:flex;gap:6px;margin-bottom:6px;">
           <select class="px-input" id="missionCntSelect" style="flex:1;">
@@ -735,7 +735,7 @@ html, body {
 
       <div class="px-card">
         <div class="sec-title">
-          <span>📜 친구 미션 기록지 & 틀린 단어</span>
+          <span>📜 친구 미션 기록지</span>
           <button type="button" class="px-mini-btn" id="refreshFriendBtn">새로고침</button>
         </div>
         <div id="friendBoardBox"></div>
@@ -1012,13 +1012,13 @@ function renderStatus() {
 
 const VOCA_THEMES = [
   { name: '크림 바닐라', bg: '#FBF7EE', butter: '#FFE58F', sky: '#BAE6FD', matcha: '#BBF7D0', coral: '#FECACA' },
-  { name: '딸기 밀크', bg: '#FFF0F3', butter: '#FFD6E0', sky: '#FFC2D1', matcha: '#FFE5EC', coral: '#FF8FAB' },
-  { name: '말차 라떼', bg: '#F1F8F2', butter: '#D8F3DC', sky: '#B7E4C7', matcha: '#95D5B2', coral: '#FFD6A5' },
-  { name: '소다 스카이', bg: '#EFF8FF', butter: '#DBEAFE', sky: '#BAE6FD', matcha: '#A7F3D0', coral: '#FBCFE8' },
-  { name: '버터 레몬', bg: '#FFFBEB', butter: '#FEF08A', sky: '#FDE68A', matcha: '#D9F99D', coral: '#FDBA74' },
-  { name: '라벤더 밀크', bg: '#F5F3FF', butter: '#EDE9FE', sky: '#DDD6FE', matcha: '#C7D2FE', coral: '#F5D0FE' },
-  { name: '피치 코랄', bg: '#FFF5F0', butter: '#FED7AA', sky: '#FDE68A', matcha: '#BBF7D0', coral: '#FCA5A5' },
-  { name: '모던 스톤', bg: '#F3F4F6', butter: '#E5E7EB', sky: '#CBD5E1', matcha: '#D1FAE5', coral: '#FCA5A5' }
+  { name: '딸기 밀크', bg: '#FFF0F3', butter: '#FFF3B0', sky: '#D8F3DC', matcha: '#B7E4C7', coral: '#FFACC7' },
+  { name: '말차 라떼', bg: '#F1F8F2', butter: '#F3E9D2', sky: '#FEF08A', matcha: '#A7E3B5', coral: '#FDBA74' },
+  { name: '소다 스카이', bg: '#EFF8FF', butter: '#FEF3C7', sky: '#99E2FF', matcha: '#A7F3D0', coral: '#FBCFE8' },
+  { name: '버터 레몬', bg: '#FFFBEB', butter: '#FEF08A', sky: '#BAE6FD', matcha: '#D9F99D', coral: '#FED7AA' },
+  { name: '라벤더 밀크', bg: '#F5F3FF', butter: '#FEF3C7', sky: '#DDD6FE', matcha: '#BBF7D0', coral: '#F5D0FE' },
+  { name: '피치 코랄', bg: '#FFF5F0', butter: '#FEF3C7', sky: '#CCFBF1', matcha: '#BBF7D0', coral: '#FDB493' },
+  { name: '모던 스톤', bg: '#F3F4F6', butter: '#E7DEC8', sky: '#CBD5E1', matcha: '#C5D8C1', coral: '#E2E8F0' }
 ];
 window.setLetterSp = function(v) { state.letterSp = v; save(); renderStatus(); renderFsLsButtons(); };
 window.setVocaTheme = function(i) { state.themeIdx = i; save(); renderStatus(); renderVocaThemeGrid(); };
@@ -1772,7 +1772,11 @@ function gradeKoreanMeaning(userRaw, targetKo) {
     }
   }
   const ok = matchedIdx !== -1;
-  const others = ok ? parts.filter((_, i) => i !== matchedIdx) : parts;
+  const others = ok ? parts.filter((pt, i) => {
+    if (i === matchedIdx) return false;
+    const pc = clean(pt);
+    return pc && !u.includes(pc);
+  }) : parts;
   return { ok, matched: ok ? parts[matchedIdx] : null, others };
 }
 
@@ -1970,7 +1974,7 @@ function finishQuiz(overrideTotal) {
     id: 'qlog_' + Date.now(),
     date: t,
     time: timeStr,
-    folderName: qFolderLabel || '단어장',
+    folderName: (activeMissionId && activeMissionId !== 'yesterday') ? `[친구 미션] ${qFolderLabel || '단어장'}` : (qFolderLabel || '단어장'),
     correct: qCorrect,
     total,
     rate,
@@ -2366,11 +2370,9 @@ function renderMissionCardRows(names, members, mResults, hasWords, missionMeta) 
     }
     if (r && r.completed) {
       let wrongList = '';
-      if (r.wrongs && r.wrongs.length) {
-        wrongList = `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">틀린 단어: ${r.wrongs.map(w => w.en).join(', ')}</div>`;
-      } else if (r.total && r.correct === r.total) {
+      if (r.total && r.correct === r.total) {
         wrongList = `<div style="margin-top:4px;font-size:11px;color:#2B8A3E;">틀린 단어 없음! 완벽해요 🎉</div>`;
-      } else {
+      } else if (!r.elapsedSec && !r.correct) {
         wrongList = `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">시험 중도 포기 / 미제출 (0점 처리)</div>`;
       }
       const cKey = `${(missionMeta && missionMeta.id) || 'cur'}_${name}`;
@@ -2582,7 +2584,7 @@ document.getElementById('postMissionBtn').onclick = async () => {
 
   const dueTime = document.getElementById('missionTimeInput').value || '23:00';
   const curFolder = state.folders.find(f => f.id === targetFolderId);
-  const title = document.getElementById('missionTitleInput').value.trim() || `${curFolder?.name || '단어장'}`;
+  const title = curFolder?.name || '단어장';
   const mid = 'm_' + Date.now();
   const createdAt = Date.now();
   const missionWords = pool.map(w => ({ en: w.en, ko: w.ko }));
@@ -2623,15 +2625,23 @@ let friendAutoTimer = setInterval(() => {
   }
 }, 5000);
 document.getElementById('refreshFriendBtn').onclick = () => renderFriendTab();
+window.deleteFriendChat = async (cid) => {
+  if (!state.room || !cid) return;
+  await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/chats/${encodeURIComponent(cid)}.json`, { method: 'DELETE' });
+  loadFriendChats();
+};
 async function loadFriendChats() {
   const box = document.getElementById('friendChatList');
   if (!state.room) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">방 연결 후 첫 응원 메시지를 남겨보세요!</div>'; return; }
   try {
     const res = await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/chats.json`);
     const data = await res.json() || {};
-    const arr = Object.values(data).filter(c => c && typeof c === 'object' && c.nick && c.msg).sort((a,b) => (a.ts||0) - (b.ts||0)).slice(-20);
+    const arr = Object.entries(data).filter(([, c]) => c && typeof c === 'object' && c.nick && c.msg).sort((a,b) => (a[1].ts||0) - (b[1].ts||0)).slice(-20);
     if (!arr.length) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);">첫 응원 메시지를 남겨보세요!</div>'; return; }
-    box.innerHTML = arr.map(c => `<div style="font-size:12px;padding:4px 6px;margin-bottom:4px;border-radius:8px;background:${c.nick===state.nick?'var(--butter)':'#F4EFE4'};border:1.5px solid var(--ink);"><strong>${c.nick}:</strong> ${c.msg}</div>`).join('');
+    box.innerHTML = arr.map(([cid, c]) => `<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12px;padding:4px 8px;margin-bottom:4px;border-radius:8px;background:${c.nick===state.nick?'var(--butter)':'var(--sky)'};border:1.5px solid var(--ink);">
+      <span><strong>${c.nick}:</strong> ${c.msg}</span>
+      ${c.nick===state.nick ? `<button type="button" onclick="deleteFriendChat('${cid}')" style="border:none;background:transparent;color:#C92A2A;font-weight:bold;cursor:pointer;font-size:12px;padding:0 2px;">✕</button>` : ''}
+    </div>`).join('');
     box.scrollTop = box.scrollHeight;
   } catch (e) {}
 }
