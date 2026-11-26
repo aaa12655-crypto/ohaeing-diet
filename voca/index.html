@@ -511,6 +511,7 @@ html, body {
         </div>
       </div>
       <div class="top-btns">
+        <button type="button" class="px-mini-btn" id="hardRefreshBtn" title="새로고침">🔄</button>
         <button type="button" class="px-mini-btn" id="openSettingsBtn">설정</button>
       </div>
     </div>
@@ -3212,6 +3213,11 @@ document.getElementById('startTaBtn').onclick = () => {
 };
 document.getElementById('quitTaBtn').onclick = () => stopTimeAttack(false);
 
+document.getElementById('hardRefreshBtn').onclick = () => {
+  const u = new URL(location.href);
+  u.searchParams.set('v', Date.now());
+  location.replace(u.toString());
+};
 document.getElementById('openSettingsBtn').onclick = () => { renderVocaFontGrid(); renderVocaThemeGrid(); renderFsLsButtons(); applyFourthTabMode(); document.getElementById('settingsModal').classList.add('open'); };
 document.getElementById('closeSettingsModal').onclick = () => document.getElementById('settingsModal').classList.remove('open');
 document.getElementById('exportJsonBtn').onclick = () => {
