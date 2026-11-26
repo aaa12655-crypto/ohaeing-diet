@@ -45,7 +45,8 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 button { color: var(--ink); }
-body.fw-thin, body.fw-thin * { font-weight: 300 !important; -webkit-text-stroke: 0px !important; }
+body.fw-thin, body.fw-thin * { font-weight: 300 !important; -webkit-text-stroke: 0.3px rgba(255,255,255,0.55) !important; }
+body.fw-thin .study-en, body.fw-thin .study-ko { color: #5A554E; }
 body.fw-bold { font-weight: 800; -webkit-text-stroke: 0.45px currentColor; }
 body.fw-bold .study-ko, body.fw-bold .study-en, body.fw-bold .px-btn { font-weight: 800; }
 html, body {
@@ -735,6 +736,7 @@ html, body {
           <input type="text" class="px-input" id="myNickInput" placeholder="내 닉네임" style="flex:1;" />
           <input type="text" class="px-input" id="roomCodeInput" placeholder="방 코드" style="flex:1;" />
           <button type="button" class="px-btn matcha" id="joinRoomBtn">연결</button>
+          <button type="button" class="px-btn coral" id="disconnectRoomBtn" style="display:none;font-size:12px;padding:7px 8px;">끊기</button>
         </div>
         <div style="display:flex;gap:6px;">
           <button type="button" class="px-btn butter" id="genRoomCodeBtn" style="flex:1;font-size:12px;padding:7px 8px;">🎲 방 코드 랜덤생성</button>
@@ -2974,6 +2976,8 @@ function renderFriendTab() {
   updateRoomBadge();
   renderSavedRooms();
   renderMissionSelectors();
+  const discBtn = document.getElementById('disconnectRoomBtn');
+  if (discBtn) discBtn.style.display = state.room ? 'inline-block' : 'none';
   document.getElementById('myNickInput').value = state.nick || '';
   document.getElementById('roomCodeInput').value = state.room || '';
   loadFriendBoard();
@@ -3050,12 +3054,18 @@ document.getElementById('joinRoomBtn').onclick = async () => {
   if (!state.nick || !state.room) return alert('닉네임과 방 코드를 모두 입력해 주세요!');
   saveRoomShortcut(state.room, state.nick);
   save();
-  updateRoomBadge();
-  renderSavedRooms();
   await syncFriendScore();
-  await loadFriendBoard();
-  await loadFriendChats();
+  renderFriendTab();
   alert(`방(${state.room})에 연결됐어요! 💌 초대장 복사로 친구에게 보내보세요!`);
+};
+document.getElementById('disconnectRoomBtn').onclick = () => {
+  if (!state.room) return;
+  if (!confirm(`방(${state.room}) 연결을 끊고 목록에서 지울까요?`)) return;
+  const oldRoom = state.room;
+  state.savedRooms = (state.savedRooms || []).filter(x => x.room !== oldRoom);
+  state.room = '';
+  save();
+  renderFriendTab();
 };
 
 (function checkInviteRoomParam() {
