@@ -2256,9 +2256,14 @@ function renderMissionCardRows(names, members, mResults, hasWords) {
       </div>`;
     }
     if (r && r.completed) {
-      const wrongList = (r.wrongs && r.wrongs.length)
-        ? `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">틀린 단어: ${r.wrongs.map(w => w.en).join(', ')}</div>`
-        : `<div style="margin-top:4px;font-size:11px;color:#2B8A3E;">틀린 단어 없음! 완벽해요 🎉</div>`;
+      let wrongList = '';
+      if (r.wrongs && r.wrongs.length) {
+        wrongList = `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">틀린 단어: ${r.wrongs.map(w => w.en).join(', ')}</div>`;
+      } else if (r.total && r.correct === r.total) {
+        wrongList = `<div style="margin-top:4px;font-size:11px;color:#2B8A3E;">틀린 단어 없음! 완벽해요 🎉</div>`;
+      } else {
+        wrongList = `<div style="margin-top:4px;font-size:11px;color:#C92A2A;">시험 중도 포기 / 미제출 (0점 처리)</div>`;
+      }
       return `<div style="padding:7px 0;border-bottom:1px dotted #ccc;font-size:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span><strong>${name}${crown}</strong> (Lv.${m.lv || 1})</span>
