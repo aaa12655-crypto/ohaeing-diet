@@ -1586,13 +1586,14 @@ window.setWordStatus = function(id, st, btnEl) {
   if (!w) return;
   w.status = w.status === st ? 'none' : st;
   save();
-  const hardOnly = document.getElementById('filterHardChk')?.checked;
+  const hardOnly = document.getElementById('onlyHardChk')?.checked;
   if (studyView === 'list' && !hardOnly && btnEl) {
     btnEl.classList.toggle('on', w.status === 'hard');
     renderAllFolderRows();
-    const list = getStudyWords();
-    const hCnt = list.filter(x => x.status === 'hard').length;
-    document.getElementById('listCount').textContent = `${list.length}단어 · 🔥${hCnt}`;
+    const allInFolder = state.words.filter(x => x.folderId === state.activeFolderId);
+    const hCnt = allInFolder.filter(x => x.status === 'hard').length;
+    const statsEl = document.getElementById('homeStatsTxt');
+    if (statsEl) statsEl.textContent = `${allInFolder.length}단어 · 🔥${hCnt}`;
     return;
   }
   renderHome(); renderStudy();
@@ -1922,9 +1923,17 @@ document.querySelectorAll('.color-dot').forEach(dot => {
   };
 });
 document.getElementById('onlyHardChk').onchange = () => { fcIdx = 0; renderStudy(); };
-let playAllTimer = null, playAllActive = false;
+let playAllTimer = null, playAllActive = false, playAllPausedUntil = 0;
+function markPlayAllUserTouch() {
+  if (playAllActive) playAllPausedUntil = Date.now() + 3000;
+}
+window.addEventListener('touchstart', markPlayAllUserTouch, { passive: true });
+window.addEventListener('touchmove', markPlayAllUserTouch, { passive: true });
+window.addEventListener('wheel', markPlayAllUserTouch, { passive: true });
+
 function stopPlayAll() {
   playAllActive = false;
+  playAllPausedUntil = 0;
   if (playAllTimer) { clearTimeout(playAllTimer); playAllTimer = null; }
   if (window.speechSynthesis) speechSynthesis.cancel();
   const btn = document.getElementById('playAllBtn');
@@ -1936,6 +1945,7 @@ document.getElementById('playAllBtn').onclick = () => {
   const list = getStudyWords();
   if (!list.length) return;
   playAllActive = true;
+  playAllPausedUntil = 0;
   document.getElementById('playAllBtn').textContent = '⏹️ 정지';
   let idx = 0;
   function step() {
@@ -1944,7 +1954,9 @@ document.getElementById('playAllBtn').onclick = () => {
     const rows = document.querySelectorAll('#studyListView .study-row');
     if (rows[idx]) {
       rows[idx].classList.add('playing-now');
-      rows[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (Date.now() >= playAllPausedUntil) {
+        rows[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
     const w = list[idx++];
     if ('speechSynthesis' in window) {
@@ -2153,17 +2165,40 @@ document.getElementById('sheetQuitBtn').onclick = () => {
   document.getElementById('quizSetupBox').style.display = 'block';
 };
 
+function editDist1(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  if (a === b) return true;
+  let i = 0, j = 0, diff = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++diff > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else { i++; j++; }
+  }
+  return diff + (a.length - i) + (b.length - j) <= 1;
+}
+
 function gradeKoreanMeaning(userRaw, targetKo) {
-  const clean = (s) => s.replace(/\([^)]*\)/g, '').replace(/[\s~·.,!?;:'"\[\]]+/g, '').replace(/^(n|v|a|ad|adj|adv|prep|conj)\./g, '');
+  const clean = (s) => (s || '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/(?:^|[\s,;/])(?:n|v|a|ad|adj|adv|prep|conj)\./gi, ' ')
+    .replace(/[\s~·.,!?;:'"\[\]0-9]+/g, '');
   const u = clean(userRaw || '');
-  const parts = (targetKo || '').split(/[,;/·]+/).map(x => x.trim()).filter(Boolean);
+  const uParts = (userRaw || '').split(/[,;/]+/).map(clean).filter(Boolean);
+  if (!uParts.length && u) uParts.push(u);
+  const noParenTarget = (targetKo || '').replace(/\([^)]*\)/g, '');
+  const parts = noParenTarget.split(/[,;/·]+/).map(x => x.replace(/(?:^|[\s])(?:n|v|a|ad|adj|adv|prep|conj)\./gi, '').trim()).filter(Boolean);
   if (!u || u.length < 1) return { ok: false, matched: null, others: parts };
   let matchedIdx = -1;
   for (let i = 0; i < parts.length; i++) {
     const pClean = clean(parts[i]);
     if (!pClean) continue;
-    // 정확히 같거나, 2글자 이상 핵심어가 포함되면 정답 인정
-    if (u === pClean || (u.length >= 2 && (pClean.includes(u) || u.includes(pClean)))) {
+    const hit = u === pClean
+      || (u.length >= 2 && (pClean.includes(u) || u.includes(pClean)))
+      || uParts.some(up => up === pClean || (up.length >= 2 && (pClean.includes(up) || up.includes(pClean))) || (up.length >= 3 && pClean.length >= 3 && editDist1(up, pClean)))
+      || (u.length >= 3 && pClean.length >= 3 && editDist1(u, pClean));
+    if (hit) {
       matchedIdx = i;
       break;
     }
@@ -2467,12 +2502,12 @@ document.getElementById('qLogPrevBtn').onclick = () => shiftQLogDate(-1);
 document.getElementById('qLogNextBtn').onclick = () => shiftQLogDate(1);
 
 window._friendSheetCache = {};
-function renderSheetResultModal(title, meta, items) {
+function renderSheetResultModal(title, meta, items, logIdx) {
   document.getElementById('quizLogModalTitle').textContent = title;
   document.getElementById('quizLogModalMeta').textContent = meta;
   document.getElementById('quizLogModalBody').innerHTML = (items || []).map((it, i) => `
     <div style="padding:8px;border:1.5px solid #222;border-radius:8px;margin-bottom:6px;background:${it.ok ? '#F3FBF4' : '#FFF5F5'};">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
         <strong style="font-size:13px;display:flex;align-items:center;gap:7px;">
           <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 4px;font-size:12px;font-weight:bold;color:#222;">
             ${i + 1}
@@ -2482,6 +2517,7 @@ function renderSheetResultModal(title, meta, items) {
           </span>
           <span>${it.en}</span>
         </strong>
+        ${(!it.ok && typeof logIdx === 'number') ? `<button type="button" class="px-mini-btn" style="font-size:11px;padding:2px 7px;background:#EBFBEE;color:#2B8A3E;flex-shrink:0;" onclick="acceptWrongAsCorrect(${logIdx}, ${i})">⭕ 정답 인정</button>` : ''}
       </div>
       <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);"><span style="color:#D92B2B;font-weight:bold;">+ ${it.others.join(', ')}</span></span>` : ''}</div>
       ${!it.ok ? `<div style="font-size:12px;color:#C92A2A;margin-top:2px;">정답: ${it.ko}</div>` : ''}
@@ -2489,10 +2525,26 @@ function renderSheetResultModal(title, meta, items) {
   `).join('');
   document.getElementById('quizLogModal').classList.add('open');
 }
+window.acceptWrongAsCorrect = (logIdx, itemIdx) => {
+  const lg = (state.quizLogs || [])[logIdx];
+  if (!lg || !lg.items || !lg.items[itemIdx] || lg.items[itemIdx].ok) return;
+  const it = lg.items[itemIdx];
+  it.ok = true;
+  lg.correct = lg.items.filter(x => x.ok).length;
+  lg.rate = lg.total ? Math.round((lg.correct / lg.total) * 100) : 0;
+  if (state.wrongLogs) state.wrongLogs = state.wrongLogs.filter(w => w.en !== it.en);
+  if (state.wrongByDate && lg.date && state.wrongByDate[lg.date]) {
+    state.wrongByDate[lg.date] = state.wrongByDate[lg.date].filter(w => w.en !== it.en);
+  }
+  save();
+  openQuizLogModal(logIdx);
+  if (typeof renderQuizLogs === 'function') renderQuizLogs();
+  if (typeof renderWrongNote === 'function') renderWrongNote();
+};
 window.openQuizLogModal = (idx) => {
   const lg = (state.quizLogs || [])[idx];
   if (!lg) return;
-  renderSheetResultModal(`📝 ${lg.folderName} (${lg.correct}/${lg.total})`, `${lg.date} ${lg.time} · 정답률 ${lg.rate}%`, lg.items || []);
+  renderSheetResultModal(`📝 ${lg.folderName} (${lg.correct}/${lg.total})`, `${lg.date} ${lg.time} · 정답률 ${lg.rate}%`, lg.items || [], idx);
 };
 window.openFriendSheetModal = (key) => {
   const d = window._friendSheetCache[key];
