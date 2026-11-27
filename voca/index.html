@@ -2502,7 +2502,7 @@ document.getElementById('qLogPrevBtn').onclick = () => shiftQLogDate(-1);
 document.getElementById('qLogNextBtn').onclick = () => shiftQLogDate(1);
 
 window._friendSheetCache = {};
-function renderSheetResultModal(title, meta, items, logIdx) {
+function renderSheetResultModal(title, meta, items, acceptHandlerName, targetKey) {
   document.getElementById('quizLogModalTitle').textContent = title;
   document.getElementById('quizLogModalMeta').textContent = meta;
   document.getElementById('quizLogModalBody').innerHTML = (items || []).map((it, i) => `
@@ -2517,7 +2517,7 @@ function renderSheetResultModal(title, meta, items, logIdx) {
           </span>
           <span>${it.en}</span>
         </strong>
-        ${(!it.ok && typeof logIdx === 'number') ? `<button type="button" class="px-mini-btn" style="font-size:11px;padding:2px 7px;background:#EBFBEE;color:#2B8A3E;flex-shrink:0;" onclick="acceptWrongAsCorrect(${logIdx}, ${i})">⭕ 정답 인정</button>` : ''}
+        ${(!it.ok && acceptHandlerName) ? `<button type="button" class="px-mini-btn" style="font-size:11px;padding:2px 7px;background:#EBFBEE;color:#2B8A3E;flex-shrink:0;" onclick="${acceptHandlerName}(${typeof targetKey === 'string' ? `'${targetKey.replace(/'/g, "\\'")}'` : targetKey}, ${i})">⭕ 정답 인정</button>` : ''}
       </div>
       <div style="font-size:12px;margin-top:3px;">내 답: ${it.userAns || '-'}${it.ok && it.others && it.others.length ? ` <span style="color:var(--muted);"><span style="color:#D92B2B;font-weight:bold;">+ ${it.others.join(', ')}</span></span>` : ''}</div>
       ${!it.ok ? `<div style="font-size:12px;color:#C92A2A;margin-top:2px;">정답: ${it.ko}</div>` : ''}
@@ -2541,15 +2541,43 @@ window.acceptWrongAsCorrect = (logIdx, itemIdx) => {
   if (typeof renderQuizLogs === 'function') renderQuizLogs();
   if (typeof renderWrongNote === 'function') renderWrongNote();
 };
+window.acceptFriendWrongAsCorrect = async (cKey, itemIdx) => {
+  const d = window._friendSheetCache[cKey];
+  if (!d || !d.items || !d.items[itemIdx] || d.items[itemIdx].ok) return;
+  const it = d.items[itemIdx];
+  it.ok = true;
+  const correct = d.items.filter(x => x.ok).length;
+  const total = d.total || d.items.length;
+  const score = total ? Math.round((correct / total) * 100) : 0;
+  d.title = `📝 ${d.name} · ${d.missionTitle} (${correct}/${total})`;
+  d.meta = `${d.date || ''} · ${score}점 · ${formatElapsed(d.elapsedSec)}`;
+  if (state.wrongLogs) state.wrongLogs = state.wrongLogs.filter(w => w.en !== it.en);
+  if (state.wrongByDate && d.date && state.wrongByDate[d.date]) {
+    state.wrongByDate[d.date] = state.wrongByDate[d.date].filter(w => w.en !== it.en);
+  }
+  save();
+  openFriendSheetModal(cKey);
+  if (state.room && d.fbSubPath) {
+    try {
+      await fetch(`${FB_URL}/voca_rooms/${encodeURIComponent(state.room)}/${d.fbSubPath}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ details: d.items, correct, score })
+      });
+      loadFriendBoard();
+    } catch (e) {}
+  }
+};
 window.openQuizLogModal = (idx) => {
   const lg = (state.quizLogs || [])[idx];
   if (!lg) return;
-  renderSheetResultModal(`📝 ${lg.folderName} (${lg.correct}/${lg.total})`, `${lg.date} ${lg.time} · 정답률 ${lg.rate}%`, lg.items || [], idx);
+  renderSheetResultModal(`📝 ${lg.folderName} (${lg.correct}/${lg.total})`, `${lg.date} ${lg.time} · 정답률 ${lg.rate}%`, lg.items || [], 'acceptWrongAsCorrect', idx);
 };
 window.openFriendSheetModal = (key) => {
   const d = window._friendSheetCache[key];
   if (!d || !d.items || !d.items.length) return alert('상세 채점지가 저장되지 않은 이전 기록이거나 미응시 상태예요!');
-  renderSheetResultModal(d.title, d.meta, d.items);
+  const handler = d.isMine ? 'acceptFriendWrongAsCorrect' : null;
+  renderSheetResultModal(d.title, d.meta, d.items, handler, key);
 };
 
 document.getElementById('startYesterdayWrongBtn').onclick = () => {
@@ -2855,10 +2883,22 @@ function renderMissionCardRows(names, members, mResults, hasWords, missionMeta) 
       }
       const cKey = `${(missionMeta && missionMeta.id) || 'cur'}_${name}`;
       if (r.details && r.details.length) {
+        const myNick = (state.nick || '').trim();
+        const isHist = !!(missionMeta && missionMeta._isHist);
+        const fbSubPath = (missionMeta && missionMeta.id)
+          ? `${isHist ? 'mission_history' : 'missions'}/${encodeURIComponent(missionMeta.id)}/results/${encodeURIComponent(name)}`
+          : null;
         window._friendSheetCache[cKey] = {
           title: `📝 ${name} · ${(missionMeta && missionMeta.title) || '미션'} (${r.correct}/${r.total})`,
           meta: `${(missionMeta && missionMeta.date) || ''} · ${r.score}점 · ${formatElapsed(r.elapsedSec)}`,
-          items: r.details
+          items: r.details,
+          name,
+          missionTitle: (missionMeta && missionMeta.title) || '미션',
+          date: (missionMeta && missionMeta.date) || '',
+          total: r.total,
+          elapsedSec: r.elapsedSec,
+          isMine: !!myNick && name === myNick,
+          fbSubPath
         };
       }
       const hasSheet = !!(r.details && r.details.length);
@@ -3017,6 +3057,7 @@ async function loadFriendBoard() {
         htmlOut += histList.map(h => {
           const hRes = h.results || {};
           const hNames = h.by ? [h.by] : Array.from(new Set([...Object.keys(members), ...Object.keys(hRes)]));
+          h._isHist = true;
           const rows = renderMissionCardRows(hNames, members, hRes, true, h);
           return `<div style="background:#F8F6F0;border:2px solid var(--ink);border-radius:10px;padding:9px;margin-bottom:8px;">
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:bold;margin-bottom:3px;gap:6px;">
